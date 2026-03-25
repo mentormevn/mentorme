@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ cá nhân | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="profile-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="#">Dịch vụ</a></li>
+    </ul>
+
+    <div id="authArea">
+      <div class="auth-links">
+        <a href="login.html">Đăng nhập</a>
+        <a href="register.html" class="btn-register">Đăng ký</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="profile-shell">
+    <section class="profile-sidebar">
+      <div class="profile-avatar-card">
+        <img id="profileAvatar" class="profile-avatar-large" src="logo.png" alt="Ảnh đại diện">
+        <h1 id="profileDisplayName">Tên người dùng</h1>
+        <p id="profileHeadline">Hồ sơ cá nhân Mentor Me</p>
+        <p id="profileGoalPreview" class="profile-goal-preview"></p>
+      </div>
+
+      <div class="profile-summary-card">
+        <h2>Thông tin nhanh</h2>
+        <div class="profile-summary-item">
+          <span>Email</span>
+          <strong id="profileEmailText"></strong>
+        </div>
+        <div class="profile-summary-item">
+          <span>Số điện thoại</span>
+          <strong id="profilePhoneText"></strong>
+        </div>
+        <div class="profile-summary-item">
+          <span>Thành viên từ</span>
+          <strong id="profileCreatedAt"></strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-content">
+      <div id="profileMessage" class="auth-message" hidden></div>
+
+      <div class="profile-section-card">
+        <div class="profile-section-header">
+          <h2>Thông tin cá nhân</h2>
+          <p>Cập nhật hồ sơ để mentor hiểu rõ hơn về nhu cầu và mục tiêu học tập của bạn.</p>
+        </div>
+
+        <form id="profileForm" class="profile-form" novalidate>
+          <label class="auth-field">
+            <span>Họ và tên</span>
+            <input type="text" id="profileNameInput" required>
+          </label>
+
+          <label class="auth-field">
+            <span>Email</span>
+            <input type="email" id="profileEmailInput" readonly>
+          </label>
+
+          <label class="auth-field">
+            <span>Số điện thoại</span>
+            <input type="tel" id="profilePhoneInput" required>
+          </label>
+
+          <label class="auth-field">
+            <span>Mục tiêu học tập</span>
+            <input type="text" id="profileGoalInput" placeholder="Ví dụ: Muốn cải thiện speaking và tìm mentor buổi tối">
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Giới thiệu ngắn</span>
+            <textarea id="profileBioInput" rows="5" placeholder="Chia sẻ ngắn về nhu cầu học tập, điểm mạnh hoặc điều bạn đang cần hỗ trợ."></textarea>
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Ảnh đại diện</span>
+            <input type="file" id="profileAvatarUpload" accept="image/*">
+          </label>
+
+          <div class="profile-actions">
+            <button type="submit" class="auth-submit-btn">Lưu thay đổi</button>
+            <button type="button" id="profileLogoutBtn" class="profile-secondary-btn">Đăng xuất</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="profile-section-card">
+        <div class="profile-section-header">
+          <h2>Đổi mật khẩu</h2>
+          <p>Đổi mật khẩu định kỳ giúp tài khoản của bạn an toàn hơn trên cùng một thiết bị.</p>
+        </div>
+
+        <form id="changePasswordForm" class="profile-form" novalidate>
+          <label class="auth-field">
+            <span>Mật khẩu hiện tại</span>
+            <div class="auth-password-field">
+              <input type="password" id="currentPasswordInput" placeholder="Nhập mật khẩu hiện tại" required>
+              <button type="button" class="password-toggle" data-toggle-password="currentPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">
+                <img src="images/eye-close.png" alt="Ẩn mật khẩu">
+              </button>
+            </div>
+          </label>
+
+          <label class="auth-field">
+            <span>Mật khẩu mới</span>
+            <div class="auth-password-field">
+              <input type="password" id="newPasswordInput" placeholder="Tối thiểu 8 ký tự" required>
+              <button type="button" class="password-toggle" data-toggle-password="newPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">
+                <img src="images/eye-close.png" alt="Ẩn mật khẩu">
+              </button>
+            </div>
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Xác nhận mật khẩu mới</span>
+            <div class="auth-password-field">
+              <input type="password" id="confirmNewPasswordInput" placeholder="Nhập lại mật khẩu mới" required>
+              <button type="button" class="password-toggle" data-toggle-password="confirmNewPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">
+                <img src="images/eye-close.png" alt="Ẩn mật khẩu">
+              </button>
+            </div>
+          </label>
+
+          <div class="profile-actions">
+            <button type="submit" class="auth-submit-btn">Cập nhật mật khẩu</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

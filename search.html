@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tìm kiếm Mentor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li class="active"><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="#">Dịch vụ</a></li>
+    </ul>
+
+    <div id="authArea">
+      <div class="auth-links">
+        <a href="login.html">Đăng nhập</a>
+        <a href="register.html" class="btn-register">Đăng ký</a>
+      </div>
+    </div>
+  </div>
+
+  <section class="search-hero">
+    <div class="search-hero-container">
+      <div class="search-robot">
+        <img src="robot3.png" alt="Robot TIGI">
+      </div>
+
+      <div class="search-content">
+        <h1>MENTOR ME</h1>
+
+        <div class="search-box">
+          <input id="mentorSearchInput" type="text" placeholder="Ví dụ: Em cần mentor IELTS buổi tối, luyện thi 1 kèm 1">
+          <button id="mentorSearchButton" type="button" aria-label="Tìm kiếm mentor">
+            <img src="search-logo.png" alt="Tìm kiếm">
+          </button>
+        </div>
+
+        <p class="search-sub">
+          (Hãy điền mục tiêu môn học/cuộc thi và thời gian rảnh mà bạn mong muốn tìm Mentor, TIGI sẽ giúp bạn!)
+        </p>
+      </div>
+    </div>
+
+    <div class="filter-box">
+      <h2>Tìm kiếm</h2>
+
+      <div class="filters">
+        <label class="filter-select">
+          <span>Lĩnh vực</span>
+          <select id="fieldFilter" name="linh-vuc">
+            <option value="">Chọn lĩnh vực</option>
+            <option value="toan">Toán</option>
+            <option value="van">Ngữ văn</option>
+            <option value="anh">Tiếng Anh</option>
+            <option value="lap-trinh">Lập trình</option>
+            <option value="ielts">IELTS</option>
+            <option value="trung">Tiếng Trung</option>
+            <option value="ky-nang">Kỹ năng học tập</option>
+          </select>
+        </label>
+
+        <label class="filter-select">
+          <span>Thời gian rảnh</span>
+          <select id="availabilityFilter" name="thoi-gian-ranh">
+            <option value="">Chọn thời gian</option>
+            <option value="sang">Buổi sáng</option>
+            <option value="chieu">Buổi chiều</option>
+            <option value="toi">Buổi tối</option>
+            <option value="cuoi-tuan">Cuối tuần</option>
+          </select>
+        </label>
+
+        <label class="filter-select">
+          <span>Dịch vụ</span>
+          <select id="serviceFilter" name="dich-vu">
+            <option value="">Chọn dịch vụ</option>
+            <option value="1-1">Mentor 1 kèm 1</option>
+            <option value="group">Mentor theo nhóm</option>
+            <option value="roadmap">Tư vấn lộ trình</option>
+            <option value="competition">Luyện thi/cuộc thi</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="mentor-results">
+    <div class="mentor-results-header">
+      <h2>Mentor phù hợp</h2>
+      <p>Khám phá các mentor nổi bật và chọn người đồng hành phù hợp với mục tiêu của bạn.</p>
+      <p id="mentorResultsSummary" class="mentor-results-summary"></p>
+    </div>
+
+    <div id="mentorGrid" class="mentor-grid"></div>
+  </section>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

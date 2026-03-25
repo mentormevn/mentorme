@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đặt lịch Mentor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li class="active"><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="#">Dịch vụ</a></li>
+    </ul>
+
+    <div id="authArea">
+      <div class="auth-links">
+        <a href="login.html">Đăng nhập</a>
+        <a href="register.html" class="btn-register">Đăng ký</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="booking-page">
+    <section class="booking-shell">
+      <div class="booking-mentor-card">
+        <p class="booking-tag">Mentor bạn đã chọn</p>
+        <img id="bookingMentorImage" src="mentor1.jpg" alt="Mentor">
+        <h1 id="bookingMentorName">Tên mentor</h1>
+        <p id="bookingMentorRole">Chuyên môn mentor</p>
+        <div class="booking-mentor-meta">
+          <p><strong>Môn/kỹ năng:</strong> <span id="bookingMentorFocus"></span></p>
+          <p><strong>Thời gian rảnh:</strong> <span id="bookingMentorAvailability"></span></p>
+          <p><strong>Dịch vụ:</strong> <span id="bookingMentorService"></span></p>
+        </div>
+      </div>
+
+      <div class="booking-form-card">
+        <div class="booking-form-header">
+          <h2>Gửi yêu cầu đặt lịch</h2>
+          <p>Điền thông tin giả lập để mô phỏng trải nghiệm đặt lịch với mentor.</p>
+        </div>
+
+        <form id="bookingForm" class="booking-form">
+          <label>
+            <span>Họ và tên</span>
+            <input type="text" id="bookingName" placeholder="Ví dụ: Nguyễn Minh Anh" required>
+          </label>
+
+          <label>
+            <span>Email</span>
+            <input type="email" id="bookingEmail" placeholder="ban@email.com" required>
+          </label>
+
+          <label>
+            <span>Mục tiêu học tập</span>
+            <input type="text" id="bookingGoal" placeholder="Ví dụ: Muốn tăng band IELTS lên 6.5 trong 3 tháng" required>
+          </label>
+
+          <label>
+            <span>Thời gian mong muốn</span>
+            <select id="bookingTime" required>
+              <option value="">Chọn thời gian phù hợp</option>
+              <option value="Buổi sáng">Buổi sáng</option>
+              <option value="Buổi chiều">Buổi chiều</option>
+              <option value="Buổi tối">Buổi tối</option>
+              <option value="Cuối tuần">Cuối tuần</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Chia sẻ thêm</span>
+            <textarea id="bookingNote" rows="5" placeholder="Ví dụ: Em đang yếu speaking và cần mentor nhẹ nhàng nhưng theo sát."></textarea>
+          </label>
+
+          <button type="submit" class="mentor-primary-btn booking-submit-btn">Gửi yêu cầu</button>
+        </form>
+
+        <div id="bookingSuccessMessage" class="booking-success-message" hidden></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>
