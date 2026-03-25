@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-hero auth-hero-login">
+      <div class="auth-brand">
+        <a href="index.html" class="logo">
+          <img src="logo.png" alt="Mentor Me logo">
+          <span>MENTOR ME</span>
+        </a>
+        <p class="auth-badge">Đăng nhập an toàn</p>
+      </div>
+
+      <div class="auth-hero-copy">
+        <h1>Chào mừng bạn đã quay trở lại!</h1>
+        <p>
+          Đăng nhập để tiếp tục theo dõi lộ trình học, gửi yêu cầu đặt lịch và quản lý hồ sơ cá nhân.
+        </p>
+
+        <div class="auth-highlight-list">
+          <div class="auth-highlight-card">
+            <strong>Liền mạch</strong>
+            <span>Tiếp tục tìm mentor và xem các lựa chọn phù hợp ngay sau khi đăng nhập.</span>
+          </div>
+          <div class="auth-highlight-card">
+            <strong>Bảo mật</strong>
+            <span>Dữ liệu hồ sơ được quản lý tập trung trong cùng một luồng đăng ký, đăng nhập và cập nhật.</span>
+          </div>
+        </div>
+        <div class="auth-proof-strip">
+          <div><strong>Cá nhân hóa</strong><span>Lưu mục tiêu và hồ sơ học tập</span></div>
+          <div><strong>Trực quan</strong><span>Tìm mentor nhanh chóng trên một giao diện thân thiện</span></div>
+        </div>
+
+        <div class="auth-role-strip">
+          <article class="auth-role-card">
+            <span>Mentee</span>
+            <strong>Tự đăng ký và dùng ngay</strong>
+            <p>Dành cho người học tìm mentor, đặt lịch và nhận tư vấn.</p>
+          </article>
+          <article class="auth-role-card">
+            <span>Mentor</span>
+            <strong>Dùng tài khoản được cấp</strong>
+            <p>Mentor chỉ đăng nhập sau khi được chọn lọc và nhận mã kích hoạt riêng.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-panel-header">
+        <h2>Đăng nhập</h2>
+        <p>Chào mừng bạn quay lại. Hãy nhập thông tin tài khoản để tiếp tục.</p>
+      </div>
+
+      <div id="loginMessage" class="auth-message" hidden></div>
+
+      <form id="loginForm" class="auth-form auth-form-single" novalidate>
+        <label class="auth-field">
+          <span>Email đăng nhập</span>
+          <input type="email" id="loginIdentifier" placeholder="Ví dụ: ban@gmail.com" autocomplete="username" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Mật khẩu</span>
+          <div class="auth-password-field">
+            <input type="password" id="loginPassword" placeholder="Nhập mật khẩu của bạn" autocomplete="current-password" required>
+            <button type="button" class="password-toggle" data-toggle-password="loginPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
+            </button>
+          </div>
+        </label>
+
+        <div class="auth-form-row">
+          <label class="auth-checkbox">
+            <input type="checkbox" id="rememberLogin">
+            <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+          </label>
+          <a href="forgot-password.html" class="auth-inline-link">Quên mật khẩu?</a>
+        </div>
+
+        <button type="submit" class="auth-submit-btn">Đăng nhập</button>
+      </form>
+
+      <div class="auth-footer-note">
+        <p>Bạn chưa có tài khoản? <a href="register.html">Tạo tài khoản mới</a></p>
+        <p>Muốn trở thành mentor? <a href="mentor-apply.html">Gửi hồ sơ ứng tuyển</a> hoặc <a href="mentor-activate.html">kích hoạt tài khoản đã được cấp</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

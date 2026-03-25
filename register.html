@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-hero auth-hero-register">
+      <div class="auth-brand">
+        <a href="index.html" class="logo">
+          <img src="logo.png" alt="Mentor Me logo">
+          <span>MENTOR ME</span>
+        </a>
+        <p class="auth-badge">Tạo tài khoản mới</p>
+      </div>
+
+      <div class="auth-hero-copy">
+        <h1>Bắt đầu hành trình cá nhân hóa cùng Mentor Me.</h1>
+        <p>
+          Tạo tài khoản để lưu hồ sơ, nhận gợi ý mentor phù hợp, gửi yêu cầu đặt lịch và theo dõi học tập của bạn trên cùng một nền tảng.
+        </p>
+
+        <div class="auth-highlight-list">
+          <div class="auth-highlight-card">
+            <strong>Gợi ý phù hợp</strong>
+            <span>Nhận danh sách mentor dựa trên mục tiêu, lịch rảnh và nhu cầu học tập của riêng bạn.</span>
+          </div>
+          <div class="auth-highlight-card">
+            <strong>Dễ quản lý</strong>
+            <span>Cập nhật hồ sơ cá nhân, mục tiêu học tập và thông tin liên hệ trong vài bước.</span>
+          </div>
+        </div>
+        <div class="auth-proof-strip">
+          <div><strong>Tối ưu</strong><span>Gợi ý mentor dựa trên nhu cầu và mục tiêu cá nhân của bạn</span></div>
+
+          <div><strong>Nhanh gọn</strong><span>Bắt đầu tìm mentor ngay sau khi tạo tài khoản</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-panel-header">
+        <h2>Tạo tài khoản</h2>
+        <p>Điền thông tin bên dưới để bắt đầu sử dụng Mentor Me một cách đầy đủ.</p>
+      </div>
+
+      <div id="registerMessage" class="auth-message" hidden></div>
+
+      <form id="registerForm" class="auth-form" novalidate>
+        <label class="auth-field">
+          <span>Họ và tên</span>
+          <input type="text" id="registerName" placeholder="Ví dụ: Nguyễn Minh Anh" autocomplete="name" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Email</span>
+          <input type="email" id="registerEmail" placeholder="ban@gmail.com" autocomplete="email" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Số điện thoại</span>
+          <input type="tel" id="registerPhone" placeholder="Ví dụ: 0912345678" autocomplete="tel" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Mục tiêu hiện tại</span>
+          <input type="text" id="registerGoal" placeholder="Ví dụ: Muốn luyện IELTS để đạt 6.5 trong 4 tháng">
+        </label>
+
+        <label class="auth-field">
+          <span>Loại tài khoản</span>
+          <select id="registerRole" required>
+            <option value="mentee">Mentee</option>
+          </select>
+        </label>
+
+        <label class="auth-field">
+          <span>Mật khẩu</span>
+          <div class="auth-password-field">
+            <input type="password" id="registerPassword" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password" required>
+            <button type="button" class="password-toggle" data-toggle-password="registerPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
+            </button>
+          </div>
+        </label>
+
+        <label class="auth-field">
+          <span>Xác nhận mật khẩu</span>
+          <div class="auth-password-field">
+            <input type="password" id="registerConfirmPassword" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required>
+            <button type="button" class="password-toggle" data-toggle-password="registerConfirmPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
+            </button>
+          </div>
+        </label>
+
+        <label class="auth-checkbox">
+          <input type="checkbox" id="registerAgree" required>
+          <span>Tôi đồng ý với cách Mentor Me lưu trữ thông tin tài khoản để hỗ trợ kết nối mentor.</span>
+        </label>
+
+        <button type="submit" class="auth-submit-btn">Tạo tài khoản</button>
+      </form>
+
+      <div class="auth-footer-note">
+        <p>Đã có tài khoản? <a href="login.html">Đăng nhập ngay</a></p>
+        <p>Tài khoản mentor không đăng ký công khai. Nếu bạn muốn trở thành mentor, hãy <a href="mentor-apply.html">điền form ứng tuyển</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

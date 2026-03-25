@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ứng tuyển Mentor | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="mentor-apply-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="services.html">Dịch vụ</a></li>
+    </ul>
+
+    <div id="authArea"></div>
+  </div>
+
+  <main class="mentor-apply-shell">
+    <section class="mentor-apply-hero">
+      <div class="mentor-apply-hero-copy">
+        <h1>Trở thành mentor sau khi được phỏng vấn và chọn lọc.</h1>
+        <p>
+          Mentor Me không mở đăng ký mentor đại trà. Bạn sẽ điền hồ sơ ứng tuyển,
+          được đội ngũ đánh giá và chỉ khi phù hợp mới được cấp quyền kích hoạt tài khoản mentor.
+        </p>
+      </div>
+      <div class="mentor-apply-hero-steps">
+        <div><strong>1</strong><span>Gửi hồ sơ ứng tuyển</span></div>
+        <div><strong>2</strong><span>Phỏng vấn và chọn lọc</span></div>
+        <div><strong>3</strong><span>Nhận mã kích hoạt tài khoản mentor</span></div>
+      </div>
+    </section>
+
+    <section class="mentor-apply-card">
+      <div id="mentorApplicationMessage" class="auth-message" hidden></div>
+      <form id="mentorApplicationForm" class="mentor-apply-form" novalidate>
+        <label class="auth-field">
+          <span>Họ và tên</span>
+          <input type="text" id="mentorApplicationName" placeholder="Ví dụ: Nguyễn Minh Anh" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Email</span>
+          <input type="email" id="mentorApplicationEmail" placeholder="mentor@ gmail.com" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Số điện thoại</span>
+          <input type="text" id="mentorApplicationPhone" placeholder="Ví dụ: 0912345678" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Lĩnh vực chuyên môn</span>
+          <input type="text" id="mentorApplicationExpertise" placeholder="Ví dụ: IELTS, Toán, định hướng du học" required>
+        </label>
+
+        <label class="auth-field profile-full-width">
+          <span>Kinh nghiệm liên quan</span>
+          <textarea id="mentorApplicationExperience" rows="4" placeholder="Chia sẻ ngắn về học vấn, thành tích, số năm kinh nghiệm hoặc nhóm mentee bạn từng đồng hành."></textarea>
+        </label>
+
+        <label class="auth-field profile-full-width">
+          <span>Lý do bạn muốn trở thành mentor</span>
+          <textarea id="mentorApplicationMotivation" rows="5" placeholder="Điều gì khiến bạn phù hợp để đồng hành cùng mentee trên Mentor Me?" required></textarea>
+        </label>
+
+        <label class="auth-field profile-full-width">
+          <span>Link portfolio / LinkedIn / hồ sơ tham khảo</span>
+          <input type="text" id="mentorApplicationPortfolioLink" placeholder="Ví dụ: https://linkedin.com/in/...">
+        </label>
+
+        <div class="profile-actions">
+          <button type="submit" class="auth-submit-btn">Gửi hồ sơ ứng tuyển</button>
+          <a href="mentor-activate.html" class="mentor-secondary-btn">Đã có mã kích hoạt?</a>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

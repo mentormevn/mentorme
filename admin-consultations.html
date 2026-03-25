@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin tư vấn | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="services.html">Dịch vụ</a></li>
+      <li class="active"><a href="admin-consultations.html">Admin tư vấn</a></li>
+    </ul>
+
+    <div id="authArea"></div>
+  </div>
+
+  <main class="admin-shell">
+    <section class="admin-header-card">
+      <h1>Admin xử lý lead tư vấn và hồ sơ ứng tuyển mentor</h1>
+      <p>
+        Dùng trang này để xem lead mới, cập nhật trạng thái, thêm ghi chú nội bộ,
+        đồng thời duyệt ứng tuyển mentor và cấp mã kích hoạt cho người đã được chọn lọc.
+      </p>
+    </section>
+
+    <section class="admin-access-card">
+      <div id="adminConsultationMessage" class="auth-message" hidden></div>
+      <form id="adminAccessForm" class="admin-access-form" novalidate>
+        <label class="auth-field">
+          <span>Mật khẩu quản trị</span>
+          <input type="password" id="adminAccessKey" placeholder="Nhập mật khẩu admin để xem dữ liệu" required>
+        </label>
+        <button type="submit" class="mentor-primary-btn">Mở dashboard</button>
+      </form>
+    </section>
+
+    <section id="adminConsultationDashboard" class="admin-dashboard" hidden>
+      <div class="admin-dashboard-bar">
+        <h2>Yêu cầu tư vấn</h2>
+        <button type="button" id="adminRefreshRequests" class="mentor-secondary-btn">Tải lại</button>
+      </div>
+      <div id="adminConsultationList" class="admin-consultation-list"></div>
+    </section>
+
+    <section id="adminMentorApplicationDashboard" class="admin-dashboard" hidden>
+      <div class="admin-dashboard-bar">
+        <h2>Ứng tuyển mentor</h2>
+        <button type="button" id="adminRefreshMentorApplications" class="mentor-secondary-btn">Tải lại</button>
+      </div>
+      <div id="adminMentorApplicationSummary"></div>
+      <div id="adminMentorApplicationList" class="admin-consultation-list"></div>
+    </section>
+
+    <section id="adminBookingDashboard" class="admin-dashboard" hidden>
+      <div class="admin-dashboard-bar">
+        <h2>Đăng ký học với mentor</h2>
+        <button type="button" id="adminRefreshBookingRequests" class="mentor-secondary-btn">Tải lại</button>
+      </div>
+      <div id="adminBookingRequestList" class="admin-consultation-list"></div>
+    </section>
+
+    <section id="adminMentorProfileUpdateDashboard" class="admin-dashboard" hidden>
+      <div class="admin-dashboard-bar">
+        <h2>Yêu cầu cập nhật hồ sơ mentor</h2>
+        <button type="button" id="adminRefreshMentorProfileUpdates" class="mentor-secondary-btn">Tải lại</button>
+      </div>
+      <div id="adminMentorProfileUpdateList" class="admin-consultation-list"></div>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

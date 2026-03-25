@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MENTOR ME</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo">
+        <img src="logo.svg" alt="Mentor Me logo">
+        <span>MENTOR ME</span>
+      </a>
+
+      <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <ul class="menu">
+        <li class="active"><a href="index.html">Trang chủ</a></li>
+        <li><a href="search.html">Tìm kiếm mentor</a></li>
+        <li><a href="services.html">Dịch vụ</a></li>
+      </ul>
+
+      <div id="authArea"></div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-container">
+        <div class="hero-image">
+          <img src="robot.png" alt="Robot Mentor Me">
+        </div>
+
+        <div class="hero-content">
+          <h1>MENTOR ME</h1>
+    
+
+          <div class="search-box">
+            <input type="text" placeholder="Tìm kiếm cùng TIGI?">
+            <button class="search-btn" onclick="goSearch()">
+              <img src="search-logo.png" alt="Tìm kiếm">
+            </button>
+          </div>
+
+          <p class="hero-sub">
+            (Hãy điền mục tiêu môn học/ cuộc thi/ kỹ năng mà bạn mong muốn tìm Mentor, TIGI sẽ giúp bạn)
+          </p>
+
+          <div class="hero-quick-actions">
+            <a href="search.html" class="mentor-primary-btn">Bat dau tim mentor</a>
+            <a href="register.html" class="mentor-secondary-btn">Tao tai khoan</a>
+          </div>
+
+          <div class="hero-stats">
+            <div class="hero-stat-card">
+              <strong>20+</strong>
+              <span>Mentor giàu kinh nghiệm</span>
+            </div>
+            <div class="hero-stat-card">
+              <strong>1:1</strong>
+              <span>Lộ trình đồng hành cá nhân hóa theo mục tiêu</span>
+            </div>
+            <div class="hero-stat-card">
+              <strong>24h</strong>
+              <span>Trải nghiệm hỗ trợ nhanh chóng</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-scale">
+      <div class="about">
+        <div class="about-left">
+          <h2>GIỚI THIỆU</h2>
+          <h3>Find Your Mentor - Shape Your Future</h3>
+          <p>Bạn muốn học tốt hơn, thử sức ở các cuộc thi nhưng thiếu một người cố vấn, vừa giúp bạn định hướng rõ ràng?</p>
+          <p>Và đôi khi, bạn chỉ ước có một người đi trước giúp mình nhìn rõ con đường ngay từ đầu.</p>
+          <p>Mentor Me ra đời để trở thành cầu nối ấy - kết nối bạn với những Mentor giàu trải nghiệm, sẵn sàng lắng nghe, chia sẻ và đồng hành để bạn tự tin hơn trên hành trình của mình.</p>
+        </div>
+
+        <div class="about-right">
+          <div class="robot-wrap">
+            <img src="chat.svg" class="about-chat" alt="Chat bubble">
+            <img src="robot2.svg" class="about-robot" alt="Robot giới thiệu">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mentor">
+      <h2>ĐỘI NGŨ MENTOR</h2>
+
+      <div class="mentor-home-intro">
+        <p>
+          Khám phá các Mentor nổi bật của Mentor Me. 
+        </p>
+      </div>
+
+      <div class="mentor-wrapper mentor-home-wrapper">
+        <button type="button" class="prev mentor-home-prev" aria-label="Mentor trước">❮</button>
+
+        <div class="mentor-container mentor-home-container">
+          <div id="homeMentorTrack" class="mentor-track"></div>
+        </div>
+
+        <button type="button" class="next mentor-home-next" aria-label="Mentor tiếp theo">❯</button>
+      </div>
+
+      <div class="mentor-home-actions">
+        <a href="search.html" class="mentor-primary-btn">Tìm mentor phù hợp</a>
+      </div>
+    </section>
+
+    <section class="mentee">
+      <h2>MENTEE NGHĨ GÌ?</h2>
+
+      <div class="mentee-wrapper">
+        <button class="mentee-prev" type="button" aria-label="Mentee trước">❮</button>
+
+        <div class="mentee-container">
+          <div class="mentee-track">
+            <div class="mentee-slide">
+              <div class="mentee-card">
+                <img src="mentee1.jpg" alt="Vương Việt Anh">
+
+                <div class="mentee-content">
+                  <h3>VƯƠNG VIỆT ANH</h3>
+                  <h4>Mentor: Đỗ Thùy Trang</h4>
+
+                  <ul>
+                    <li>Phó Chủ nhiệm CLB ABC</li>
+                    <li>Top 10 cuộc thi XYZ</li>
+                  </ul>
+
+                  <p class="mentee-text">
+                    Mình đến với Mentor Me khi chưa có định hướng quá nhiều về tương lai, khi đến được sự hướng dẫn của chị Trang về việc tham gia hoạt động ngoại khóa khiến mình tự tin hơn rất nhiều.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mentee-slide">
+              <div class="mentee-card">
+                <img src="mentee2.jpg" alt="Nguyễn Minh Anh">
+
+                <div class="mentee-content">
+                  <h3>NGUYỄN MINH ANH</h3>
+                  <h4>Mentor: Khánh Đức</h4>
+
+                  <ul>
+                    <li>IELTS 7.5</li>
+                    <li>Học bổng du học</li>
+                  </ul>
+
+                  <p class="mentee-text">
+                    Mentor giúp mình nhìn rõ con đường học tập hơn và có chiến lược rõ ràng thay vì học mơ hồ như trước.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="mentee-next" type="button" aria-label="Mentee tiếp theo">❯</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h3>MENTOR ME</h3>
+        <p>Nền tảng kết nối mentor - mentee trong học tập và phát triển kĩ năng.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>LIÊN HỆ</h4>
+
+        <div class="contact-item">
+          <img src="email.png" alt="Email">
+          <span>mentorme.vn@gmail.com</span>
+        </div>
+
+        <div class="contact-item">
+          <img src="lienhe.png" alt="Điện thoại">
+          <span>(+84) 367 863 987</span>
+        </div>
+
+        <div class="contact-item">
+          <img src="diachi.png" alt="Địa chỉ">
+          <span>144 Xuân Thủy, Hà Nội</span>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <a href="mentor-apply.html" class="footer-btn">ĐĂNG KÝ LÀM MENTOR</a>
+
+        <div class="socials">
+          <a href="https://facebook.com/mentorme4.0" target="_blank" class="social-link">
+            <span>Facebook</span>
+          </a>
+          <a href="#">Instagram</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      © 2026 Mentor Me. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    const track2 = document.querySelector(".mentee-track");
+    const slides2 = document.querySelectorAll(".mentee-slide");
+    let index2 = 0;
+
+    document.querySelector(".mentee-next").onclick = () => {
+      if (index2 < slides2.length - 1) {
+        index2++;
+        track2.style.transform = `translateX(-${index2 * 100}%)`;
+      }
+    };
+
+    document.querySelector(".mentee-prev").onclick = () => {
+      if (index2 > 0) {
+        index2--;
+        track2.style.transform = `translateX(-${index2 * 100}%)`;
+      }
+    };
+  </script>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

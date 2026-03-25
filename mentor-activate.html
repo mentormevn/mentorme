@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kích hoạt tài khoản Mentor | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="mentor-activate-page">
+  <main class="auth-shell">
+    <section class="auth-hero auth-hero-register">
+      <div class="auth-brand">
+        <a href="index.html" class="logo">
+          <img src="logo.png" alt="Mentor Me logo">
+          <span>MENTOR ME</span>
+        </a>
+        <p class="auth-badge">Kích hoạt tài khoản mentor</p>
+      </div>
+
+      <div class="auth-hero-copy">
+        <h1>Chỉ mentor đã được duyệt mới có thể kích hoạt tài khoản.</h1>
+        <p>
+          Nếu bạn đã vượt qua vòng chọn lọc, hãy dùng email ứng tuyển và mã kích hoạt
+          do admin cung cấp để tạo tài khoản mentor.
+        </p>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-panel-header">
+        <h2>Kích hoạt mentor</h2>
+        <p>Hoàn tất bước này để đăng nhập vào dashboard mentor.</p>
+      </div>
+
+      <div id="mentorActivationMessage" class="auth-message" hidden></div>
+
+      <form id="mentorActivationForm" class="auth-form" novalidate>
+        <label class="auth-field">
+          <span>Họ và tên</span>
+          <input type="text" id="mentorActivationName" placeholder="Ví dụ: Nguyễn Minh Anh" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Email ứng tuyển</span>
+          <input type="email" id="mentorActivationEmail" placeholder="mentor@ gmail.com" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Mã kích hoạt</span>
+          <input type="text" id="mentorActivationCode" placeholder="Ví dụ: A1B2C3D4" required>
+        </label>
+
+        <label class="auth-field">
+          <span>Mật khẩu</span>
+          <div class="auth-password-field">
+            <input type="password" id="mentorActivationPassword" placeholder="Tối thiểu 8 ký tự" required>
+            <button type="button" class="password-toggle" data-toggle-password="mentorActivationPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
+            </button>
+          </div>
+        </label>
+
+        <label class="auth-field">
+          <span>Xác nhận mật khẩu</span>
+          <div class="auth-password-field">
+            <input type="password" id="mentorActivationConfirmPassword" placeholder="Nhập lại mật khẩu" required>
+            <button type="button" class="password-toggle" data-toggle-password="mentorActivationConfirmPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
+            </button>
+          </div>
+        </label>
+
+        <button type="submit" class="auth-submit-btn">Kích hoạt tài khoản mentor</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

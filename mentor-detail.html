@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết Mentor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="detail-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li class="active"><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="services.html">Dịch vụ</a></li>
+    </ul>
+
+    <div id="authArea">
+      <div class="auth-links">
+        <a href="login.html">Đăng nhập</a>
+        <a href="register.html" class="btn-register">Đăng ký</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="mentor-detail-page">
+    <section class="mentor-detail-card">
+      <div class="mentor-detail-sidebar">
+        <div class="mentor-detail-visual">
+          <img id="mentorDetailImage" src="mentor1.jpg" alt="Mentor">
+        </div>
+
+        <div class="mentor-detail-side-info">
+          <div class="mentor-meta-box">
+            <span>Nơi làm việc / học tập</span>
+            <strong id="mentorDetailWorkplace">Đang cập nhật</strong>
+          </div>
+          <div class="mentor-meta-box">
+            <span>Môn/kỹ năng</span>
+            <strong id="mentorDetailFocus">Đang cập nhật</strong>
+          </div>
+          <div class="mentor-meta-box">
+            <span>Thời gian rảnh</span>
+            <strong id="mentorDetailAvailability">Đang cập nhật</strong>
+          </div>
+          <div class="mentor-meta-box">
+            <span>Hình thức</span>
+            <strong id="mentorDetailService">Đang cập nhật</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="mentor-detail-content">
+        <a class="mentor-back-link" href="search.html">← Quay lại danh sách mentor</a>
+        <h1 id="mentorDetailName">Tên mentor</h1>
+        <p id="mentorDetailHeadline" class="mentor-detail-headline">Headline mentor</p>
+
+        <div class="mentor-detail-meta">
+          <div class="mentor-meta-box">
+            <span>Đánh giá</span>
+            <strong id="mentorDetailRating">0.0 / 5 sao</strong>
+          </div>
+          <div class="mentor-meta-box">
+            <span>Đã đồng hành</span>
+            <strong id="mentorDetailStudents">0 học sinh</strong>
+          </div>
+        </div>
+
+        <div class="mentor-detail-note">
+          Ho so duoi day la giao dien mo phong de ban bo sung thong tin mentor sau. Toan bo du lieu hien duoc render dong tu danh sach mentor gia lap.
+        </div>
+
+        <div class="mentor-detail-section">
+          <h2>Thành tích nổi bật</h2>
+          <ul id="mentorDetailAchievements"></ul>
+        </div>
+
+        <div class="mentor-detail-section">
+          <h2>Mentor phù hợp với</h2>
+          <p id="mentorDetailFit"></p>
+        </div>
+
+        <div class="mentor-detail-section">
+          <h2>Đánh giá từ mentee</h2>
+          <div id="mentorDetailReviews" class="mentor-review-list"></div>
+        </div>
+
+        <div class="mentor-detail-actions">
+          <a href="search.html" class="mentor-secondary-btn">Xem mentor khác</a>
+          <a id="mentorBookingLink" href="booking.html?id=tra-my" class="mentor-primary-btn">Đặt lịch với mentor</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>
