@@ -102,7 +102,21 @@ function clearMessage(elementId) {
 }
 
 function isSupabaseReady() {
-  return Boolean(supabaseClient);
+  return Boolean(supabaseClient && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
+}
+
+function ensureSupabaseReady(messageElementId) {
+  if (isSupabaseReady()) return true;
+
+  if (messageElementId) {
+    showMessage(
+      messageElementId,
+      "error",
+      "Cấu hình Supabase chưa sẵn sàng. Hãy kiểm tra lại SUPABASE_URL và SUPABASE_ANON_KEY trước khi sử dụng tính năng này."
+    );
+  }
+
+  return false;
 }
 
 async function getSupabaseSession() {
@@ -874,6 +888,7 @@ function redirectIfAuthenticated() {
 function initializeRegisterPage() {
   const registerForm = document.getElementById("registerForm");
   if (!registerForm) return;
+  if (!ensureSupabaseReady("registerMessage")) return;
 
   registerForm.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -965,6 +980,7 @@ function initializeRegisterPage() {
 function initializeLoginPage() {
   const loginForm = document.getElementById("loginForm");
   if (!loginForm) return;
+  if (!ensureSupabaseReady("loginMessage")) return;
 
   loginForm.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -1010,6 +1026,7 @@ function initializeLoginPage() {
 function initializeProfilePage() {
   const profileForm = document.getElementById("profileForm");
   if (!profileForm) return;
+  if (!ensureSupabaseReady("profileMessage")) return;
 
   const sessionUser = getCurrentUser();
   if (!sessionUser) {
@@ -1185,6 +1202,7 @@ function initializeProfilePage() {
 function initializeForgotPasswordPage() {
   const forgotPasswordForm = document.getElementById("forgotPasswordForm");
   if (!forgotPasswordForm) return;
+  if (!ensureSupabaseReady("forgotPasswordMessage")) return;
 
   forgotPasswordForm.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -1215,6 +1233,7 @@ function initializeForgotPasswordPage() {
 function initializeResetPasswordPage() {
   const resetPasswordForm = document.getElementById("resetPasswordForm");
   if (!resetPasswordForm) return;
+  if (!ensureSupabaseReady("resetPasswordMessage")) return;
 
   resetPasswordForm.addEventListener("submit", async function (e) {
     e.preventDefault();
