@@ -19,9 +19,9 @@
       </div>
 
       <div class="auth-hero-copy">
-        <h1>Bắt đầu hành trình học tập được cá nhân hóa cùng Mentor Me.</h1>
+        <h1>Bắt đầu hành trình cá nhân hóa cùng Mentor Me.</h1>
         <p>
-          Tạo tài khoản để lưu hồ sơ, nhận gợi ý mentor phù hợp, gửi yêu cầu đặt lịch và theo dõi các kết nối học tập của bạn trên cùng một nền tảng.
+          Tạo tài khoản để lưu hồ sơ, nhận gợi ý mentor phù hợp, gửi yêu cầu đặt lịch và theo dõi học tập của bạn trên cùng một nền tảng.
         </p>
 
         <div class="auth-highlight-list">
@@ -33,6 +33,11 @@
             <strong>Dễ quản lý</strong>
             <span>Cập nhật hồ sơ cá nhân, mục tiêu học tập và thông tin liên hệ trong vài bước.</span>
           </div>
+        </div>
+        <div class="auth-proof-strip">
+          <div><strong>Tối ưu</strong><span>Gợi ý mentor dựa trên nhu cầu và mục tiêu cá nhân của bạn</span></div>
+
+          <div><strong>Nhanh gọn</strong><span>Bắt đầu tìm mentor ngay sau khi tạo tài khoản</span></div>
         </div>
       </div>
     </section>
@@ -53,7 +58,7 @@
 
         <label class="auth-field">
           <span>Email</span>
-          <input type="email" id="registerEmail" placeholder="ban@email.com" autocomplete="email" required>
+          <input type="email" id="registerEmail" placeholder="ban@gmail.com" autocomplete="email" required>
         </label>
 
         <label class="auth-field">
@@ -67,12 +72,17 @@
         </label>
 
         <label class="auth-field">
+          <span>Loại tài khoản</span>
+          <select id="registerRole" required>
+            <option value="mentee">Mentee</option>
+          </select>
+        </label>
+
+        <label class="auth-field">
           <span>Mật khẩu</span>
           <div class="auth-password-field">
             <input type="password" id="registerPassword" placeholder="Tối thiểu 8 ký tự" autocomplete="new-password" required>
-            <button type="button" class="password-toggle" data-toggle-password="registerPassword" aria-label="Hiện hoặc ẩn mật khẩu">
-              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
-            </button>
+            <span class="password-toggle" role="button" tabindex="0" data-toggle-password="registerPassword" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</span>
           </div>
         </label>
 
@@ -80,9 +90,7 @@
           <span>Xác nhận mật khẩu</span>
           <div class="auth-password-field">
             <input type="password" id="registerConfirmPassword" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required>
-            <button type="button" class="password-toggle" data-toggle-password="registerConfirmPassword" aria-label="Hiện hoặc ẩn mật khẩu">
-              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
-            </button>
+            <span class="password-toggle" role="button" tabindex="0" data-toggle-password="registerConfirmPassword" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</span>
           </div>
         </label>
 
@@ -96,6 +104,7 @@
 
       <div class="auth-footer-note">
         <p>Đã có tài khoản? <a href="login.html">Đăng nhập ngay</a></p>
+        <p>Tài khoản mentor không đăng ký công khai. Nếu bạn muốn trở thành mentor, hãy <a href="mentor-apply.html">điền form ứng tuyển</a>.</p>
       </div>
     </section>
   </main>

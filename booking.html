@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="booking-flow-page">
   <div class="navbar">
     <a href="index.html" class="logo">
       <img src="logo.png" alt="Mentor Me logo">
@@ -17,7 +17,8 @@
     <ul class="menu">
       <li><a href="index.html">Trang chủ</a></li>
       <li class="active"><a href="search.html">Tìm kiếm Mentor</a></li>
-      <li><a href="#">Dịch vụ</a></li>
+      <li><a href="services.html">Dịch vụ</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
     </ul>
 
     <div id="authArea">
@@ -34,7 +35,6 @@
         <p class="booking-tag">Mentor bạn đã chọn</p>
         <img id="bookingMentorImage" src="mentor1.jpg" alt="Mentor">
         <h1 id="bookingMentorName">Tên mentor</h1>
-        <p id="bookingMentorRole">Chuyên môn mentor</p>
         <div class="booking-mentor-meta">
           <p><strong>Môn/kỹ năng:</strong> <span id="bookingMentorFocus"></span></p>
           <p><strong>Thời gian rảnh:</strong> <span id="bookingMentorAvailability"></span></p>
@@ -56,7 +56,7 @@
 
           <label>
             <span>Email</span>
-            <input type="email" id="bookingEmail" placeholder="ban@email.com" required>
+            <input type="email" id="bookingEmail" placeholder="ban@gmail.com" required>
           </label>
 
           <label>
@@ -71,6 +71,7 @@
               <option value="Buổi sáng">Buổi sáng</option>
               <option value="Buổi chiều">Buổi chiều</option>
               <option value="Buổi tối">Buổi tối</option>
+              <option value="Tối thứ 4">Tối thứ 4</option>
               <option value="Cuối tuần">Cuối tuần</option>
             </select>
           </label>

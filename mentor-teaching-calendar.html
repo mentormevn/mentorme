@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch dạy | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="mentor-dashboard-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
+      <li><a href="mentor-accepted.html">Mentee đã nhận</a></li>
+      <li class="active"><a href="mentor-teaching-calendar.html">Lịch dạy</a></li>
+      <li><a href="mentor-requests.html">Mentee muốn đăng ký</a></li>
+    </ul>
+
+    <div id="authArea"></div>
+  </div>
+
+  <main class="schedule-shell">
+    <section class="schedule-hero-card">
+      <h1>Lịch dạy theo calendar</h1>
+      <p id="mentorCalendarScopeNote">Các buổi mentor đã nhận sẽ được đưa vào lịch để bạn nhìn nhanh theo ngày. Bấm vào event để mở chi tiết.</p>
+    </section>
+
+    <section id="mentorCalendarSummary" class="schedule-summary-grid"></section>
+    <section class="mentor-calendar-card">
+      <div class="mentor-calendar-toolbar">
+        <button id="mentorCalendarPrevBtn" type="button" class="mentor-calendar-nav-btn">Tháng trước</button>
+        <div id="mentorCalendarMonthLabel" class="mentor-calendar-month"></div>
+        <button id="mentorCalendarNextBtn" type="button" class="mentor-calendar-nav-btn">Tháng sau</button>
+      </div>
+      <div class="mentor-calendar-weekdays">
+        <span>Thứ 2</span>
+        <span>Thứ 3</span>
+        <span>Thứ 4</span>
+        <span>Thứ 5</span>
+        <span>Thứ 6</span>
+        <span>Thứ 7</span>
+        <span>CN</span>
+      </div>
+      <div id="mentorTeachingCalendarGrid" class="mentor-calendar-grid"></div>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

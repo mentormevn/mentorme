@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết lịch dạy | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="mentor-dashboard-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
+      <li><a href="mentor-accepted.html">Mentee đã nhận</a></li>
+      <li><a href="mentor-teaching-calendar.html">Lịch dạy</a></li>
+      <li><a href="mentor-requests.html">Mentee muốn đăng ký</a></li>
+    </ul>
+
+    <div id="authArea"></div>
+  </div>
+
+  <main class="schedule-shell">
+    <section class="schedule-hero-card">
+      <h1>Chi tiết buổi dạy</h1>
+      <p id="mentorBookingDetailScopeNote">Xem nhanh thông tin mentee, buổi học và hồ sơ mentor liên quan đến yêu cầu đã nhận.</p>
+    </section>
+
+    <section id="mentorBookingDetailContent" class="mentor-booking-detail-grid"></section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="search-page">
   <div class="navbar">
     <a href="index.html" class="logo">
       <img src="logo.png" alt="Mentor Me logo">
@@ -17,7 +17,8 @@
     <ul class="menu">
       <li><a href="index.html">Trang chủ</a></li>
       <li class="active"><a href="search.html">Tìm kiếm Mentor</a></li>
-      <li><a href="#">Dịch vụ</a></li>
+      <li><a href="services.html">Dịch vụ</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
     </ul>
 
     <div id="authArea">
@@ -47,11 +48,13 @@
         <p class="search-sub">
           (Hãy điền mục tiêu môn học/cuộc thi và thời gian rảnh mà bạn mong muốn tìm Mentor, TIGI sẽ giúp bạn!)
         </p>
+        </div>
       </div>
     </div>
 
     <div class="filter-box">
       <h2>Tìm kiếm</h2>
+      <p class="filter-box-text">Nếu bạn không muốn gõ, hãy lọc nhanh ở phần tìm kiếm.</p>
 
       <div class="filters">
         <label class="filter-select">
@@ -85,8 +88,8 @@
             <option value="">Chọn dịch vụ</option>
             <option value="1-1">Mentor 1 kèm 1</option>
             <option value="group">Mentor theo nhóm</option>
-            <option value="roadmap">Tư vấn lộ trình</option>
-            <option value="competition">Luyện thi/cuộc thi</option>
+            <option value="roadmap">Định hướng</option>
+            <option value="competition">Luyện thi/ cuộc thi</option>
           </select>
         </label>
       </div>
@@ -101,6 +104,7 @@
     </div>
 
     <div id="mentorGrid" class="mentor-grid"></div>
+    <div id="mentorPagination" class="mentor-pagination" hidden></div>
   </section>
 
   <script src="public-config.js"></script>

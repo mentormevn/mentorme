@@ -19,9 +19,9 @@
       </div>
 
       <div class="auth-hero-copy">
-        <h1>Kết nối lại với mentor phù hợp cho hành trình của bạn.</h1>
+        <h1>Chào mừng bạn đã quay trở lại!</h1>
         <p>
-          Đăng nhập để tiếp tục theo dõi lộ trình học, xem mentor đã lưu, gửi yêu cầu đặt lịch và quản lý hồ sơ cá nhân một cách tập trung.
+          Đăng nhập để tiếp tục theo dõi lộ trình học, gửi yêu cầu đặt lịch và quản lý hồ sơ cá nhân.
         </p>
 
         <div class="auth-highlight-list">
@@ -33,6 +33,23 @@
             <strong>Bảo mật</strong>
             <span>Dữ liệu hồ sơ được quản lý tập trung trong cùng một luồng đăng ký, đăng nhập và cập nhật.</span>
           </div>
+        </div>
+        <div class="auth-proof-strip">
+          <div><strong>Cá nhân hóa</strong><span>Lưu mục tiêu và hồ sơ học tập</span></div>
+          <div><strong>Trực quan</strong><span>Tìm mentor nhanh chóng trên một giao diện thân thiện</span></div>
+        </div>
+
+        <div class="auth-role-strip">
+          <article class="auth-role-card">
+            <span>Mentee</span>
+            <strong>Tự đăng ký và dùng ngay</strong>
+            <p>Dành cho người học tìm mentor, đặt lịch và nhận tư vấn.</p>
+          </article>
+          <article class="auth-role-card">
+            <span>Mentor</span>
+            <strong>Kích hoạt rồi đăng nhập như tài khoản thường</strong>
+            <p>Mentor dùng email ứng tuyển, nhập mã kích hoạt một lần, rồi đăng nhập bằng email và mật khẩu đã tạo.</p>
+          </article>
         </div>
       </div>
     </section>
@@ -48,16 +65,14 @@
       <form id="loginForm" class="auth-form auth-form-single" novalidate>
         <label class="auth-field">
           <span>Email đăng nhập</span>
-          <input type="email" id="loginIdentifier" placeholder="Ví dụ: ban@email.com" autocomplete="username" required>
+          <input type="email" id="loginIdentifier" placeholder="Ví dụ: ban@gmail.com" autocomplete="username" required>
         </label>
 
         <label class="auth-field">
           <span>Mật khẩu</span>
           <div class="auth-password-field">
             <input type="password" id="loginPassword" placeholder="Nhập mật khẩu của bạn" autocomplete="current-password" required>
-            <button type="button" class="password-toggle" data-toggle-password="loginPassword" aria-label="Hiện hoặc ẩn mật khẩu">
-              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
-            </button>
+            <span class="password-toggle" role="button" tabindex="0" data-toggle-password="loginPassword" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</span>
           </div>
         </label>
 
@@ -74,6 +89,7 @@
 
       <div class="auth-footer-note">
         <p>Bạn chưa có tài khoản? <a href="register.html">Tạo tài khoản mới</a></p>
+        <p>Muốn trở thành mentor? <a href="mentor-apply.html">Gửi hồ sơ ứng tuyển</a> hoặc <a href="mentor-activate.html">kích hoạt tài khoản đã được cấp</a>.</p>
       </div>
     </section>
   </main>
