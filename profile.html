@@ -18,6 +18,7 @@
       <li><a href="index.html">Trang chủ</a></li>
       <li><a href="search.html">Tìm kiếm Mentor</a></li>
       <li><a href="services.html">Dịch vụ</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
     </ul>
 
     <div id="authArea">
@@ -97,7 +98,7 @@
             <select id="profileRoleInput" disabled>
               <option value="mentee">Mentee</option>
               <option value="mentor">Mentor</option>
-              <option value="admin">Admin</option>
+              <option value="admin">Nội bộ</option>
             </select>
             <small id="profileRoleHint" class="profile-field-hint">Vai trò tài khoản được cấp theo từng luồng riêng.</small>
           </label>
@@ -130,9 +131,7 @@
             <span>Mật khẩu hiện tại</span>
             <div class="auth-password-field">
               <input type="password" id="currentPasswordInput" placeholder="Nhập mật khẩu hiện tại" required>
-              <button type="button" class="password-toggle" data-toggle-password="currentPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">
-                <img src="images/eye-close.png" alt="Ẩn mật khẩu">
-              </button>
+              <span class="password-toggle" role="button" tabindex="0" data-toggle-password="currentPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</span>
             </div>
           </label>
 
@@ -140,9 +139,7 @@
             <span>Mật khẩu mới</span>
             <div class="auth-password-field">
               <input type="password" id="newPasswordInput" placeholder="Tối thiểu 8 ký tự" required>
-              <button type="button" class="password-toggle" data-toggle-password="newPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">
-                <img src="images/eye-close.png" alt="Ẩn mật khẩu">
-              </button>
+              <span class="password-toggle" role="button" tabindex="0" data-toggle-password="newPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</span>
             </div>
           </label>
 
@@ -150,9 +147,7 @@
             <span>Xác nhận mật khẩu mới</span>
             <div class="auth-password-field">
               <input type="password" id="confirmNewPasswordInput" placeholder="Nhập lại mật khẩu mới" required>
-              <button type="button" class="password-toggle" data-toggle-password="confirmNewPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">
-                <img src="images/eye-close.png" alt="Ẩn mật khẩu">
-              </button>
+              <span class="password-toggle" role="button" tabindex="0" data-toggle-password="confirmNewPasswordInput" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</span>
             </div>
           </label>
 

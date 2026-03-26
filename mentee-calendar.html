@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lịch học của tôi | Mentor Me</title>
+  <title>Calendar học | Mentor Me</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -26,23 +26,21 @@
 
   <main class="schedule-shell">
     <section class="schedule-hero-card">
-      <h1>Theo dõi các yêu cầu đã gửi và những buổi học đang chờ mentor phản hồi.</h1>
-      <p>Toàn bộ booking bạn đã tạo sẽ được gom lại ở đây để tiện xem trạng thái, mentor đã nhận hay chưa, và khung giờ đã đăng ký.</p>
+      <h1>Theo dõi lịch học của bạn theo từng tháng.</h1>
+      <p>Trang này gom các buổi đã được mentor nhận vào dạng calendar riêng để bạn nhìn nhanh hơn và chủ động sắp xếp thời gian học.</p>
     </section>
 
-    <section id="menteeScheduleSummary" class="schedule-summary-grid"></section>
-
-    <section id="menteeScheduleList" class="schedule-list"></section>
+    <section id="menteeCalendarSummary" class="schedule-summary-grid"></section>
 
     <section class="mentor-calendar-card">
       <div class="schedule-panel-head">
-        <h2>Lịch học theo calendar</h2>
-        <p>Các buổi đã được mentor nhận sẽ xuất hiện ở đây để bạn theo dõi theo ngày.</p>
+        <h2>Calendar học của mentee</h2>
+        <p>Bấm chuyển tháng để xem trước các buổi học ở những tháng tiếp theo.</p>
       </div>
       <div class="mentor-calendar-toolbar">
-        <button id="menteeCalendarPrevBtn" type="button" class="mentor-calendar-nav-btn">Tháng trước</button>
-        <div id="menteeCalendarMonthLabel" class="mentor-calendar-month"></div>
-        <button id="menteeCalendarNextBtn" type="button" class="mentor-calendar-nav-btn">Tháng sau</button>
+        <button id="menteeCalendarOnlyPrevBtn" type="button" class="mentor-calendar-nav-btn">Tháng trước</button>
+        <div id="menteeCalendarOnlyMonthLabel" class="mentor-calendar-month"></div>
+        <button id="menteeCalendarOnlyNextBtn" type="button" class="mentor-calendar-nav-btn">Tháng sau</button>
       </div>
       <div class="mentor-calendar-weekdays">
         <span>Thứ 2</span>
@@ -53,7 +51,7 @@
         <span>Thứ 7</span>
         <span>CN</span>
       </div>
-      <div id="menteeScheduleCalendarGrid" class="mentor-calendar-grid"></div>
+      <div id="menteeCalendarOnlyGrid" class="mentor-calendar-grid"></div>
     </section>
   </main>
 

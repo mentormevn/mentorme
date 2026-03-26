@@ -17,7 +17,9 @@
     <ul class="menu">
       <li><a href="index.html">Trang chủ</a></li>
       <li><a href="search.html">Tìm kiếm Mentor</a></li>
-      <li class="active"><a href="mentor-mentees.html">Mentee đã nhận & lịch dạy</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
+      <li><a href="mentor-accepted.html">Mentee đã nhận</a></li>
+      <li class="active"><a href="mentor-teaching-calendar.html">Lịch dạy</a></li>
       <li><a href="mentor-requests.html">Mentee muốn đăng ký</a></li>
     </ul>
 
@@ -32,7 +34,11 @@
 
     <section id="mentorCalendarSummary" class="schedule-summary-grid"></section>
     <section class="mentor-calendar-card">
-      <div id="mentorCalendarMonthLabel" class="mentor-calendar-month"></div>
+      <div class="mentor-calendar-toolbar">
+        <button id="mentorCalendarPrevBtn" type="button" class="mentor-calendar-nav-btn">Tháng trước</button>
+        <div id="mentorCalendarMonthLabel" class="mentor-calendar-month"></div>
+        <button id="mentorCalendarNextBtn" type="button" class="mentor-calendar-nav-btn">Tháng sau</button>
+      </div>
       <div class="mentor-calendar-weekdays">
         <span>Thứ 2</span>
         <span>Thứ 3</span>

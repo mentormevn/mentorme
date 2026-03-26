@@ -2425,18 +2425,18 @@ a{
 
 .password-toggle{
   position:absolute;
-  right:14px;
+  right:12px;
   top:50%;
   transform:translateY(-50%);
+  cursor:pointer;
+  padding:0;
   border:none;
   background:transparent;
-  cursor:pointer;
-  padding:4px;
-}
-
-.password-toggle img{
-  width:20px;
-  height:20px;
+  color:var(--brand);
+  font-size:13px;
+  font-weight:800;
+  line-height:1;
+  text-decoration:underline;
 }
 
 .auth-form-row{
@@ -2460,6 +2460,27 @@ a{
   width:18px;
   height:18px;
   margin-top:2px;
+  accent-color:#1b4fa3;
+}
+
+.auth-field-checkboxes{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+  gap:10px 14px;
+  margin-top:10px;
+}
+
+.auth-field-checkboxes label{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#536a8d;
+  font-size:14px;
+}
+
+.auth-field-checkboxes input{
+  width:18px;
+  height:18px;
   accent-color:#1b4fa3;
 }
 
@@ -4062,6 +4083,25 @@ body{
   box-shadow:var(--shadow-lg);
 }
 
+.schedule-page .schedule-hero-card,
+.schedule-page .schedule-panel,
+.schedule-page .schedule-card,
+.schedule-page .schedule-summary-card,
+.schedule-page .mentor-calendar-card,
+.schedule-page .mentor-booking-detail-card{
+  border-color:rgba(129, 184, 255, 0.95);
+}
+
+.schedule-page .mentor-calendar-nav-btn,
+.schedule-page .mentor-calendar-event{
+  background:#eaf3ff;
+}
+
+.schedule-page .mentor-calendar-cell.is-today{
+  border-color:rgba(27,79,163,0.4);
+  box-shadow:inset 0 0 0 1px rgba(27,79,163,0.18);
+}
+
 .schedule-hero-card{
   padding:30px;
   border-radius:30px;
@@ -4344,12 +4384,73 @@ body{
   box-shadow:var(--shadow-lg);
 }
 
+.mentor-dashboard-page .schedule-hero-card,
+.mentor-dashboard-page .schedule-panel,
+.mentor-dashboard-page .schedule-card,
+.mentor-dashboard-page .schedule-summary-card,
+.mentor-dashboard-page .mentor-calendar-card,
+.mentor-dashboard-page .mentor-booking-detail-card,
+.mentor-dashboard-page .mentor-workspace-card{
+  border-color:rgba(235, 145, 145, 0.92);
+}
+
+.mentor-dashboard-page .mentor-calendar-nav-btn{
+  background:#fff0f0;
+  color:#b23939;
+}
+
+.mentor-dashboard-page .mentor-calendar-nav-btn:hover{
+  background:#ffe2e2;
+}
+
+.mentor-dashboard-page .mentor-calendar-event{
+  background:#fff1f1;
+}
+
+.mentor-dashboard-page .mentor-calendar-event strong{
+  color:#9e2f2f;
+}
+
+.mentor-dashboard-page .mentor-calendar-event span{
+  color:#b16464;
+}
+
+.mentor-dashboard-page .mentor-calendar-cell.is-today{
+  border-color:rgba(178,57,57,0.38);
+  box-shadow:inset 0 0 0 1px rgba(178,57,57,0.16);
+}
+
 .mentor-calendar-month{
-  margin-bottom:18px;
   color:var(--brand);
   font-size:30px;
   font-weight:800;
   text-transform:capitalize;
+}
+
+.mentor-calendar-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:18px;
+}
+
+.mentor-calendar-nav-btn{
+  border:none;
+  border-radius:999px;
+  padding:12px 18px;
+  background:#eaf3ff;
+  color:var(--brand);
+  font:inherit;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.mentor-calendar-nav-btn:hover{
+  transform:translateY(-1px);
+  background:#dbeaff;
 }
 
 .mentor-calendar-weekdays{
@@ -4441,6 +4542,17 @@ body{
   margin-bottom:16px;
   color:var(--brand);
   font-size:34px;
+}
+
+@media (max-width: 900px){
+  .mentor-calendar-toolbar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .mentor-calendar-month{
+    text-align:center;
+  }
 }
 
 .mentor-apply-shell{

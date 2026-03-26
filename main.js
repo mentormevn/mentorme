@@ -28,11 +28,13 @@ const BOOKING_REQUESTS_STORAGE_KEY = "mentorBookingRequests";
 const APPROVED_MENTOR_PROFILE_STORAGE_KEY = "approvedMentorProfiles";
 const PENDING_MENTOR_UPDATE_STORAGE_KEY = "pendingMentorProfileUpdates";
 const MENTOR_REVIEW_STORAGE_KEY = "mentorSubmittedReviews";
+const REVIEW_MIGRATION_STORAGE_KEY = "mentorReviewMigrationVersion";
 const DEMO_ADMIN_ACCESS_CODE = "ADMIN2026";
-const DEMO_MENTOR_ACCESS_CODE = "mentor0001";
 const DEMO_MENTEE_EMAIL = "dothuytrang2k7@gmail.com";
 const DEMO_MENTEE_PASSWORD = "trang2007";
 const SEARCH_PAGE_SIZE = 12;
+const REAL_MENTOR_DATA_VERSION = "2026-03-26-real-v2";
+const REVIEW_CLEANUP_VERSION = "2026-03-26-clear-trang-dung";
 let currentSearchPage = 1;
 const appConfig = browserWindow.MENTOR_ME_CONFIG || {};
 const SUPABASE_URL = appConfig.SUPABASE_URL || "";
@@ -75,7 +77,7 @@ function normalizeRole(role) {
 
 function formatRoleLabel(role) {
   if (role === "mentor") return "Mentor";
-  if (role === "admin") return "Admin";
+  if (role === "admin") return "Nội bộ";
   return "Mentee";
 }
 
@@ -92,10 +94,16 @@ function getRoleSchedulePath(role) {
   return "mentee-schedule.html";
 }
 
+function getRoleCalendarPath(role) {
+  const normalizedRole = normalizeRole(role);
+  if (normalizedRole === "mentor" || normalizedRole === "admin") return "mentor-teaching-calendar.html";
+  return "mentee-calendar.html";
+}
+
 function getRoleGoalLabel(role) {
   const normalizedRole = normalizeRole(role);
   if (normalizedRole === "mentor") return "Định hướng mentoring";
-  if (normalizedRole === "admin") return "Phạm vi quản trị";
+  if (normalizedRole === "admin") return "Phạm vi nội bộ";
   return "Mục tiêu học tập";
 }
 
@@ -106,7 +114,7 @@ function getRoleGoalPlaceholder(role) {
   }
 
   if (normalizedRole === "admin") {
-    return "Ví dụ: Quản lý lead tư vấn, duyệt mentor và theo dõi vận hành hằng ngày";
+    return "Ví dụ: Theo dõi vận hành nội bộ, kiểm duyệt hồ sơ và xử lý các yêu cầu hệ thống";
   }
 
   return "Ví dụ: Muốn cải thiện speaking và tìm mentor buổi tối";
@@ -119,7 +127,7 @@ function getRoleBioPlaceholder(role) {
   }
 
   if (normalizedRole === "admin") {
-    return "Chia sẻ ngắn về phạm vi quản trị, vai trò vận hành hoặc các đầu việc bạn đang phụ trách.";
+    return "Chia sẻ ngắn về vai trò nội bộ hoặc phạm vi phụ trách của tài khoản này.";
   }
 
   return "Chia sẻ ngắn về nhu cầu học tập, điểm mạnh hoặc điều bạn đang cần hỗ trợ.";
@@ -132,6 +140,59 @@ function slugifyText(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function buildMentorAvailabilityText(availability) {
+  const labels = {
+    sang: "Buổi sáng",
+    chieu: "Buổi chiều",
+    toi: "Buổi tối",
+    "cuoi-tuan": "Cuối tuần"
+  };
+  const list = (availability || []).map(function (item) {
+    return labels[item];
+  }).filter(Boolean);
+  return list.length ? list.join(", ") : "Linh hoạt theo lịch hẹn";
+}
+
+function buildMentorServiceText(services) {
+  const labels = {
+    "1-1": "Mentor 1 kèm 1",
+    group: "mentor theo nhóm",
+    roadmap: "tư vấn lộ trình",
+    competition: "luyện thi/cuộc thi"
+  };
+  const list = (services || []).map(function (item) {
+    return labels[item];
+  }).filter(Boolean);
+  return list.length ? list.join(", ") : "Mentor 1 kèm 1";
+}
+
+function buildMentorSearchableText(mentor) {
+  return [
+    mentor.name,
+    mentor.tag,
+    mentor.role,
+    mentor.bio,
+    mentor.focus,
+    mentor.fit,
+    mentor.workplace
+  ]
+    .map(slugifyText)
+    .filter(Boolean)
+    .join(" ");
+}
+
+function buildUniqueMentorId(name) {
+  const baseId = slugifyText(name) || "mentor";
+  const approvedStore = getApprovedMentorProfiles();
+  const existingIds = new Set(Object.keys(mentorData).concat(Object.keys(approvedStore)));
+  if (!existingIds.has(baseId)) return baseId;
+  let index = 2;
+  while (existingIds.has(baseId + "-" + index)) {
+    index += 1;
+  }
+  return baseId + "-" + index;
 }
 
 function getMentorContextForUser(user) {
@@ -197,22 +258,6 @@ function createDemoSessionUser(accessCode) {
       bio: "Tài khoản admin dùng để kiểm thử luồng quản trị nội bộ.",
       role: "admin",
       avatar: createAvatarFallback("Admin Mentor Me"),
-      createdAt: new Date().toISOString(),
-      isDemoAccount: true
-    };
-  }
-
-  if (accessCode === DEMO_MENTOR_ACCESS_CODE) {
-    const mentor = mentorData["tien-dung"];
-    return {
-      id: "demo-mentor-nguyen-tien-dung",
-      name: mentor ? mentor.name : "Nguyễn Tiến Dũng",
-      email: "nguyen.tiendung@mentorme.local",
-      phone: "",
-      goal: "Hoàn thiện hồ sơ mentor và nhận mentee phù hợp",
-      bio: mentor ? mentor.role : "Tài khoản mentor giả lập dành cho Nguyễn Tiến Dũng.",
-      role: "mentor",
-      avatar: mentor ? mentor.image : createAvatarFallback("Nguyễn Tiến Dũng"),
       createdAt: new Date().toISOString(),
       isDemoAccount: true
     };
@@ -320,6 +365,20 @@ function saveSubmittedReview(review) {
   saveMentorSubmittedReviews(nextReviews);
 }
 
+function syncSubmittedReviewsWithCurrentData() {
+  const savedVersion = localStorage.getItem(REVIEW_MIGRATION_STORAGE_KEY);
+  if (savedVersion === REVIEW_CLEANUP_VERSION) {
+    return;
+  }
+
+  const cleanedReviews = getMentorSubmittedReviews().filter(function (review) {
+    return !["tien-dung", "thuy-trang"].includes(review.mentorId);
+  });
+
+  saveMentorSubmittedReviews(cleanedReviews);
+  localStorage.setItem(REVIEW_MIGRATION_STORAGE_KEY, REVIEW_CLEANUP_VERSION);
+}
+
 function addBookingRequest(request) {
   const requests = getBookingRequests();
   requests.unshift(request);
@@ -382,6 +441,35 @@ function getApprovedMentorProfiles() {
 
 function saveApprovedMentorProfiles(store) {
   localStorage.setItem(APPROVED_MENTOR_PROFILE_STORAGE_KEY, JSON.stringify(store));
+}
+
+function syncApprovedMentorProfilesWithRealData() {
+  const store = getApprovedMentorProfiles();
+  let changed = false;
+
+  Object.keys(store).forEach(function (mentorId) {
+    const profile = store[mentorId] || {};
+    if (!mentorData[mentorId] && profile._origin !== "admin") {
+      delete store[mentorId];
+      changed = true;
+    }
+  });
+
+  Object.keys(mentorData).forEach(function (mentorId) {
+    const currentProfile = store[mentorId] || {};
+    if (currentProfile._seedVersion === REAL_MENTOR_DATA_VERSION) {
+      return;
+    }
+
+    store[mentorId] = Object.assign({}, mentorData[mentorId], {
+      _seedVersion: REAL_MENTOR_DATA_VERSION
+    });
+    changed = true;
+  });
+
+  if (changed) {
+    saveApprovedMentorProfiles(store);
+  }
 }
 
 function getPendingMentorProfileUpdates() {
@@ -459,6 +547,13 @@ function clearMessage(elementId) {
 
 function normalizeWhitespace(value) {
   return String(value || "").trim();
+}
+
+function collectCheckedValues(form, name) {
+  return Array.from(form.querySelectorAll('input[name="' + name + '"]:checked'))
+    .map(function (input) {
+      return input.value;
+    });
 }
 
 function escapeHtml(value) {
@@ -578,20 +673,24 @@ async function loadCurrentUserFromSupabase() {
 function togglePasswordVisibility(button) {
   const targetId = button.getAttribute("data-toggle-password");
   const input = document.getElementById(targetId);
-  const image = button.querySelector("img");
 
-  if (!input || !image) return;
+  if (!input) return;
 
   const isPassword = input.type === "password";
   input.type = isPassword ? "text" : "password";
-  image.src = isPassword ? "images/eye-open.png" : "images/eye-close.png";
-  image.alt = isPassword ? "Hiện mật khẩu" : "Ẩn mật khẩu";
+  button.textContent = isPassword ? "Ẩn" : "Hiện";
 }
 
 function initializePasswordToggles() {
   document.querySelectorAll(".password-toggle").forEach(function (button) {
     button.addEventListener("click", function () {
       togglePasswordVisibility(button);
+    });
+    button.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        togglePasswordVisibility(button);
+      }
     });
   });
 }
@@ -609,16 +708,39 @@ function renderAuthArea(user) {
     return;
   }
 
+  const normalizedRole = normalizeRole(user.role);
+  let dropdownLinks = "";
+
+  if (normalizedRole === "mentor") {
+    dropdownLinks = `
+      <a href="profile.html">Hồ sơ tài khoản</a>
+      <a href="mentor-dashboard.html">Hồ sơ mentor</a>
+      <a href="mentee-schedule.html">Lịch học</a>
+      <a href="mentor-accepted.html">Mentee đã nhận</a>
+      <a href="mentor-teaching-calendar.html">Lịch dạy</a>
+      <a href="mentor-requests.html">Mentee muốn đăng ký</a>
+    `;
+  } else if (normalizedRole === "admin") {
+    dropdownLinks = `
+      <a href="profile.html">Hồ sơ nội bộ</a>
+      <a href="admin-consultations.html">Quản trị nội bộ</a>
+      <a href="mentor-dashboard.html">Hồ sơ mentor</a>
+      <a href="mentor-teaching-calendar.html">Lịch dạy</a>
+    `;
+  } else {
+    dropdownLinks = `
+      <a href="profile.html">Hồ sơ mentee</a>
+      <a href="mentee-schedule.html">Lịch học</a>
+    `;
+  }
+
   authArea.innerHTML = `
     <div class="user-menu">
       <img src="${user.avatar || createAvatarFallback(user.name)}" class="avatar">
       <span>${user.name}</span>
 
       <div class="dropdown">
-        <a href="profile.html">${normalizeRole(user.role) === "mentee" ? "Hồ sơ mentee" : "Hồ sơ tài khoản"}</a>
-        ${["mentor", "admin"].includes(normalizeRole(user.role)) ? '<a href="mentor-dashboard.html">Hồ sơ mentor</a>' : ""}
-        ${normalizeRole(user.role) === "admin" ? '<a href="admin-consultations.html">Dashboard admin</a>' : ""}
-        <a href="${getRoleSchedulePath(user.role)}">${normalizeRole(user.role) === "mentee" ? "Lịch học" : "Mentee & lịch dạy"}</a>
+        ${dropdownLinks}
         <a href="#" id="logoutBtn">Đăng xuất</a>
       </div>
     </div>
@@ -711,266 +833,88 @@ const mentorData = {
     id: "tra-my",
     name: "BÙI VŨ TRÀ MY",
     image: "mentorbuivutramy.jpg",
-    workplace: "Sinh viên ngành Ngôn ngữ Trung, cộng tác viên hỗ trợ học tập ngoại ngữ",
-    tag: "Mentor tiếng Trung",
-    role: "Đồng hành luyện thi HSK và xây dựng lộ trình học tiếng Trung",
-    focus: "Tiếng Trung, HSK, kỹ năng tự học",
+    workplace: "Konkuk University - Top 12 Đại học Hàn Quốc",
+    tag: "Mentor ngoại ngữ và định hướng",
+    role: "Mentor tiếng Trung, ngoại ngữ, định hướng nghề nghiệp và kỹ năng mềm",
+    bio: "Bùi Vũ Trà My là du học sinh tại Hàn Quốc, có nền tảng hoạt động ngoại khóa mạnh và phù hợp với mentee cần đồng hành ở mảng ngoại ngữ, định hướng và kỹ năng mềm.",
+    focus: "Tiếng Trung, ngoại ngữ, định hướng nghề nghiệp, kỹ năng mềm",
     field: "trung",
-    availability: ["toi", "cuoi-tuan"],
-    availabilityText: "Buổi tối và cuối tuần",
-    service: ["1-1", "roadmap", "competition"],
-    serviceText: "Mentor 1 kèm 1, tư vấn lộ trình, luyện thi",
+    availability: ["sang", "chieu", "toi", "cuoi-tuan"],
+    availabilityText: "Linh hoạt theo lịch hẹn",
+    service: ["1-1", "group", "roadmap"],
+    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn lộ trình",
     achievements: [
-      "Đạt HSK 5 và có kinh nghiệm hướng dẫn học sinh ôn thi.",
-      "Hỗ trợ xây dựng lộ trình học theo mục tiêu từng giai đoạn.",
-      "Đồng hành cùng học sinh để giữ kỷ luật học tập."
+      "Đang là du học sinh Viện tiếng, Đại học Konkuk tại Hàn Quốc.",
+      "Phó Chủ nhiệm CLB Định hướng và Phát triển Khởi nghiệp Thành phố Cẩm Phả nhiệm kỳ 2024.",
+      "Đồng Trưởng ban tổ chức sự kiện gây quỹ thiện nguyện \"Mầm\" 2024 và tham gia nhiều dự án truyền thông, hướng nghiệp tại Quảng Ninh.",
+      "Hoàn thành các khóa đào tạo và chứng nhận chuyên môn từ WHO cùng khóa đào tạo giáo viên tiếng Trung ngắn hạn."
     ],
-    fit: "Học sinh muốn học tiếng Trung bài bản, luyện thi chứng chỉ hoặc cần người kèm cặp sát sao.",
-    searchableText: "tieng trung hsk luyen thi chung chi 1 kem 1 buoi toi cuoi tuan roadmap mentor nhe nhang theo sat mat goc"
+    fit: "Phù hợp với học sinh, sinh viên cần đồng hành về ngoại ngữ, định hướng nghề nghiệp, hoạt động ngoại khóa hoặc muốn học cùng một mentor giàu trải nghiệm thực tế.",
+    searchableText: "tra my tieng trung ngoai ngu hsk du hoc han quoc dinh huong nghe nghiep ky nang mem hoat dong ngoai khoa truyen thong huong nghiep"
   },
   "tien-dung": {
     id: "tien-dung",
     name: "NGUYỄN TIẾN DŨNG",
     image: "mentor2.jpg",
-    workplace: "Phụ trách nội dung HS14, mentor kỹ năng học đường và xây dựng hồ sơ",
-    tag: "Mentor học tập và định hướng",
-    role: "Thế mạnh về thuyết trình, hoạt động học đường và xây dựng hồ sơ",
-    bio: "Tiến Dũng đồng hành tốt với các bạn cần mentor giao tiếp tốt, hỗ trợ thuyết trình, hoạt động CLB hoặc định hướng hồ sơ cá nhân.",
-    focus: "Thuyết trình, hoạt động học đường, định hướng hồ sơ",
-    field: "ky-nang",
-    availability: ["chieu", "toi"],
-    availabilityText: "Buổi chiều và buổi tối",
-    service: ["1-1", "group", "roadmap"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn định hướng",
-    achievements: [
-      "Giải Nhất thuyết trình Ngày hội Văn hóa Đọc năm học 2024 - 2025.",
-      "Giải Nhì cuộc thi sáng kiến phòng, chống bạo lực học đường năm học 2024 - 2025.",
-      "Trưởng ban Nội dung của HS14 - cộng đồng chia sẻ học tập cho học sinh Quảng Ninh."
-    ],
-    fit: "Học sinh muốn cải thiện kỹ năng thuyết trình, xây dựng hồ sơ hoạt động hoặc cần mentor để tự tin hơn.",
-    searchableText: "ky nang thuyet trinh clb hoat dong hoc duong dinh huong ho so group 1 kem 1 buoi chieu toi giao tiep tu tin"
-  },
-  "mai-huong": {
-    id: "mai-huong",
-    name: "BÙI MAI HƯƠNG",
-    image: "mentor3.jpg",
-    workplace: "Sinh viên khối Khoa học Xã hội, mentor phương pháp học tập bền vững",
-    tag: "Mentor học tập bền vững",
-    role: "Đồng hành học tập, xây nề nếp học và phương pháp tự học hiệu quả",
-    bio: "Mai Hương phù hợp với học sinh cần một người hướng dẫn cách học đều hơn, quản lý thời gian tốt hơn và giữ động lực lâu dài.",
-    focus: "Tiếng Trung, kỹ năng học tập, quản lý thời gian",
-    field: "ky-nang",
-    availability: ["sang", "toi", "cuoi-tuan"],
-    availabilityText: "Buổi sáng cuối tuần và buổi tối",
-    service: ["1-1", "roadmap"],
-    serviceText: "Mentor 1 kèm 1, coaching học tập",
-    achievements: [
-      "Đạt HSK 5.",
-      "Có kinh nghiệm hướng dẫn phương pháp học tập bền vững.",
-      "Tập trung vào việc xây dựng thói quen học đều và tự đánh giá tiến bộ."
-    ],
-    fit: "Học sinh dễ mất động lực, học chưa đều và cần mentor giúp sắp xếp thời gian hợp lý.",
-    searchableText: "ky nang hoc tap quan ly thoi gian coaching thoi quen tieng trung buoi toi cuoi tuan roadmap can nguoi theo sat mentor nhe nhang"
-  },
-  "minh-khoi": {
-    id: "minh-khoi",
-    name: "LÊ MINH KHÔI",
-    image: "mentor4.jpg",
-    workplace: "Sinh viên khối Kỹ thuật, mentor Toán và chiến lược luyện đề",
-    tag: "Mentor toán học",
-    role: "Hỗ trợ Toán tư duy, luyện đề và chiến lược học theo mục tiêu",
-    bio: "Minh Khôi phù hợp với học sinh cần củng cố nền tảng Toán, luyện đề có chiến lược và được theo sát tiến độ từng tuần.",
-    focus: "Toán, luyện đề, quản lý tiến độ",
-    field: "toan",
-    availability: ["toi", "cuoi-tuan"],
-    availabilityText: "Buổi tối và cuối tuần",
-    service: ["1-1", "competition"],
-    serviceText: "Mentor 1 kèm 1, luyện thi/cuộc thi",
-    achievements: [
-      "Có kinh nghiệm xây chiến lược luyện đề theo từng mốc điểm.",
-      "Hướng dẫn học sinh phân tích lỗi sai sau mỗi buổi học.",
-      "Đồng hành trong giai đoạn ôn thi nước rút."
-    ],
-    fit: "Học sinh cần tăng tốc môn Toán hoặc muốn có người kèm sát trong giai đoạn ôn thi.",
-    searchableText: "toan luyen de luyen thi competition 1 kem 1 buoi toi cuoi tuan mat goc tang diem on thi de"
-  },
-  "ha-an": {
-    id: "ha-an",
-    name: "TRẦN HÀ AN",
-    image: "mentor5.jpg",
-    workplace: "Sinh viên chuyên ngành tiếng Anh, mentor IELTS và phản hồi bài viết",
-    tag: "Mentor IELTS",
-    role: "Đồng hành luyện IELTS, phản hồi speaking-writing và xây lịch học cá nhân",
-    bio: "Hà An phù hợp với học sinh đang cần luyện IELTS thực tế, muốn được sửa bài kỹ và có lộ trình tăng band rõ ràng.",
-    focus: "IELTS, tiếng Anh, speaking, writing",
-    field: "ielts",
-    availability: ["chieu", "toi"],
-    availabilityText: "Buổi chiều và buổi tối",
-    service: ["1-1", "roadmap", "competition"],
-    serviceText: "Mentor 1 kèm 1, tư vấn lộ trình, luyện thi",
-    achievements: [
-      "Có kinh nghiệm đồng hành học sinh luyện IELTS theo band mục tiêu.",
-      "Tập trung phản hồi kỹ phần speaking và writing.",
-      "Giúp xây lịch học cá nhân phù hợp với thời gian rảnh."
-    ],
-    fit: "Học sinh cần mentor IELTS buổi tối, muốn được sửa bài kỹ và luyện thi có chiến lược.",
-    searchableText: "ielts tieng anh speaking writing band luyen thi buoi toi buoi chieu 1 kem 1 roadmap competition em yeu speaking em yeu writing tang band"
-  },
-  "gia-huy": {
-    id: "gia-huy",
-    name: "PHẠM GIA HUY",
-    image: "mentor6.JPG",
-    workplace: "Sinh viên Công nghệ thông tin, mentor lập trình dự án cơ bản",
-    tag: "Mentor lập trình",
-    role: "Coaching lập trình nền tảng, dự án web cơ bản và tư duy giải quyết vấn đề",
-    bio: "Gia Huy phù hợp với học sinh hoặc sinh viên mới học lập trình, cần người giải thích dễ hiểu và đồng hành khi làm project đầu tiên.",
-    focus: "Lập trình, web cơ bản, tư duy logic",
-    field: "lap-trinh",
-    availability: ["chieu", "cuoi-tuan"],
-    availabilityText: "Buổi chiều và cuối tuần",
-    service: ["1-1", "group", "roadmap"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn lộ trình",
-    achievements: [
-      "Có kinh nghiệm hỗ trợ người mới học lập trình từ nền tảng.",
-      "Đồng hành làm project web cơ bản và sửa lỗi theo từng bước.",
-      "Giúp xây lộ trình học phù hợp từ căn bản đến thực hành."
-    ],
-    fit: "Người mới học lập trình cần mentor giải thích kỹ, học theo dự án và có lộ trình rõ ràng.",
-    searchableText: "lap trinh web project coding logic group 1 kem 1 roadmap buoi chieu cuoi tuan nguoi moi mat goc can giai thich ky"
-  },
-  "ngoc-linh": {
-    id: "ngoc-linh",
-    name: "ĐỖ NGỌC LINH",
-    image: "mentor1.jpg",
-    workplace: "Sinh viên ngành Ngôn ngữ Anh, mentor giao tiếp và phát âm",
-    tag: "Mentor tiếng Anh giao tiếp",
-    role: "Đồng hành luyện speaking, phản xạ giao tiếp và phát âm",
-    bio: "Ngọc Linh phù hợp với người học cần vượt qua sự ngại nói, muốn luyện speaking đều đặn với mentor tích cực và nhẹ nhàng.",
-    focus: "Tiếng Anh giao tiếp, speaking, phát âm",
-    field: "anh",
-    availability: ["toi", "cuoi-tuan"],
-    availabilityText: "Buổi tối và cuối tuần",
-    service: ["1-1", "group"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm",
-    achievements: [
-      "Có kinh nghiệm đồng hành người học cải thiện phản xạ speaking.",
-      "Tập trung luyện phát âm, phản xạ và vượt qua tâm lý ngại nói.",
-      "Thiết kế buổi học theo tình huống thực tế."
-    ],
-    fit: "Người học bị yếu speaking, mất tự tin khi giao tiếp hoặc muốn luyện nói đều hằng tuần.",
-    searchableText: "tieng anh speaking giao tiep phat am em yeu speaking ngai noi mentor nhe nhang buoi toi cuoi tuan"
-  },
-  "thu-trang": {
-    id: "thu-trang",
-    name: "VŨ THU TRANG",
-    image: "mentor2.jpg",
-    workplace: "Sinh viên Sư phạm Ngữ văn, mentor viết luận và ôn thi",
-    tag: "Mentor ngữ văn",
-    role: "Đồng hành môn Ngữ văn, viết luận và ôn thi theo dạng bài",
-    bio: "Thu Trang phù hợp với học sinh muốn cải thiện cách phân tích tác phẩm, viết đoạn văn và xây ý mạch lạc hơn.",
-    focus: "Ngữ văn, viết luận, phân tích tác phẩm",
+    workplace: "Học viện Báo chí và Tuyên truyền - Chuyên ngành Truyền thông chính sách",
+    tag: "Mentor Ngữ văn, truyền thông và hồ sơ",
+    role: "Mentor Ngữ văn, truyền thông, thuyết trình và hoạt động ngoại khóa",
+    bio: "Nguyễn Tiến Dũng hiện theo học chuyên ngành Truyền thông chính sách tại Học viện Báo chí và Tuyên truyền, có nền tảng học thuật mạnh ở môn Ngữ văn và nhiều trải nghiệm thực tế trong truyền thông, tổ chức hoạt động học sinh.",
+    focus: "Ngữ văn, truyền thông, thuyết trình, hoạt động ngoại khóa",
     field: "van",
-    availability: ["sang", "cuoi-tuan"],
-    availabilityText: "Buổi sáng và cuối tuần",
-    service: ["1-1", "competition"],
-    serviceText: "Mentor 1 kèm 1, luyện thi/cuộc thi",
+    availability: ["sang", "chieu", "toi", "cuoi-tuan"],
+    availabilityText: "Linh hoạt theo lịch hẹn",
+    service: ["1-1", "group", "roadmap", "competition"],
+    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn định hướng, đồng hành hoạt động và cuộc thi",
     achievements: [
-      "Có kinh nghiệm hỗ trợ học sinh viết luận rõ ý và chắc cấu trúc.",
-      "Đồng hành ôn thi theo từng dạng bài văn nghị luận và đọc hiểu.",
-      "Giúp học sinh cải thiện khả năng diễn đạt mạch lạc."
+      "Học sinh giỏi Tỉnh môn Ngữ văn cấp THPT năm học 2023 - 2024 và 2024 - 2025, cùng danh hiệu Học sinh giỏi Thành phố môn Ngữ văn cấp THCS năm học 2021 - 2022.",
+      "Giải Nhất thuyết trình Ngày hội Văn hóa Đọc năm học 2024 - 2025.",
+      "Giải Nhì cuộc thi Sáng kiến phòng, chống bạo lực học đường năm học 2024 - 2025.",
+      "Thành viên ACC - Câu lạc bộ truyền thông Học viện Báo chí và Tuyên truyền, thành viên Đội Báo chí - Truyền thông Spotlight 2025 và Trưởng ban Nội dung HS14 năm 2023 - 2024."
     ],
-    fit: "Học sinh muốn cải thiện kỹ năng viết văn, phân tích tác phẩm hoặc cần ôn thi theo dạng bài.",
-    searchableText: "ngu van viet luan phan tich tac pham on thi de van 1 kem 1 cuoi tuan buoi sang"
+    fit: "Phù hợp với học sinh cần học tốt môn Văn, muốn cải thiện kỹ năng thuyết trình, tham gia hoạt động ngoại khóa, làm truyền thông học đường hoặc xây dựng hồ sơ cá nhân chỉn chu hơn.",
+    searchableText: "nguyen tien dung ngu van van hoc truyen thong thuyet trinh ky nang mem hoat dong ngoai khoa hoc vien bao chi truyen thong chinh sach spotlight hs14 ho so"
   },
-  "quang-huy": {
-    id: "quang-huy",
-    name: "NGUYỄN QUANG HUY",
+  "thuy-trang": {
+    id: "thuy-trang",
+    name: "ĐỖ THÙY TRANG",
     image: "mentor3.jpg",
-    workplace: "Sinh viên khối Toán ứng dụng, mentor học sinh giỏi và toán nâng cao",
-    tag: "Mentor olympic toán",
-    role: "Luyện thi học sinh giỏi và toán nâng cao theo chuyên đề",
-    bio: "Quang Huy phù hợp với học sinh muốn học toán nâng cao, đi thi học sinh giỏi hoặc cần mentor đẩy tốc độ tư duy giải bài.",
-    focus: "Toán nâng cao, học sinh giỏi, chiến lược giải đề",
-    field: "toan",
-    availability: ["toi", "cuoi-tuan"],
-    availabilityText: "Buổi tối và cuối tuần",
-    service: ["1-1", "competition"],
-    serviceText: "Mentor 1 kèm 1, luyện thi/cuộc thi",
+    workplace: "Trường Đại học Kinh tế - Đại học Quốc gia Hà Nội",
+    tag: "Mentor định hướng và kỹ năng mềm",
+    role: "Mentor định hướng nghề nghiệp, kỹ năng mềm và hoạt động ngoại khóa",
+    bio: "Đỗ Thùy Trang nổi bật ở hoạt động Đoàn - Hội, tổ chức sự kiện, khởi nghiệp và định hướng phát triển cá nhân cho học sinh, sinh viên.",
+    focus: "Định hướng nghề nghiệp, kỹ năng mềm, hoạt động ngoại khóa",
+    field: "ky-nang",
+    availability: ["sang", "chieu", "toi", "cuoi-tuan"],
+    availabilityText: "Linh hoạt theo lịch hẹn",
+    service: ["1-1", "group", "roadmap", "competition"],
+    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn định hướng, đồng hành hoạt động",
     achievements: [
-      "Có kinh nghiệm kèm học sinh theo chuyên đề toán nâng cao.",
-      "Tập trung phân tích tư duy giải đề và tối ưu tốc độ làm bài.",
-      "Phù hợp với học sinh hướng tới cuộc thi học thuật."
+      "Chủ nhiệm CLB Định hướng và Phát triển khởi nghiệp thành phố Cẩm Phả nhiệm kỳ 2024 và 2024 - 2025.",
+      "Ủy viên Ủy ban Hội LHTN Việt Nam thành phố Cẩm Phả khóa V, nhiệm kỳ 2024 - 2029 và đại biểu tham dự Đại hội Đại biểu Hội LHTN Việt Nam tỉnh Quảng Ninh lần thứ VII.",
+      "Trưởng ban tổ chức các mùa sự kiện gây quỹ thiện nguyện \"Mầm\" và sự kiện hướng nghiệp cho hơn 200 học sinh THPT tại thành phố Cẩm Phả.",
+      "Đạt nhiều giấy khen, bằng khen cấp thành phố, tỉnh và Trung ương Đoàn về công tác Đoàn - Hội, khởi nghiệp và dự án cộng đồng."
     ],
-    fit: "Học sinh muốn chinh phục toán nâng cao hoặc chuẩn bị cho các kỳ thi học sinh giỏi.",
-    searchableText: "toan nang cao olympic hoc sinh gioi competition giai de buoi toi cuoi tuan"
+    fit: "Phù hợp với mentee muốn được định hướng nghề nghiệp, phát triển kỹ năng mềm, xây hồ sơ hoạt động, tổ chức dự án và nâng cao sự tự tin khi tham gia cộng đồng.",
+    searchableText: "do thuy trang dinh huong nghe nghiep ky nang mem hoat dong ngoai khoa khoi nghiep to chuc su kien doan hoi kinh te quoc gia"
   }
 };
 
 const mentorExperienceData = {
   "tra-my": {
-    rating: 4.9,
-    studentsTaught: 32,
-    reviews: [
-      { author: "Khánh Linh", role: "HSK learner", rating: 5, content: "Mentor rất sát sao, giải thích rõ từng giai đoạn nên mình giữ được nhịp học đều." },
-      { author: "Minh Thảo", role: "Học sinh lớp 11", rating: 5, content: "Lộ trình học tiếng Trung được chia nhỏ rất dễ theo, bớt bị ngợp hơn hẳn." }
-    ]
+    rating: 0,
+    studentsTaught: 0,
+    reviews: []
   },
   "tien-dung": {
-    rating: 4.8,
-    studentsTaught: 41,
-    reviews: [
-      { author: "Mai Chi", role: "Học sinh THPT", rating: 5, content: "Anh Dũng giúp mình tự tin hơn khi thuyết trình và biết cách kể câu chuyện hồ sơ rõ ràng." },
-      { author: "Bảo Ngọc", role: "Mentee kỹ năng", rating: 4.8, content: "Cách góp ý rất dễ hiểu, đặc biệt phù hợp với bạn đang thiếu định hướng hoạt động học đường." }
-    ]
+    rating: 0,
+    studentsTaught: 0,
+    reviews: []
   },
-  "mai-huong": {
-    rating: 4.7,
-    studentsTaught: 28,
-    reviews: [
-      { author: "Ngọc Hà", role: "Mentee học tập", rating: 4.7, content: "Mentor nhẹ nhàng nhưng rất đều, giúp mình xây lại thói quen học hiệu quả." }
-    ]
-  },
-  "minh-khoi": {
-    rating: 4.9,
-    studentsTaught: 36,
-    reviews: [
-      { author: "Gia Minh", role: "Ôn thi Toán", rating: 5, content: "Học rất vào vì mentor chỉ rõ lỗi sai và đưa ra chiến lược luyện đề thực tế." }
-    ]
-  },
-  "ha-an": {
-    rating: 4.9,
-    studentsTaught: 47,
-    reviews: [
-      { author: "Phương Anh", role: "IELTS mentee", rating: 5, content: "Phần speaking được sửa rất kỹ, lộ trình tăng band rõ ràng nên mình bám được lâu." }
-    ]
-  },
-  "gia-huy": {
-    rating: 4.8,
-    studentsTaught: 34,
-    reviews: [
-      { author: "Tuấn Kiệt", role: "Sinh viên năm 1", rating: 4.8, content: "Mentor giải thích code rất dễ hiểu, phù hợp cho người mới học project web." }
-    ]
-  },
-  "ngoc-linh": {
-    rating: 4.7,
-    studentsTaught: 25,
-    reviews: [
-      { author: "Hồng Nhung", role: "Speaking mentee", rating: 4.7, content: "Các buổi luyện nói tự nhiên và bớt áp lực, mình đỡ ngại giao tiếp hơn." }
-    ]
-  },
-  "thu-trang": {
-    rating: 4.8,
-    studentsTaught: 29,
-    reviews: [
-      { author: "Thu Hà", role: "Mentee Ngữ văn", rating: 4.8, content: "Mentor giúp mình viết văn chặt chẽ hơn và dễ lên ý hơn trước." }
-    ]
-  },
-  "quang-huy": {
-    rating: 4.9,
-    studentsTaught: 31,
-    reviews: [
-      { author: "Đức Anh", role: "Học sinh giỏi Toán", rating: 4.9, content: "Rất hợp cho bạn muốn đẩy tốc độ giải đề và học chuyên đề nâng cao." }
-    ]
+  "thuy-trang": {
+    rating: 0,
+    studentsTaught: 0,
+    reviews: []
   }
 };
 
@@ -1077,18 +1021,29 @@ function getAcceptedStudentCountForMentor(mentorId) {
 }
 
 function getResolvedMentorById(mentorId) {
-  const baseMentor = mentorData[mentorId];
-  if (!baseMentor) return null;
-
   const approvedStore = getApprovedMentorProfiles();
   const approvedProfile = approvedStore[mentorId] || {};
+  const baseMentor = mentorData[mentorId] || (approvedProfile._origin === "admin" ? approvedProfile : null);
+  if (!baseMentor) return null;
   const experience = mentorExperienceData[mentorId] || {};
   const acceptedCount = getAcceptedStudentCountForMentor(mentorId);
   const submittedReviews = getMentorSubmittedReviews().filter(function (review) {
     return review.mentorId === mentorId;
   });
-  const baseRating = Number(approvedProfile.rating || experience.rating || 4.8);
-  const baseStudents = Number(approvedProfile.studentsTaught || experience.studentsTaught || 0);
+  const baseRating = Number(
+    approvedProfile.rating !== undefined && approvedProfile.rating !== null
+      ? approvedProfile.rating
+      : experience.rating !== undefined && experience.rating !== null
+        ? experience.rating
+        : 0
+  );
+  const baseStudents = Number(
+    approvedProfile.studentsTaught !== undefined && approvedProfile.studentsTaught !== null
+      ? approvedProfile.studentsTaught
+      : experience.studentsTaught !== undefined && experience.studentsTaught !== null
+        ? experience.studentsTaught
+        : 0
+  );
   const submittedRatingTotal = submittedReviews.reduce(function (total, review) {
     return total + Number(review.rating || 0);
   }, 0);
@@ -1114,7 +1069,12 @@ function getResolvedMentorById(mentorId) {
 }
 
 function getResolvedMentorList() {
-  return Object.keys(mentorData)
+  const approvedStore = getApprovedMentorProfiles();
+  const baseIds = Object.keys(mentorData);
+  const extraIds = Object.keys(approvedStore).filter(function (mentorId) {
+    return !mentorData[mentorId] && approvedStore[mentorId] && approvedStore[mentorId]._origin === "admin";
+  });
+  return baseIds.concat(extraIds)
     .map(function (mentorId) {
       return getResolvedMentorById(mentorId);
     })
@@ -1645,7 +1605,7 @@ function initializeConsultationRequestForm() {
     }
 
     if (payload.goal.length < 10) {
-      showMessage("consultationMessage", "error", "Hãy mô tả nhu cầu chi tiết hơn để admin tư vấn chính xác.");
+      showMessage("consultationMessage", "error", "Hãy mô tả nhu cầu chi tiết hơn để đội ngũ tư vấn hỗ trợ chính xác.");
       return;
     }
 
@@ -1660,7 +1620,7 @@ function initializeConsultationRequestForm() {
       showMessage(
         "consultationMessage",
         "success",
-        "Yêu cầu tư vấn đã được gửi. Admin sẽ liên hệ và sắp xếp buổi tư vấn online nếu phù hợp."
+        "Yêu cầu tư vấn đã được gửi. Đội ngũ Mentor Me sẽ liên hệ và sắp xếp buổi tư vấn online nếu phù hợp."
       );
     } catch (error) {
       showMessage("consultationMessage", "error", error.message);
@@ -2090,7 +2050,7 @@ function initializeMentorApplicationPage() {
       showMessage(
         "mentorApplicationMessage",
         "success",
-        "Hồ sơ ứng tuyển mentor đã được gửi. Nếu phù hợp, admin sẽ liên hệ và cấp mã kích hoạt tài khoản."
+        "Hồ sơ ứng tuyển mentor đã được gửi. Nếu phù hợp, đội ngũ Mentor Me sẽ liên hệ và cấp mã kích hoạt tài khoản."
       );
     } catch (error) {
       showMessage("mentorApplicationMessage", "error", error.message);
@@ -2182,7 +2142,7 @@ function initializeMentorActivationPage() {
 
         const sessionUser = await loadCurrentUserFromSupabase();
         saveAuthSession(sessionUser);
-        showMessage("mentorActivationMessage", "success", "Kích hoạt tài khoản mentor thành công. Đang chuyển tới dashboard mentor...");
+        showMessage("mentorActivationMessage", "success", "Kích hoạt tài khoản mentor thành công. Từ lần sau bạn đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo.");
         window.setTimeout(function () {
           window.location.href = "mentor-dashboard.html";
         }, 900);
@@ -2192,7 +2152,7 @@ function initializeMentorActivationPage() {
       showMessage(
         "mentorActivationMessage",
         "success",
-        "Tài khoản mentor đã được tạo. Nếu hệ thống vẫn yêu cầu xác thực email, hãy kiểm tra thiết lập xác thực trong Supabase."
+        "Tài khoản mentor đã được tạo. Từ lần sau bạn đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo. Nếu hệ thống vẫn yêu cầu xác thực email, hãy kiểm tra thiết lập xác thực trong Supabase."
       );
     } catch (error) {
       showMessage("mentorActivationMessage", "error", error.message || "Không thể kích hoạt tài khoản mentor lúc này.");
@@ -2215,6 +2175,8 @@ function initializeAdminConsultationPage() {
   const mentorProfileUpdateDashboard = document.getElementById("adminMentorProfileUpdateDashboard");
   const mentorProfileUpdateList = document.getElementById("adminMentorProfileUpdateList");
   const mentorProfileUpdateRefreshButton = document.getElementById("adminRefreshMentorProfileUpdates");
+  const mentorCreateDashboard = document.getElementById("adminMentorCreateDashboard");
+  const mentorCreateForm = document.getElementById("adminMentorCreateForm");
 
   if (!accessForm || !dashboard || !listElement) return;
 
@@ -2343,6 +2305,9 @@ function initializeAdminConsultationPage() {
     await loadMentorApplications();
     loadBookingRequestsForAdmin();
     loadMentorProfileUpdates();
+    if (mentorCreateDashboard) {
+      mentorCreateDashboard.hidden = false;
+    }
   });
 
   if (refreshButton) {
@@ -2466,6 +2431,88 @@ function initializeAdminConsultationPage() {
     });
   }
 
+  if (mentorCreateForm) {
+    mentorCreateForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      clearMessage("adminConsultationMessage");
+
+      const name = normalizeWhitespace(document.getElementById("adminMentorCreateName").value);
+      const role = normalizeWhitespace(document.getElementById("adminMentorCreateRole").value);
+      const workplace = normalizeWhitespace(document.getElementById("adminMentorCreateWorkplace").value);
+      const focus = normalizeWhitespace(document.getElementById("adminMentorCreateFocus").value);
+      const field = normalizeWhitespace(document.getElementById("adminMentorCreateField").value);
+      const image = normalizeWhitespace(document.getElementById("adminMentorCreateImage").value);
+      const tag = normalizeWhitespace(document.getElementById("adminMentorCreateTag").value);
+      const bio = normalizeWhitespace(document.getElementById("adminMentorCreateBio").value);
+      const achievementsText = normalizeWhitespace(document.getElementById("adminMentorCreateAchievements").value);
+      const fit = normalizeWhitespace(document.getElementById("adminMentorCreateFit").value);
+      const ratingValue = normalizeWhitespace(document.getElementById("adminMentorCreateRating").value);
+      const studentsValue = normalizeWhitespace(document.getElementById("adminMentorCreateStudents").value);
+      const availability = collectCheckedValues(mentorCreateForm, "adminMentorCreateAvailability");
+      const service = collectCheckedValues(mentorCreateForm, "adminMentorCreateService");
+
+      if (!name || name.length < 2) {
+        showMessage("adminConsultationMessage", "error", "Tên mentor cần có ít nhất 2 ký tự.");
+        return;
+      }
+
+      if (!focus) {
+        showMessage("adminConsultationMessage", "error", "Hãy thêm lĩnh vực chính để mentor dễ tìm.");
+        return;
+      }
+
+      if (!field) {
+        showMessage("adminConsultationMessage", "error", "Vui lòng chọn nhóm lĩnh vực.");
+        return;
+      }
+
+      const achievements = achievementsText
+        ? achievementsText.split("\n").map(normalizeWhitespace).filter(Boolean)
+        : [];
+
+      const mentorId = buildUniqueMentorId(name);
+      const finalService = service.length ? service : ["1-1"];
+      const finalAvailability = availability.length ? availability : ["sang", "chieu", "toi"];
+      const mentorProfile = {
+        id: mentorId,
+        name: name,
+        image: image || "mentor2.jpg",
+        workplace: workplace || "Đang cập nhật",
+        tag: tag || ("Mentor " + focus),
+        role: role || ("Mentor " + focus),
+        bio: bio || "Thông tin mentor sẽ được bổ sung thêm.",
+        focus: focus,
+        field: field,
+        availability: finalAvailability,
+        availabilityText: buildMentorAvailabilityText(finalAvailability),
+        service: finalService,
+        serviceText: buildMentorServiceText(finalService),
+        achievements: achievements,
+        fit: fit || "Phù hợp với mentee đang cần mentor đồng hành theo mục tiêu học tập cụ thể.",
+        searchableText: ""
+      };
+
+      if (ratingValue) {
+        mentorProfile.rating = Number(ratingValue);
+      }
+
+      if (studentsValue) {
+        mentorProfile.studentsTaught = Number(studentsValue);
+      }
+
+      mentorProfile.searchableText = buildMentorSearchableText(mentorProfile);
+      mentorProfile._origin = "admin";
+      mentorProfile._createdAt = new Date().toISOString();
+
+      const approvedStore = getApprovedMentorProfiles();
+      approvedStore[mentorId] = mentorProfile;
+      saveApprovedMentorProfiles(approvedStore);
+
+      mentorCreateForm.reset();
+      showMessage("adminConsultationMessage", "success", "Đã thêm mentor mới. Hãy mở trang tìm kiếm để xem hiển thị.");
+    });
+  }
+
   if (currentAdminKey) {
     const accessInput = document.getElementById("adminAccessKey");
     if (accessInput) {
@@ -2475,6 +2522,9 @@ function initializeAdminConsultationPage() {
     loadMentorApplications();
     loadBookingRequestsForAdmin();
     loadMentorProfileUpdates();
+    if (mentorCreateDashboard) {
+      mentorCreateDashboard.hidden = false;
+    }
   }
 }
 
@@ -2819,29 +2869,12 @@ function initializeLoginPage() {
     }
 
     const demoUser = createDemoSessionUser(identifier);
-    const isDemoAdminOrMentor = demoUser && ["admin", "mentor"].includes(normalizeRole(demoUser.role)) && password === identifier;
+    const isDemoAdminOnly = demoUser && normalizeRole(demoUser.role) === "admin" && password === identifier;
     const isDemoMentee = demoUser && normalizeRole(demoUser.role) === "mentee" && normalizeEmail(identifier) === DEMO_MENTEE_EMAIL && password === DEMO_MENTEE_PASSWORD;
 
-    if (demoUser && (isDemoAdminOrMentor || isDemoMentee)) {
+    if (demoUser && (isDemoAdminOnly || isDemoMentee)) {
       if (demoUser.role === "admin") {
         sessionStorage.setItem("mentorMeAdminKey", DEMO_ADMIN_ACCESS_CODE);
-      }
-
-      if (demoUser.role === "mentor") {
-        const mentor = mentorData["tien-dung"];
-        saveMentorProfileByUserId(demoUser.id, Object.assign({
-          displayName: mentor ? mentor.name : demoUser.name,
-          headline: mentor ? mentor.role : "Mentor học tập và định hướng",
-          workplace: mentor ? mentor.workplace : "Đang cập nhật",
-          expertise: mentor ? mentor.focus : "Thuyết trình, hoạt động học đường, định hướng hồ sơ",
-          services: mentor ? mentor.serviceText : "1:1 mentoring, mentor theo nhóm, tư vấn định hướng",
-          pricing: "250.000 - 350.000 VNĐ / buổi",
-          availability: mentor ? mentor.availabilityText : "Buổi chiều và buổi tối",
-          intro: "Đồng hành với mentee trong các chủ đề học tập, kỹ năng và định hướng hồ sơ.",
-          achievements: mentor ? mentor.achievements.join("\n") : "Giải Nhất thuyết trình\nGiải Nhì sáng kiến học đường\nTrưởng ban Nội dung cộng đồng HS14",
-          fit: mentor ? mentor.fit : "Học sinh cần cải thiện kỹ năng thuyết trình, xây hồ sơ hoạt động hoặc cần mentor đồng hành.",
-          visibility: "public"
-        }, getMentorProfileByUserId(demoUser.id) || {}));
       }
 
       saveAuthSession(demoUser);
@@ -2855,7 +2888,7 @@ function initializeLoginPage() {
     if (!ensureSupabaseReady("loginMessage")) return;
 
     if (!identifier.includes("@")) {
-      showMessage("loginMessage", "error", "Với tài khoản thật, vui lòng dùng email đã đăng ký. Tài khoản test đang hỗ trợ mã ADMIN2026, mentor0001 hoặc email demo mentee.");
+      showMessage("loginMessage", "error", "Với tài khoản thật, vui lòng dùng email đã đăng ký. Mentor sau khi kích hoạt sẽ đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo, giống như mentee.");
       return;
     }
 
@@ -2942,7 +2975,7 @@ function initializeProfilePage() {
 
     if (profileRoleHint) {
       profileRoleHint.textContent = normalizedRole === "mentee"
-        ? "Tài khoản mentee được đăng ký công khai. Mentor và admin được cấp riêng sau khi chọn lọc hoặc phân quyền nội bộ."
+        ? "Tài khoản mentee được đăng ký công khai. Mentor được cấp riêng sau khi chọn lọc."
         : "Loại tài khoản này được cấp riêng theo quy trình nội bộ nên không đổi trực tiếp tại hồ sơ cá nhân.";
     }
 
@@ -2950,15 +2983,15 @@ function initializeProfilePage() {
       profileBannerTitle.textContent = normalizedRole === "mentor"
         ? "Quản lý tài khoản mentor và sẵn sàng hoàn thiện dashboard chuyên môn."
         : normalizedRole === "admin"
-          ? "Quản lý tài khoản admin để vận hành lead tư vấn và kiểm duyệt mentor."
+          ? "Quản lý tài khoản nội bộ và phạm vi công việc được phân quyền."
           : "Quản lý thông tin và sẵn sàng kết nối với mentor phù hợp.";
     }
 
     if (profileBannerDescription) {
       profileBannerDescription.textContent = normalizedRole === "mentor"
-        ? "Giữ thông tin liên hệ nhất quán để admin dễ xác minh và mentee dễ nhận diện khi hồ sơ được mở công khai."
+        ? "Giữ thông tin liên hệ nhất quán để đội ngũ Mentor Me dễ xác minh và mentee dễ nhận diện khi hồ sơ được mở công khai."
         : normalizedRole === "admin"
-          ? "Hồ sơ admin tập trung vào liên hệ nội bộ và phạm vi phụ trách, còn phần vận hành chính nằm ở dashboard admin."
+          ? "Hồ sơ nội bộ tập trung vào liên hệ công việc và phạm vi phụ trách, còn phần vận hành chính nằm ở khu quản trị nội bộ."
           : "Cập nhật mục tiêu, cách học và thông tin liên hệ để trải nghiệm tìm mentor trở nên sát nhu cầu hơn.";
     }
 
@@ -2966,7 +2999,7 @@ function initializeProfilePage() {
       profileSectionDescription.textContent = normalizedRole === "mentor"
         ? "Cập nhật thông tin tài khoản cơ bản. Phần chuyên môn, dịch vụ và lịch rảnh nằm ở dashboard mentor."
         : normalizedRole === "admin"
-          ? "Cập nhật thông tin tài khoản quản trị cơ bản. Việc xử lý lead và hồ sơ mentor được thực hiện ở dashboard admin."
+          ? "Cập nhật thông tin tài khoản nội bộ cơ bản. Việc xử lý lead và hồ sơ mentor được thực hiện ở khu quản trị nội bộ."
           : "Cập nhật hồ sơ để mentor hiểu rõ hơn về nhu cầu và mục tiêu học tập của bạn.";
     }
   }
@@ -2979,9 +3012,9 @@ function initializeProfilePage() {
     profileGoalPreview.textContent = account.goal
       ? (normalizedRole === "mentee" ? "Mục tiêu hiện tại: " : "Định hướng hiện tại: ") + account.goal
       : normalizedRole === "mentor"
-        ? "Bạn chưa thêm định hướng mentoring. Hãy cập nhật để admin và mentee hiểu rõ hơn về vai trò của bạn."
+        ? "Bạn chưa thêm định hướng mentoring. Hãy cập nhật để đội ngũ Mentor Me và mentee hiểu rõ hơn về vai trò của bạn."
         : normalizedRole === "admin"
-          ? "Bạn chưa thêm phạm vi quản trị. Hãy cập nhật để nội bộ dễ nhận biết vai trò của tài khoản này."
+          ? "Bạn chưa thêm phạm vi phụ trách. Hãy cập nhật để nội bộ dễ nhận biết vai trò của tài khoản này."
           : "Bạn chưa thêm mục tiêu học tập. Hãy cập nhật để mentor hiểu rõ hơn về nhu cầu của bạn.";
     profileEmailText.textContent = account.email;
     profilePhoneText.textContent = account.phone;
@@ -3377,40 +3410,142 @@ function parsePreferredTimeToWeekday(timeText) {
   return null;
 }
 
-function getNextCalendarDateForRequest(request) {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
+function getCalendarDatesForRequestInMonth(request, referenceDate) {
+  const activeDate = referenceDate instanceof Date ? referenceDate : new Date();
+  const year = activeDate.getFullYear();
+  const month = activeDate.getMonth();
   const weekday = parsePreferredTimeToWeekday(request.preferredTime);
+  const totalDays = new Date(year, month + 1, 0).getDate();
 
   if (weekday === null) {
-    return new Date(year, month, Math.min(28, today.getDate() + 2));
+    return [new Date(year, month, Math.min(28, Math.max(1, activeDate.getDate())))];
   }
 
-  const firstDayOfMonth = new Date(year, month, 1);
-  const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
-
-  for (let day = 1; day <= lastDayOfMonth; day += 1) {
+  const matches = [];
+  for (let day = 1; day <= totalDays; day += 1) {
     const currentDate = new Date(year, month, day);
-    if (currentDate.getDay() === weekday && currentDate >= new Date(year, month, today.getDate())) {
-      return currentDate;
+    if (currentDate.getDay() === weekday) {
+      matches.push(currentDate);
     }
   }
 
-  for (let fallbackDay = 1; fallbackDay <= lastDayOfMonth; fallbackDay += 1) {
-    const fallbackDate = new Date(year, month, fallbackDay);
-    if (fallbackDate.getDay() === weekday) {
-      return fallbackDate;
-    }
+  if (matches.length) {
+    return matches;
   }
 
-  return new Date(year, month, today.getDate());
+  return [new Date(year, month, Math.min(28, Math.max(1, activeDate.getDate())))];
 }
 
 function getAcceptedRequestsForCurrentMentor(currentUser) {
   return filterRequestsForCurrentMentor(getBookingRequests(), currentUser).filter(function (request) {
     return request.status === "accepted" || request.status === "completed";
   });
+}
+
+function renderCalendarGrid(gridElement, monthLabelElement, requests, linkBuilder, emptyMessage, referenceDate) {
+  if (!gridElement || !monthLabelElement) return;
+
+  const today = new Date();
+  const activeDate = referenceDate instanceof Date ? referenceDate : new Date();
+  const year = activeDate.getFullYear();
+  const month = activeDate.getMonth();
+  const firstDate = new Date(year, month, 1);
+  const startOffset = (firstDate.getDay() + 6) % 7;
+  const totalDays = new Date(year, month + 1, 0).getDate();
+
+  monthLabelElement.textContent = firstDate.toLocaleDateString("vi-VN", {
+    month: "long",
+    year: "numeric"
+  });
+
+  if (!requests.length) {
+    gridElement.innerHTML = `
+      <div class="admin-empty-state mentor-calendar-empty">
+        <h3>Chưa có lịch học nào</h3>
+        <p>${emptyMessage}</p>
+      </div>
+    `;
+    return;
+  }
+
+  const eventsByDay = requests.reduce(function (map, request) {
+    getCalendarDatesForRequestInMonth(request, firstDate).forEach(function (eventDate) {
+      const day = eventDate.getDate();
+      if (!map[day]) {
+        map[day] = [];
+      }
+      map[day].push(request);
+    });
+    return map;
+  }, {});
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i += 1) {
+    cells.push('<div class="mentor-calendar-cell is-empty"></div>');
+  }
+
+  for (let day = 1; day <= totalDays; day += 1) {
+    const events = eventsByDay[day] || [];
+    const isToday =
+      day === today.getDate() &&
+      month === today.getMonth() &&
+      year === today.getFullYear();
+    cells.push(`
+      <div class="mentor-calendar-cell ${isToday ? "is-today" : ""}">
+        <div class="mentor-calendar-date">${day}</div>
+        <div class="mentor-calendar-events">
+          ${events.map(function (request) {
+            return `
+              <a href="${linkBuilder(request)}" class="mentor-calendar-event">
+                <strong>${escapeHtml(request.menteeName || request.mentorName)}</strong>
+                <span>${escapeHtml(request.preferredTime)}</span>
+              </a>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `);
+  }
+
+  gridElement.innerHTML = cells.join("");
+}
+
+function attachCalendarNavigator(options) {
+  const gridElement = options.gridElement;
+  const monthLabelElement = options.monthLabelElement;
+  const prevButton = options.prevButton;
+  const nextButton = options.nextButton;
+  const requests = options.requests || [];
+  const linkBuilder = options.linkBuilder;
+  const emptyMessage = options.emptyMessage;
+  if (!gridElement || !monthLabelElement || !prevButton || !nextButton) return;
+
+  let monthOffset = 0;
+
+  function render() {
+    const activeDate = new Date();
+    activeDate.setDate(1);
+    activeDate.setMonth(activeDate.getMonth() + monthOffset);
+    renderCalendarGrid(gridElement, monthLabelElement, requests, linkBuilder, emptyMessage, activeDate);
+  }
+
+  if (!prevButton.dataset.calendarBound) {
+    prevButton.addEventListener("click", function () {
+      monthOffset -= 1;
+      render();
+    });
+    prevButton.dataset.calendarBound = "true";
+  }
+
+  if (!nextButton.dataset.calendarBound) {
+    nextButton.addEventListener("click", function () {
+      monthOffset += 1;
+      render();
+    });
+    nextButton.dataset.calendarBound = "true";
+  }
+
+  render();
 }
 
 function filterRequestsForCurrentMentor(requests, currentUser) {
@@ -3424,22 +3559,16 @@ function filterRequestsForCurrentMentor(requests, currentUser) {
   });
 }
 
-function initializeMenteeSchedulePage() {
-  const scheduleList = document.getElementById("menteeScheduleList");
-  const summary = document.getElementById("menteeScheduleSummary");
-  if (!scheduleList || !summary) return;
-
-  const currentUser = getCurrentUser();
-  if (!currentUser) {
-    window.location.href = "login.html?redirect=mentee-schedule.html";
-    return;
-  }
-
-  const requests = getBookingRequests().filter(function (request) {
+function getRequestsForCurrentMentee(currentUser) {
+  return getBookingRequests().filter(function (request) {
     return request.menteeUserId === currentUser.id || normalizeEmail(request.menteeEmail) === normalizeEmail(currentUser.email);
   });
+}
 
-  summary.innerHTML = `
+function renderMenteeScheduleSummary(summaryElement, requests) {
+  if (!summaryElement) return;
+
+  summaryElement.innerHTML = `
     <article class="schedule-summary-card">
       <span>Tổng yêu cầu</span>
       <strong>${requests.length}</strong>
@@ -3453,6 +3582,25 @@ function initializeMenteeSchedulePage() {
       <strong>${requests.filter(function (request) { return request.status === "pending"; }).length}</strong>
     </article>
   `;
+}
+
+function initializeMenteeSchedulePage() {
+  const scheduleList = document.getElementById("menteeScheduleList");
+  const summary = document.getElementById("menteeScheduleSummary");
+  const calendarGrid = document.getElementById("menteeScheduleCalendarGrid");
+  const monthLabel = document.getElementById("menteeCalendarMonthLabel");
+  const prevButton = document.getElementById("menteeCalendarPrevBtn");
+  const nextButton = document.getElementById("menteeCalendarNextBtn");
+  if (!scheduleList || !summary) return;
+
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = "login.html?redirect=mentee-schedule.html";
+    return;
+  }
+
+  const requests = getRequestsForCurrentMentee(currentUser);
+  renderMenteeScheduleSummary(summary, requests);
 
   if (!requests.length) {
     scheduleList.innerHTML = `
@@ -3461,10 +3609,33 @@ function initializeMenteeSchedulePage() {
         <p>Hãy đặt lịch với mentor để các buổi học và trạng thái xử lý xuất hiện tại đây.</p>
       </div>
     `;
+    renderCalendarGrid(
+      calendarGrid,
+      monthLabel,
+      [],
+      function () {
+        return "search.html";
+      },
+      "Khi mentor nhận yêu cầu của bạn, buổi học sẽ xuất hiện ở đây dưới dạng calendar.",
+      new Date()
+    );
     return;
   }
 
   scheduleList.innerHTML = requests.map(buildMenteeScheduleCard).join("");
+  attachCalendarNavigator({
+    gridElement: calendarGrid,
+    monthLabelElement: monthLabel,
+    prevButton: prevButton,
+    nextButton: nextButton,
+    requests: requests.filter(function (request) {
+      return request.status === "accepted" || request.status === "completed";
+    }),
+    linkBuilder: function (request) {
+      return "mentor-detail.html?id=" + encodeURIComponent(request.mentorId);
+    },
+    emptyMessage: "Khi mentor nhận yêu cầu của bạn, buổi học sẽ xuất hiện ở đây dưới dạng calendar."
+  });
 
   if (!scheduleList.dataset.reviewBound) {
     scheduleList.addEventListener("submit", function (event) {
@@ -3503,6 +3674,38 @@ function initializeMenteeSchedulePage() {
     });
     scheduleList.dataset.reviewBound = "true";
   }
+}
+
+function initializeMenteeCalendarPage() {
+  const summary = document.getElementById("menteeCalendarSummary");
+  const calendarGrid = document.getElementById("menteeCalendarOnlyGrid");
+  const monthLabel = document.getElementById("menteeCalendarOnlyMonthLabel");
+  const prevButton = document.getElementById("menteeCalendarOnlyPrevBtn");
+  const nextButton = document.getElementById("menteeCalendarOnlyNextBtn");
+  if (!summary || !calendarGrid || !monthLabel || !prevButton || !nextButton) return;
+
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = "login.html?redirect=mentee-calendar.html";
+    return;
+  }
+
+  const requests = getRequestsForCurrentMentee(currentUser);
+  renderMenteeScheduleSummary(summary, requests);
+
+  attachCalendarNavigator({
+    gridElement: calendarGrid,
+    monthLabelElement: monthLabel,
+    prevButton: prevButton,
+    nextButton: nextButton,
+    requests: requests.filter(function (request) {
+      return request.status === "accepted" || request.status === "completed";
+    }),
+    linkBuilder: function (request) {
+      return "mentor-detail.html?id=" + encodeURIComponent(request.mentorId);
+    },
+    emptyMessage: "Khi mentor nhận yêu cầu của bạn, buổi học sẽ xuất hiện tại đây theo dạng calendar riêng."
+  });
 }
 
 function initializeMentorRequestsPage() {
@@ -3676,6 +3879,8 @@ function initializeMentorTeachingCalendarPage() {
   const summary = document.getElementById("mentorCalendarSummary");
   const note = document.getElementById("mentorCalendarScopeNote");
   const monthLabel = document.getElementById("mentorCalendarMonthLabel");
+  const prevButton = document.getElementById("mentorCalendarPrevBtn");
+  const nextButton = document.getElementById("mentorCalendarNextBtn");
   if (!calendarGrid || !summary || !note || !monthLabel) return;
 
   const currentUser = getCurrentUser();
@@ -3691,20 +3896,10 @@ function initializeMentorTeachingCalendarPage() {
 
   const mentorContext = getMentorContextForUser(currentUser);
   const acceptedRequests = getAcceptedRequestsForCurrentMentor(currentUser);
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const firstDate = new Date(year, month, 1);
-  const startOffset = (firstDate.getDay() + 6) % 7;
-  const totalDays = new Date(year, month + 1, 0).getDate();
 
   note.textContent = mentorContext.mentorId
     ? "Calendar đang hiển thị lịch dạy của mentor: " + mentorContext.mentorName + "."
     : "Calendar đang hiển thị toàn bộ các lịch dạy đã được nhận trong hệ thống.";
-  monthLabel.textContent = firstDate.toLocaleDateString("vi-VN", {
-    month: "long",
-    year: "numeric"
-  });
 
   summary.innerHTML = `
     <article class="schedule-summary-card">
@@ -3722,51 +3917,29 @@ function initializeMentorTeachingCalendarPage() {
   `;
 
   if (!acceptedRequests.length) {
-    calendarGrid.innerHTML = `
-      <div class="admin-empty-state mentor-calendar-empty">
-        <h3>Chưa có lịch dạy nào</h3>
-        <p>Khi mentor nhận mentee, buổi học sẽ xuất hiện ở đây dưới dạng calendar.</p>
-      </div>
-    `;
+    renderCalendarGrid(
+      calendarGrid,
+      monthLabel,
+      [],
+      function () {
+        return "mentor-booking-detail.html";
+      },
+      "Khi mentor nhận mentee, buổi học sẽ xuất hiện ở đây dưới dạng calendar.",
+      new Date()
+    );
     return;
   }
-
-  const eventsByDay = acceptedRequests.reduce(function (map, request) {
-    const eventDate = getNextCalendarDateForRequest(request);
-    const day = eventDate.getDate();
-    if (!map[day]) {
-      map[day] = [];
-    }
-    map[day].push(request);
-    return map;
-  }, {});
-
-  const cells = [];
-  for (let i = 0; i < startOffset; i += 1) {
-    cells.push('<div class="mentor-calendar-cell is-empty"></div>');
-  }
-
-  for (let day = 1; day <= totalDays; day += 1) {
-    const events = eventsByDay[day] || [];
-    const isToday = day === today.getDate();
-    cells.push(`
-      <div class="mentor-calendar-cell ${isToday ? "is-today" : ""}">
-        <div class="mentor-calendar-date">${day}</div>
-        <div class="mentor-calendar-events">
-          ${events.map(function (request) {
-            return `
-              <a href="mentor-booking-detail.html?id=${encodeURIComponent(request.id)}" class="mentor-calendar-event">
-                <strong>${escapeHtml(request.menteeName)}</strong>
-                <span>${escapeHtml(request.preferredTime)}</span>
-              </a>
-            `;
-          }).join("")}
-        </div>
-      </div>
-    `);
-  }
-
-  calendarGrid.innerHTML = cells.join("");
+  attachCalendarNavigator({
+    gridElement: calendarGrid,
+    monthLabelElement: monthLabel,
+    prevButton: prevButton,
+    nextButton: nextButton,
+    requests: acceptedRequests,
+    linkBuilder: function (request) {
+      return "mentor-booking-detail.html?id=" + encodeURIComponent(request.id);
+    },
+    emptyMessage: "Khi mentor nhận mentee, buổi học sẽ xuất hiện ở đây dưới dạng calendar."
+  });
 }
 
 function initializeMentorBookingDetailPage() {
@@ -3925,6 +4098,8 @@ function initializeResetPasswordPage() {
 
 async function bootstrapApp() {
   initializePasswordToggles();
+  syncApprovedMentorProfilesWithRealData();
+  syncSubmittedReviewsWithCurrentData();
   ensureDemoBookingRequests();
   if (isSupabaseReady()) {
     await loadCurrentUserFromSupabase();
@@ -3944,6 +4119,7 @@ async function bootstrapApp() {
   initializeAdminConsultationPage();
   initializeMentorDashboardPage();
   initializeMenteeSchedulePage();
+  initializeMenteeCalendarPage();
   initializeMentorRequestsPage();
   initializeMentorMenteesPage();
   initializeMentorAcceptedPage();

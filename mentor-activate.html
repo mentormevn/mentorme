@@ -22,7 +22,7 @@
         <h1>Chỉ mentor đã được duyệt mới có thể kích hoạt tài khoản.</h1>
         <p>
           Nếu bạn đã vượt qua vòng chọn lọc, hãy dùng email ứng tuyển và mã kích hoạt
-          do admin cung cấp để tạo tài khoản mentor.
+          do đội ngũ Mentor Me cung cấp để tạo tài khoản mentor.
         </p>
       </div>
     </section>
@@ -30,7 +30,7 @@
     <section class="auth-panel">
       <div class="auth-panel-header">
         <h2>Kích hoạt mentor</h2>
-        <p>Hoàn tất bước này để đăng nhập vào dashboard mentor.</p>
+        <p>Hoàn tất bước này để từ lần sau đăng nhập bằng email ứng tuyển và mật khẩu bạn tự tạo.</p>
       </div>
 
       <div id="mentorActivationMessage" class="auth-message" hidden></div>
@@ -43,7 +43,7 @@
 
         <label class="auth-field">
           <span>Email ứng tuyển</span>
-          <input type="email" id="mentorActivationEmail" placeholder="mentor@ gmail.com" required>
+          <input type="email" id="mentorActivationEmail" placeholder="mentor@gmail.com" required>
         </label>
 
         <label class="auth-field">
@@ -55,9 +55,7 @@
           <span>Mật khẩu</span>
           <div class="auth-password-field">
             <input type="password" id="mentorActivationPassword" placeholder="Tối thiểu 8 ký tự" required>
-            <button type="button" class="password-toggle" data-toggle-password="mentorActivationPassword" aria-label="Hiện hoặc ẩn mật khẩu">
-              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
-            </button>
+            <span class="password-toggle" role="button" tabindex="0" data-toggle-password="mentorActivationPassword" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</span>
           </div>
         </label>
 
@@ -65,9 +63,7 @@
           <span>Xác nhận mật khẩu</span>
           <div class="auth-password-field">
             <input type="password" id="mentorActivationConfirmPassword" placeholder="Nhập lại mật khẩu" required>
-            <button type="button" class="password-toggle" data-toggle-password="mentorActivationConfirmPassword" aria-label="Hiện hoặc ẩn mật khẩu">
-              <img src="images/eye-close.png" alt="Ẩn mật khẩu">
-            </button>
+            <span class="password-toggle" role="button" tabindex="0" data-toggle-password="mentorActivationConfirmPassword" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</span>
           </div>
         </label>
 

@@ -17,6 +17,7 @@
     <ul class="menu">
       <li><a href="index.html">Trang chủ</a></li>
       <li><a href="services.html">Dịch vụ</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
       <li class="active"><a href="admin-consultations.html">Admin tư vấn</a></li>
     </ul>
 
@@ -74,6 +75,116 @@
         <button type="button" id="adminRefreshMentorProfileUpdates" class="mentor-secondary-btn">Tải lại</button>
       </div>
       <div id="adminMentorProfileUpdateList" class="admin-consultation-list"></div>
+    </section>
+
+    <section id="adminMentorCreateDashboard" class="admin-dashboard" hidden>
+      <div class="admin-dashboard-bar">
+        <h2>Thêm mentor lên tìm kiếm</h2>
+      </div>
+      <div class="admin-consultation-list">
+        <article class="admin-request-card">
+          <div class="admin-request-head">
+            <div>
+              <span class="admin-request-label">Mentor mới</span>
+              <h3>Đăng mentor lên tìm kiếm</h3>
+              <p>Điền thông tin cơ bản để mentor hiển thị trên trang tìm kiếm.</p>
+            </div>
+          </div>
+
+          <form id="adminMentorCreateForm" class="admin-mentor-create-form" novalidate>
+            <label class="auth-field">
+              <span>Tên mentor</span>
+              <input type="text" id="adminMentorCreateName" placeholder="Ví dụ: Nguyễn Minh Anh" required>
+            </label>
+
+            <label class="auth-field">
+              <span>Headline / Vai trò</span>
+              <input type="text" id="adminMentorCreateRole" placeholder="Ví dụ: Mentor IELTS, kỹ năng mềm">
+            </label>
+
+            <label class="auth-field">
+              <span>Nơi làm việc / học tập</span>
+              <input type="text" id="adminMentorCreateWorkplace" placeholder="Ví dụ: Đại học Ngoại thương">
+            </label>
+
+            <label class="auth-field">
+              <span>Lĩnh vực chính</span>
+              <input type="text" id="adminMentorCreateFocus" placeholder="Ví dụ: IELTS, kỹ năng học tập" required>
+            </label>
+
+            <label class="auth-field">
+              <span>Nhóm lĩnh vực</span>
+              <select id="adminMentorCreateField" required>
+                <option value="">Chọn lĩnh vực</option>
+                <option value="toan">Toán</option>
+                <option value="van">Ngữ văn</option>
+                <option value="anh">Tiếng Anh</option>
+                <option value="lap-trinh">Lập trình</option>
+                <option value="ielts">IELTS</option>
+                <option value="trung">Tiếng Trung</option>
+                <option value="ky-nang">Kỹ năng học tập</option>
+              </select>
+            </label>
+
+            <label class="auth-field">
+              <span>Ảnh mentor (file/URL)</span>
+              <input type="text" id="adminMentorCreateImage" placeholder="Ví dụ: mentor2.jpg">
+            </label>
+
+            <label class="auth-field">
+              <span>Tag ngắn</span>
+              <input type="text" id="adminMentorCreateTag" placeholder="Ví dụ: Mentor định hướng">
+            </label>
+
+            <label class="auth-field">
+              <span>Thời gian rảnh</span>
+              <div class="auth-field-checkboxes">
+                <label><input type="checkbox" name="adminMentorCreateAvailability" value="sang"> Buổi sáng</label>
+                <label><input type="checkbox" name="adminMentorCreateAvailability" value="chieu"> Buổi chiều</label>
+                <label><input type="checkbox" name="adminMentorCreateAvailability" value="toi"> Buổi tối</label>
+                <label><input type="checkbox" name="adminMentorCreateAvailability" value="cuoi-tuan"> Cuối tuần</label>
+              </div>
+            </label>
+
+            <label class="auth-field">
+              <span>Dịch vụ</span>
+              <div class="auth-field-checkboxes">
+                <label><input type="checkbox" name="adminMentorCreateService" value="1-1"> 1 kèm 1</label>
+                <label><input type="checkbox" name="adminMentorCreateService" value="group"> Theo nhóm</label>
+                <label><input type="checkbox" name="adminMentorCreateService" value="roadmap"> Lộ trình</label>
+                <label><input type="checkbox" name="adminMentorCreateService" value="competition"> Luyện thi/cuộc thi</label>
+              </div>
+            </label>
+
+            <label class="auth-field">
+              <span>Giới thiệu mentor</span>
+              <textarea id="adminMentorCreateBio" rows="4" placeholder="Mô tả ngắn về mentor"></textarea>
+            </label>
+
+            <label class="auth-field">
+              <span>Thành tích nổi bật (mỗi dòng một mục)</span>
+              <textarea id="adminMentorCreateAchievements" rows="4" placeholder="Ví dụ: IELTS 8.0"></textarea>
+            </label>
+
+            <label class="auth-field">
+              <span>Mentor phù hợp với</span>
+              <textarea id="adminMentorCreateFit" rows="3" placeholder="Mentee phù hợp"></textarea>
+            </label>
+
+            <label class="auth-field">
+              <span>Đánh giá hiển thị</span>
+              <input type="number" id="adminMentorCreateRating" min="0" max="5" step="0.1" placeholder="Ví dụ: 4.8">
+            </label>
+
+            <label class="auth-field">
+              <span>Số học sinh đã dạy</span>
+              <input type="number" id="adminMentorCreateStudents" min="0" step="1" placeholder="Ví dụ: 20">
+            </label>
+
+            <button type="submit" class="mentor-primary-btn">Tạo mentor</button>
+          </form>
+        </article>
+      </div>
     </section>
   </main>
 
