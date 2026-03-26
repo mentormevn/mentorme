@@ -36,13 +36,30 @@ const SEARCH_PAGE_SIZE = 12;
 const REAL_MENTOR_DATA_VERSION = "2026-03-26-real-v2";
 const REVIEW_CLEANUP_VERSION = "2026-03-26-clear-trang-dung";
 let currentSearchPage = 1;
-const appConfig = browserWindow.MENTOR_ME_CONFIG || {};
-const SUPABASE_URL = appConfig.SUPABASE_URL || "";
-const SUPABASE_PUBLISHABLE_KEY = appConfig.SUPABASE_ANON_KEY || "";
-const supabaseClient =
-  browserWindow.supabase && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY
-    ? browserWindow.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
-    : null;
+let supabaseClient = null;
+let supabaseClientUrl = "";
+let supabaseClientKey = "";
+
+function refreshSupabaseClient() {
+  const appConfig = browserWindow.MENTOR_ME_CONFIG || {};
+  const nextUrl = appConfig.SUPABASE_URL || "";
+  const nextKey = appConfig.SUPABASE_ANON_KEY || "";
+
+  if (!browserWindow.supabase || !nextUrl || !nextKey) {
+    supabaseClient = null;
+    supabaseClientUrl = nextUrl;
+    supabaseClientKey = nextKey;
+    return null;
+  }
+
+  if (!supabaseClient || supabaseClientUrl !== nextUrl || supabaseClientKey !== nextKey) {
+    supabaseClient = browserWindow.supabase.createClient(nextUrl, nextKey);
+    supabaseClientUrl = nextUrl;
+    supabaseClientKey = nextKey;
+  }
+
+  return supabaseClient;
+}
 
 if (hamburger) {
   hamburger.addEventListener("click", () => {
@@ -566,7 +583,7 @@ function escapeHtml(value) {
 }
 
 function isSupabaseReady() {
-  return Boolean(supabaseClient && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
+  return Boolean(refreshSupabaseClient() && supabaseClientUrl && supabaseClientKey);
 }
 
 function ensureSupabaseReady(messageElementId) {

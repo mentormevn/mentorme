@@ -1,13 +1,15 @@
-require("dotenv").config();
+import "dotenv/config";
 
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const fs = require("fs");
-const crypto = require("crypto");
+import next from "next";
+import express from "express";
+import cors from "cors";
+import crypto from "node:crypto";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const dev = process.env.NODE_ENV !== "production";
+const nextApp = next({ dev });
+const handle = nextApp.getRequestHandler();
 const ADMIN_DASHBOARD_PASSWORD = process.env.ADMIN_DASHBOARD_PASSWORD || "ADMIN2026";
 const SUPABASE_URL =
   process.env.SUPABASE_URL || "https://gmyrnqupbqwbyaamixgv.supabase.co";
@@ -21,7 +23,6 @@ const SUPABASE_SERVICE_ROLE_KEY =
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
-app.use(express.static(__dirname));
 
 class SupabaseError extends Error {
   constructor(status, message, details) {
@@ -1287,22 +1288,26 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
   }
 });
 
-app.get(/.*/, (req, res) => {
-  const requestedPath = path.join(__dirname, req.path);
-  if (fs.existsSync(requestedPath) && fs.statSync(requestedPath).isFile()) {
-    res.sendFile(requestedPath);
-    return;
-  }
-
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
 if (!hasSupabaseServerConfig()) {
   console.warn(
     "Supabase server configuration is incomplete. API routes that write to Supabase will fail until SUPABASE_SERVICE_ROLE_KEY is set."
   );
 }
 
-app.listen(PORT, () => {
-  console.log("Mentor Me server is running at http://localhost:" + PORT);
+nextApp.prepare().then(() => {
+  app.get("/index.html", (req, res) => {
+    nextApp.render(req, res, "/", req.query);
+  });
+
+  app.get("/:page.html", (req, res) => {
+    nextApp.render(req, res, "/" + req.params.page, req.query);
+  });
+
+  app.use((req, res) => {
+    handle(req, res);
+  });
+
+  app.listen(PORT, () => {
+    console.log("Mentor Me Next server is running at http://localhost:" + PORT);
+  });
 });

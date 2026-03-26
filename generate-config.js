@@ -1,7 +1,14 @@
-const fs = require("fs");
-const path = require("path");
+import "dotenv/config";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const outputPath = path.join(__dirname, "public-config.js");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const rootOutputPath = path.join(__dirname, "public-config.js");
+const publicDir = path.join(__dirname, "public");
+const publicOutputPath = path.join(publicDir, "public-config.js");
 
 const config = {
   SUPABASE_URL:
@@ -14,5 +21,10 @@ const config = {
 
 const fileContent = `window.MENTOR_ME_CONFIG = ${JSON.stringify(config, null, 2)};\n`;
 
-fs.writeFileSync(outputPath, fileContent, "utf8");
-console.log("Generated public-config.js");
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir, { recursive: true });
+}
+
+fs.writeFileSync(rootOutputPath, fileContent, "utf8");
+fs.writeFileSync(publicOutputPath, fileContent, "utf8");
+console.log("Generated public-config.js in root and public/");

@@ -4,17 +4,20 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "build": "node generate-config.js",
-    "start": "node server.js",
-    "dev": "node server.js"
+    "build": "node generate-config.js && next build",
+    "start": "node generate-config.js && set NODE_ENV=production&& node server.js",
+    "dev": "node generate-config.js && set NODE_ENV=development&& node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   }
 }
