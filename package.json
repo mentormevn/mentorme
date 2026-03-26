@@ -1,23 +1,24 @@
 {
-  "name": "mentor-me",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "build": "node generate-config.js && next build",
-    "start": "node generate-config.js && set NODE_ENV=production&& node server.js",
-    "dev": "node generate-config.js && set NODE_ENV=development&& node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^16.6.1",
-    "express": "^5.2.1",
-    "next": "^16.2.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
-  }
+    "name":  "mentor-me",
+    "version":  "1.0.0",
+    "description":  "",
+    "main":  "next.config.js",
+    "scripts":  {
+                    "build":  "node generate-config.js \u0026\u0026 next build",
+                    "start":  "node generate-config.js \u0026\u0026 next start",
+                    "dev":  "node generate-config.js \u0026\u0026 next dev"
+                },
+    "keywords":  [
+
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "type":  "module",
+    "dependencies":  {
+                         "dotenv":  "^16.6.1",
+                         "next":  "^16.2.1",
+                         "react":  "^19.2.4",
+                         "react-dom":  "^19.2.4"
+                     }
 }
+

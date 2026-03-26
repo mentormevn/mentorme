@@ -94,7 +94,7 @@ function normalizeRole(role) {
 
 function formatRoleLabel(role) {
   if (role === "mentor") return "Mentor";
-  if (role === "admin") return "Nội bộ";
+  if (role === "admin") return "Ná»™i bá»™";
   return "Mentee";
 }
 
@@ -119,35 +119,35 @@ function getRoleCalendarPath(role) {
 
 function getRoleGoalLabel(role) {
   const normalizedRole = normalizeRole(role);
-  if (normalizedRole === "mentor") return "Định hướng mentoring";
-  if (normalizedRole === "admin") return "Phạm vi nội bộ";
-  return "Mục tiêu học tập";
+  if (normalizedRole === "mentor") return "Äá»‹nh hÆ°á»›ng mentoring";
+  if (normalizedRole === "admin") return "Pháº¡m vi ná»™i bá»™";
+  return "Má»¥c tiÃªu há»c táº­p";
 }
 
 function getRoleGoalPlaceholder(role) {
   const normalizedRole = normalizeRole(role);
   if (normalizedRole === "mentor") {
-    return "Ví dụ: Muốn hoàn thiện hồ sơ mentor, mở lịch nhận mentee và chuẩn hóa dịch vụ";
+    return "VÃ­ dá»¥: Muá»‘n hoÃ n thiá»‡n há»“ sÆ¡ mentor, má»Ÿ lá»‹ch nháº­n mentee vÃ  chuáº©n hÃ³a dá»‹ch vá»¥";
   }
 
   if (normalizedRole === "admin") {
-    return "Ví dụ: Theo dõi vận hành nội bộ, kiểm duyệt hồ sơ và xử lý các yêu cầu hệ thống";
+    return "VÃ­ dá»¥: Theo dÃµi váº­n hÃ nh ná»™i bá»™, kiá»ƒm duyá»‡t há»“ sÆ¡ vÃ  xá»­ lÃ½ cÃ¡c yÃªu cáº§u há»‡ thá»‘ng";
   }
 
-  return "Ví dụ: Muốn cải thiện speaking và tìm mentor buổi tối";
+  return "VÃ­ dá»¥: Muá»‘n cáº£i thiá»‡n speaking vÃ  tÃ¬m mentor buá»•i tá»‘i";
 }
 
 function getRoleBioPlaceholder(role) {
   const normalizedRole = normalizeRole(role);
   if (normalizedRole === "mentor") {
-    return "Chia sẻ ngắn về phong cách mentoring, điểm mạnh chuyên môn hoặc nhóm mentee bạn muốn đồng hành.";
+    return "Chia sáº» ngáº¯n vá» phong cÃ¡ch mentoring, Ä‘iá»ƒm máº¡nh chuyÃªn mÃ´n hoáº·c nhÃ³m mentee báº¡n muá»‘n Ä‘á»“ng hÃ nh.";
   }
 
   if (normalizedRole === "admin") {
-    return "Chia sẻ ngắn về vai trò nội bộ hoặc phạm vi phụ trách của tài khoản này.";
+    return "Chia sáº» ngáº¯n vá» vai trÃ² ná»™i bá»™ hoáº·c pháº¡m vi phá»¥ trÃ¡ch cá»§a tÃ i khoáº£n nÃ y.";
   }
 
-  return "Chia sẻ ngắn về nhu cầu học tập, điểm mạnh hoặc điều bạn đang cần hỗ trợ.";
+  return "Chia sáº» ngáº¯n vá» nhu cáº§u há»c táº­p, Ä‘iá»ƒm máº¡nh hoáº·c Ä‘iá»u báº¡n Ä‘ang cáº§n há»— trá»£.";
 }
 
 function slugifyText(value) {
@@ -161,28 +161,28 @@ function slugifyText(value) {
 
 function buildMentorAvailabilityText(availability) {
   const labels = {
-    sang: "Buổi sáng",
-    chieu: "Buổi chiều",
-    toi: "Buổi tối",
-    "cuoi-tuan": "Cuối tuần"
+    sang: "Buá»•i sÃ¡ng",
+    chieu: "Buá»•i chiá»u",
+    toi: "Buá»•i tá»‘i",
+    "cuoi-tuan": "Cuá»‘i tuáº§n"
   };
   const list = (availability || []).map(function (item) {
     return labels[item];
   }).filter(Boolean);
-  return list.length ? list.join(", ") : "Linh hoạt theo lịch hẹn";
+  return list.length ? list.join(", ") : "Linh hoáº¡t theo lá»‹ch háº¹n";
 }
 
 function buildMentorServiceText(services) {
   const labels = {
-    "1-1": "Mentor 1 kèm 1",
-    group: "mentor theo nhóm",
-    roadmap: "tư vấn lộ trình",
-    competition: "luyện thi/cuộc thi"
+    "1-1": "Mentor 1 kÃ¨m 1",
+    group: "mentor theo nhÃ³m",
+    roadmap: "tÆ° váº¥n lá»™ trÃ¬nh",
+    competition: "luyá»‡n thi/cuá»™c thi"
   };
   const list = (services || []).map(function (item) {
     return labels[item];
   }).filter(Boolean);
-  return list.length ? list.join(", ") : "Mentor 1 kèm 1";
+  return list.length ? list.join(", ") : "Mentor 1 kÃ¨m 1";
 }
 
 function buildMentorSearchableText(mentor) {
@@ -221,15 +221,20 @@ function getMentorContextForUser(user) {
     };
   }
 
+  const approvedStore = getApprovedMentorProfiles();
+  if (user && user.mentorProfileId) {
+    const linkedMentor = approvedStore[user.mentorProfileId] || mentorData[user.mentorProfileId] || null;
+    return {
+      mentorId: user.mentorProfileId,
+      mentorName: (linkedMentor && linkedMentor.name) || user.name || "Mentor"
+    };
+  }
+
   const savedProfile = getMentorProfileByUserId(user.id) || {};
-  const possibleNames = [
-    savedProfile.displayName,
-    user.name
-  ]
+  const possibleNames = [savedProfile.displayName, user.name]
     .map(slugifyText)
     .filter(Boolean);
-
-  const mentorEntry = Object.values(mentorData).find(function (mentor) {
+  const mentorEntry = getResolvedMentorList().find(function (mentor) {
     const mentorSlug = slugifyText(mentor.name);
     return possibleNames.some(function (nameSlug) {
       return mentorSlug === nameSlug || mentorSlug.includes(nameSlug) || nameSlug.includes(mentorSlug);
@@ -253,13 +258,13 @@ function createDemoSessionUser(accessCode) {
   if (normalizeEmail(accessCode) === DEMO_MENTEE_EMAIL) {
     return {
       id: "demo-mentee-do-thuy-trang",
-      name: "Đỗ Thùy Trang",
+      name: "Äá»— ThÃ¹y Trang",
       email: DEMO_MENTEE_EMAIL,
       phone: "",
-      goal: "Muốn học Văn buổi tối để cải thiện cách phân tích và viết bài chắc ý hơn.",
-      bio: "Tài khoản mentee giả lập để kiểm thử luồng đăng ký học với mentor.",
+      goal: "Muá»‘n há»c VÄƒn buá»•i tá»‘i Ä‘á»ƒ cáº£i thiá»‡n cÃ¡ch phÃ¢n tÃ­ch vÃ  viáº¿t bÃ i cháº¯c Ã½ hÆ¡n.",
+      bio: "TÃ i khoáº£n mentee giáº£ láº­p Ä‘á»ƒ kiá»ƒm thá»­ luá»“ng Ä‘Äƒng kÃ½ há»c vá»›i mentor.",
       role: "mentee",
-      avatar: createAvatarFallback("Đỗ Thùy Trang"),
+      avatar: createAvatarFallback("Äá»— ThÃ¹y Trang"),
       createdAt: new Date().toISOString(),
       isDemoAccount: true
     };
@@ -271,8 +276,8 @@ function createDemoSessionUser(accessCode) {
       name: "Admin Mentor Me",
       email: "mentorme.vn@gmail.com",
       phone: "",
-      goal: "Quản lý lead tư vấn, duyệt mentor và vận hành hệ thống",
-      bio: "Tài khoản admin dùng để kiểm thử luồng quản trị nội bộ.",
+      goal: "Quáº£n lÃ½ lead tÆ° váº¥n, duyá»‡t mentor vÃ  váº­n hÃ nh há»‡ thá»‘ng",
+      bio: "TÃ i khoáº£n admin dÃ¹ng Ä‘á»ƒ kiá»ƒm thá»­ luá»“ng quáº£n trá»‹ ná»™i bá»™.",
       role: "admin",
       avatar: createAvatarFallback("Admin Mentor Me"),
       createdAt: new Date().toISOString(),
@@ -285,7 +290,7 @@ function createDemoSessionUser(accessCode) {
 
 function formatDate(dateString) {
   const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "Hôm nay";
+  if (Number.isNaN(date.getTime())) return "HÃ´m nay";
 
   return date.toLocaleDateString("vi-VN", {
     day: "2-digit",
@@ -420,12 +425,12 @@ function ensureDemoBookingRequests() {
     mentorImage: demoMentor.image,
     mentorFocus: demoMentor.focus,
     menteeUserId: "demo-mentee-do-thuy-trang",
-    menteeName: "Đỗ Thùy Trang",
+    menteeName: "Äá»— ThÃ¹y Trang",
     menteeEmail: DEMO_MENTEE_EMAIL,
-    goal: "Muốn học Văn vào tối thứ 4 để cải thiện cách phân tích và viết bài mạch lạc hơn.",
-    preferredTime: "Tối thứ 4",
-    note: "Em muốn đăng ký mentor Nguyễn Tiến Dũng và cần người theo sát phần Văn, nhất là phân tích và lên ý.",
-    adminNote: "Lead demo để kiểm thử luồng admin - mentor - mentee.",
+    goal: "Muá»‘n há»c VÄƒn vÃ o tá»‘i thá»© 4 Ä‘á»ƒ cáº£i thiá»‡n cÃ¡ch phÃ¢n tÃ­ch vÃ  viáº¿t bÃ i máº¡ch láº¡c hÆ¡n.",
+    preferredTime: "Tá»‘i thá»© 4",
+    note: "Em muá»‘n Ä‘Äƒng kÃ½ mentor Nguyá»…n Tiáº¿n DÅ©ng vÃ  cáº§n ngÆ°á»i theo sÃ¡t pháº§n VÄƒn, nháº¥t lÃ  phÃ¢n tÃ­ch vÃ  lÃªn Ã½.",
+    adminNote: "Lead demo Ä‘á»ƒ kiá»ƒm thá»­ luá»“ng admin - mentor - mentee.",
     status: "pending",
     createdAt: "2026-03-26T07:00:00.000Z",
     updatedAt: "2026-03-26T07:00:00.000Z"
@@ -544,6 +549,114 @@ function clearAuthSession() {
   renderAuthArea(null);
 }
 
+async function buildApiHeaders(options = {}) {
+  const headers = Object.assign({}, options.headers || {});
+  const adminKey = options.adminKey || "";
+
+  if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
+  if (!options.skipAuth && !isDemoAccount(getCurrentUser()) && isSupabaseReady()) {
+    try {
+      const session = await getSupabaseSession();
+      if (session && session.access_token) {
+        headers.Authorization = "Bearer " + session.access_token;
+      }
+    } catch (error) {
+      // Ignore session lookup failures and continue with public/admin headers.
+    }
+  }
+
+  if (options.json !== false && options.body !== undefined && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  return headers;
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(path, {
+    method: options.method || "GET",
+    headers: await buildApiHeaders({
+      headers: options.headers,
+      adminKey: options.adminKey,
+      body: options.body,
+      skipAuth: options.skipAuth
+    }),
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || options.errorMessage || "Khong the xu ly yeu cau luc nay.");
+  }
+
+  return data;
+}
+
+function saveBusinessStateToStorage(state) {
+  if (state.approvedMentorProfiles) {
+    saveApprovedMentorProfiles(state.approvedMentorProfiles);
+  }
+
+  if (state.mentorSubmittedReviews) {
+    saveMentorSubmittedReviews(state.mentorSubmittedReviews);
+  }
+
+  if (state.mentorBookingRequests) {
+    saveBookingRequests(state.mentorBookingRequests);
+  }
+
+  if (state.pendingMentorProfileUpdates) {
+    savePendingMentorProfileUpdates(state.pendingMentorProfileUpdates);
+  }
+
+  if (state.mentorProfileDrafts) {
+    localStorage.setItem(MENTOR_PROFILE_STORAGE_KEY, JSON.stringify(state.mentorProfileDrafts));
+  }
+}
+
+function mergeMentorProfileIntoStore(mentorProfile) {
+  if (!mentorProfile || !mentorProfile.id) return;
+  const store = getApprovedMentorProfiles();
+  store[mentorProfile.id] = mentorProfile;
+  saveApprovedMentorProfiles(store);
+}
+
+function replaceBookingRequestInStore(request) {
+  if (!request || !request.id) return null;
+  const nextRequests = getBookingRequests().filter(function (item) {
+    return item.id !== request.id;
+  });
+  nextRequests.unshift(request);
+  saveBookingRequests(nextRequests);
+  return request;
+}
+
+function replaceMentorProfileUpdateInStore(request) {
+  if (!request || !request.id) return null;
+  const nextRequests = getPendingMentorProfileUpdates().filter(function (item) {
+    return item.id !== request.id;
+  });
+  nextRequests.unshift(request);
+  savePendingMentorProfileUpdates(nextRequests);
+  return request;
+}
+
+async function syncBusinessStateFromServer(options = {}) {
+  const state = await apiRequest("/api/business-state", {
+    adminKey: options.adminKey,
+    errorMessage: "Khong the dong bo du lieu he thong luc nay."
+  });
+
+  saveBusinessStateToStorage(state);
+  return state;
+}
+
 function showMessage(elementId, type, message) {
   const element = document.getElementById(elementId);
   if (!element) return;
@@ -593,7 +706,7 @@ function ensureSupabaseReady(messageElementId) {
     showMessage(
       messageElementId,
       "error",
-      "Cấu hình Supabase chưa sẵn sàng. Hãy kiểm tra lại SUPABASE_URL và SUPABASE_ANON_KEY trước khi sử dụng tính năng này."
+      "Cáº¥u hÃ¬nh Supabase chÆ°a sáºµn sÃ ng. HÃ£y kiá»ƒm tra láº¡i SUPABASE_URL vÃ  SUPABASE_ANON_KEY trÆ°á»›c khi sá»­ dá»¥ng tÃ­nh nÄƒng nÃ y."
     );
   }
 
@@ -624,21 +737,30 @@ async function getProfileByUserId(userId) {
     .maybeSingle();
 
   if (error) {
-    throw new Error(error.message || "Không thể tải hồ sơ từ Supabase.");
+    throw new Error(error.message || "KhÃ´ng thá»ƒ táº£i há»“ sÆ¡ tá»« Supabase.");
   }
 
   return data;
 }
 
 async function upsertProfile(profile) {
+  let existingProfile = null;
+
+  try {
+    existingProfile = profile && profile.id ? await getProfileByUserId(profile.id) : null;
+  } catch (error) {
+    existingProfile = null;
+  }
+
+  const payload = Object.assign({}, existingProfile || {}, profile);
   const { data, error } = await supabaseClient
     .from("profiles")
-    .upsert(profile, { onConflict: "id" })
+    .upsert(payload, { onConflict: "id" })
     .select()
     .single();
 
   if (error) {
-    throw new Error(error.message || "Không thể cập nhật hồ sơ.");
+    throw new Error(error.message || "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t hÃ¡Â»â€œ sÃ†Â¡.");
   }
 
   return data;
@@ -656,6 +778,7 @@ function buildSessionUser(authUser, profile) {
     bio: profileData.bio || "",
     role: role,
     avatar: profileData.avatar_url || createAvatarFallback(profileData.full_name || authUser.email || "MM"),
+    mentorProfileId: profileData.mentor_profile_id || "",
     createdAt: profileData.created_at || authUser.created_at || new Date().toISOString()
   };
 }
@@ -695,7 +818,7 @@ function togglePasswordVisibility(button) {
 
   const isPassword = input.type === "password";
   input.type = isPassword ? "text" : "password";
-  button.textContent = isPassword ? "Ẩn" : "Hiện";
+  button.textContent = isPassword ? "áº¨n" : "Hiá»‡n";
 }
 
 function initializePasswordToggles() {
@@ -719,8 +842,8 @@ function renderAuthArea(user) {
 
   if (!user) {
     authArea.innerHTML = `
-      <a href="login.html">Đăng nhập</a>
-      <a href="register.html" class="btn-register">Đăng ký</a>
+      <a href="login.html">ÄÄƒng nháº­p</a>
+      <a href="register.html" class="btn-register">ÄÄƒng kÃ½</a>
     `;
     return;
   }
@@ -730,24 +853,24 @@ function renderAuthArea(user) {
 
   if (normalizedRole === "mentor") {
     dropdownLinks = `
-      <a href="profile.html">Hồ sơ tài khoản</a>
-      <a href="mentor-dashboard.html">Hồ sơ mentor</a>
-      <a href="mentee-schedule.html">Lịch học</a>
-      <a href="mentor-accepted.html">Mentee đã nhận</a>
-      <a href="mentor-teaching-calendar.html">Lịch dạy</a>
-      <a href="mentor-requests.html">Mentee muốn đăng ký</a>
+      <a href="profile.html">Há»“ sÆ¡ tÃ i khoáº£n</a>
+      <a href="mentor-dashboard.html">Há»“ sÆ¡ mentor</a>
+      <a href="mentee-schedule.html">Lá»‹ch há»c</a>
+      <a href="mentor-accepted.html">Mentee Ä‘Ã£ nháº­n</a>
+      <a href="mentor-teaching-calendar.html">Lá»‹ch dáº¡y</a>
+      <a href="mentor-requests.html">Mentee muá»‘n Ä‘Äƒng kÃ½</a>
     `;
   } else if (normalizedRole === "admin") {
     dropdownLinks = `
-      <a href="profile.html">Hồ sơ nội bộ</a>
-      <a href="admin-consultations.html">Quản trị nội bộ</a>
-      <a href="mentor-dashboard.html">Hồ sơ mentor</a>
-      <a href="mentor-teaching-calendar.html">Lịch dạy</a>
+      <a href="profile.html">Há»“ sÆ¡ ná»™i bá»™</a>
+      <a href="admin-consultations.html">Quáº£n trá»‹ ná»™i bá»™</a>
+      <a href="mentor-dashboard.html">Há»“ sÆ¡ mentor</a>
+      <a href="mentor-teaching-calendar.html">Lá»‹ch dáº¡y</a>
     `;
   } else {
     dropdownLinks = `
-      <a href="profile.html">Hồ sơ mentee</a>
-      <a href="mentee-schedule.html">Lịch học</a>
+      <a href="profile.html">Há»“ sÆ¡ mentee</a>
+      <a href="mentee-schedule.html">Lá»‹ch há»c</a>
     `;
   }
 
@@ -758,7 +881,7 @@ function renderAuthArea(user) {
 
       <div class="dropdown">
         ${dropdownLinks}
-        <a href="#" id="logoutBtn">Đăng xuất</a>
+        <a href="#" id="logoutBtn">ÄÄƒng xuáº¥t</a>
       </div>
     </div>
   `;
@@ -800,13 +923,13 @@ document.addEventListener("click", function(e) {
 
   const dropdown = userMenu.querySelector(".dropdown");
 
-  // Nếu click đúng vào avatar hoặc tên → toggle
+  // Náº¿u click Ä‘Ãºng vÃ o avatar hoáº·c tÃªn â†’ toggle
   if (e.target.closest(".user-menu > img") || e.target.closest(".user-menu > span")) {
     dropdown.style.display =
       dropdown.style.display === "flex" ? "none" : "flex";
   }
 
-  // Nếu click ra ngoài → đóng
+  // Náº¿u click ra ngoÃ i â†’ Ä‘Ã³ng
   else if (!e.target.closest(".user-menu")) {
     dropdown.style.display = "none";
   }
@@ -848,71 +971,71 @@ if (searchInput) {
 const mentorData = {
   "tra-my": {
     id: "tra-my",
-    name: "BÙI VŨ TRÀ MY",
+    name: "BÃ™I VÅ¨ TRÃ€ MY",
     image: "mentorbuivutramy.jpg",
-    workplace: "Konkuk University - Top 12 Đại học Hàn Quốc",
-    tag: "Mentor ngoại ngữ và định hướng",
-    role: "Mentor tiếng Trung, ngoại ngữ, định hướng nghề nghiệp và kỹ năng mềm",
-    bio: "Bùi Vũ Trà My là du học sinh tại Hàn Quốc, có nền tảng hoạt động ngoại khóa mạnh và phù hợp với mentee cần đồng hành ở mảng ngoại ngữ, định hướng và kỹ năng mềm.",
-    focus: "Tiếng Trung, ngoại ngữ, định hướng nghề nghiệp, kỹ năng mềm",
+    workplace: "Konkuk University - Top 12 Äáº¡i há»c HÃ n Quá»‘c",
+    tag: "Mentor ngoáº¡i ngá»¯ vÃ  Ä‘á»‹nh hÆ°á»›ng",
+    role: "Mentor tiáº¿ng Trung, ngoáº¡i ngá»¯, Ä‘á»‹nh hÆ°á»›ng nghá» nghiá»‡p vÃ  ká»¹ nÄƒng má»m",
+    bio: "BÃ¹i VÅ© TrÃ  My lÃ  du há»c sinh táº¡i HÃ n Quá»‘c, cÃ³ ná»n táº£ng hoáº¡t Ä‘á»™ng ngoáº¡i khÃ³a máº¡nh vÃ  phÃ¹ há»£p vá»›i mentee cáº§n Ä‘á»“ng hÃ nh á»Ÿ máº£ng ngoáº¡i ngá»¯, Ä‘á»‹nh hÆ°á»›ng vÃ  ká»¹ nÄƒng má»m.",
+    focus: "Tiáº¿ng Trung, ngoáº¡i ngá»¯, Ä‘á»‹nh hÆ°á»›ng nghá» nghiá»‡p, ká»¹ nÄƒng má»m",
     field: "trung",
     availability: ["sang", "chieu", "toi", "cuoi-tuan"],
-    availabilityText: "Linh hoạt theo lịch hẹn",
+    availabilityText: "Linh hoáº¡t theo lá»‹ch háº¹n",
     service: ["1-1", "group", "roadmap"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn lộ trình",
+    serviceText: "Mentor 1 kÃ¨m 1, mentor theo nhÃ³m, tÆ° váº¥n lá»™ trÃ¬nh",
     achievements: [
-      "Đang là du học sinh Viện tiếng, Đại học Konkuk tại Hàn Quốc.",
-      "Phó Chủ nhiệm CLB Định hướng và Phát triển Khởi nghiệp Thành phố Cẩm Phả nhiệm kỳ 2024.",
-      "Đồng Trưởng ban tổ chức sự kiện gây quỹ thiện nguyện \"Mầm\" 2024 và tham gia nhiều dự án truyền thông, hướng nghiệp tại Quảng Ninh.",
-      "Hoàn thành các khóa đào tạo và chứng nhận chuyên môn từ WHO cùng khóa đào tạo giáo viên tiếng Trung ngắn hạn."
+      "Äang lÃ  du há»c sinh Viá»‡n tiáº¿ng, Äáº¡i há»c Konkuk táº¡i HÃ n Quá»‘c.",
+      "PhÃ³ Chá»§ nhiá»‡m CLB Äá»‹nh hÆ°á»›ng vÃ  PhÃ¡t triá»ƒn Khá»Ÿi nghiá»‡p ThÃ nh phá»‘ Cáº©m Pháº£ nhiá»‡m ká»³ 2024.",
+      "Äá»“ng TrÆ°á»Ÿng ban tá»• chá»©c sá»± kiá»‡n gÃ¢y quá»¹ thiá»‡n nguyá»‡n \"Máº§m\" 2024 vÃ  tham gia nhiá»u dá»± Ã¡n truyá»n thÃ´ng, hÆ°á»›ng nghiá»‡p táº¡i Quáº£ng Ninh.",
+      "HoÃ n thÃ nh cÃ¡c khÃ³a Ä‘Ã o táº¡o vÃ  chá»©ng nháº­n chuyÃªn mÃ´n tá»« WHO cÃ¹ng khÃ³a Ä‘Ã o táº¡o giÃ¡o viÃªn tiáº¿ng Trung ngáº¯n háº¡n."
     ],
-    fit: "Phù hợp với học sinh, sinh viên cần đồng hành về ngoại ngữ, định hướng nghề nghiệp, hoạt động ngoại khóa hoặc muốn học cùng một mentor giàu trải nghiệm thực tế.",
+    fit: "PhÃ¹ há»£p vá»›i há»c sinh, sinh viÃªn cáº§n Ä‘á»“ng hÃ nh vá» ngoáº¡i ngá»¯, Ä‘á»‹nh hÆ°á»›ng nghá» nghiá»‡p, hoáº¡t Ä‘á»™ng ngoáº¡i khÃ³a hoáº·c muá»‘n há»c cÃ¹ng má»™t mentor giÃ u tráº£i nghiá»‡m thá»±c táº¿.",
     searchableText: "tra my tieng trung ngoai ngu hsk du hoc han quoc dinh huong nghe nghiep ky nang mem hoat dong ngoai khoa truyen thong huong nghiep"
   },
   "tien-dung": {
     id: "tien-dung",
-    name: "NGUYỄN TIẾN DŨNG",
+    name: "NGUYá»„N TIáº¾N DÅ¨NG",
     image: "mentor2.jpg",
-    workplace: "Học viện Báo chí và Tuyên truyền - Chuyên ngành Truyền thông chính sách",
-    tag: "Mentor Ngữ văn, truyền thông và hồ sơ",
-    role: "Mentor Ngữ văn, truyền thông, thuyết trình và hoạt động ngoại khóa",
-    bio: "Nguyễn Tiến Dũng hiện theo học chuyên ngành Truyền thông chính sách tại Học viện Báo chí và Tuyên truyền, có nền tảng học thuật mạnh ở môn Ngữ văn và nhiều trải nghiệm thực tế trong truyền thông, tổ chức hoạt động học sinh.",
-    focus: "Ngữ văn, truyền thông, thuyết trình, hoạt động ngoại khóa",
+    workplace: "Há»c viá»‡n BÃ¡o chÃ­ vÃ  TuyÃªn truyá»n - ChuyÃªn ngÃ nh Truyá»n thÃ´ng chÃ­nh sÃ¡ch",
+    tag: "Mentor Ngá»¯ vÄƒn, truyá»n thÃ´ng vÃ  há»“ sÆ¡",
+    role: "Mentor Ngá»¯ vÄƒn, truyá»n thÃ´ng, thuyáº¿t trÃ¬nh vÃ  hoáº¡t Ä‘á»™ng ngoáº¡i khÃ³a",
+    bio: "Nguyá»…n Tiáº¿n DÅ©ng hiá»‡n theo há»c chuyÃªn ngÃ nh Truyá»n thÃ´ng chÃ­nh sÃ¡ch táº¡i Há»c viá»‡n BÃ¡o chÃ­ vÃ  TuyÃªn truyá»n, cÃ³ ná»n táº£ng há»c thuáº­t máº¡nh á»Ÿ mÃ´n Ngá»¯ vÄƒn vÃ  nhiá»u tráº£i nghiá»‡m thá»±c táº¿ trong truyá»n thÃ´ng, tá»• chá»©c hoáº¡t Ä‘á»™ng há»c sinh.",
+    focus: "Ngá»¯ vÄƒn, truyá»n thÃ´ng, thuyáº¿t trÃ¬nh, hoáº¡t Ä‘á»™ng ngoáº¡i khÃ³a",
     field: "van",
     availability: ["sang", "chieu", "toi", "cuoi-tuan"],
-    availabilityText: "Linh hoạt theo lịch hẹn",
+    availabilityText: "Linh hoáº¡t theo lá»‹ch háº¹n",
     service: ["1-1", "group", "roadmap", "competition"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn định hướng, đồng hành hoạt động và cuộc thi",
+    serviceText: "Mentor 1 kÃ¨m 1, mentor theo nhÃ³m, tÆ° váº¥n Ä‘á»‹nh hÆ°á»›ng, Ä‘á»“ng hÃ nh hoáº¡t Ä‘á»™ng vÃ  cuá»™c thi",
     achievements: [
-      "Học sinh giỏi Tỉnh môn Ngữ văn cấp THPT năm học 2023 - 2024 và 2024 - 2025, cùng danh hiệu Học sinh giỏi Thành phố môn Ngữ văn cấp THCS năm học 2021 - 2022.",
-      "Giải Nhất thuyết trình Ngày hội Văn hóa Đọc năm học 2024 - 2025.",
-      "Giải Nhì cuộc thi Sáng kiến phòng, chống bạo lực học đường năm học 2024 - 2025.",
-      "Thành viên ACC - Câu lạc bộ truyền thông Học viện Báo chí và Tuyên truyền, thành viên Đội Báo chí - Truyền thông Spotlight 2025 và Trưởng ban Nội dung HS14 năm 2023 - 2024."
+      "Há»c sinh giá»i Tá»‰nh mÃ´n Ngá»¯ vÄƒn cáº¥p THPT nÄƒm há»c 2023 - 2024 vÃ  2024 - 2025, cÃ¹ng danh hiá»‡u Há»c sinh giá»i ThÃ nh phá»‘ mÃ´n Ngá»¯ vÄƒn cáº¥p THCS nÄƒm há»c 2021 - 2022.",
+      "Giáº£i Nháº¥t thuyáº¿t trÃ¬nh NgÃ y há»™i VÄƒn hÃ³a Äá»c nÄƒm há»c 2024 - 2025.",
+      "Giáº£i NhÃ¬ cuá»™c thi SÃ¡ng kiáº¿n phÃ²ng, chá»‘ng báº¡o lá»±c há»c Ä‘Æ°á»ng nÄƒm há»c 2024 - 2025.",
+      "ThÃ nh viÃªn ACC - CÃ¢u láº¡c bá»™ truyá»n thÃ´ng Há»c viá»‡n BÃ¡o chÃ­ vÃ  TuyÃªn truyá»n, thÃ nh viÃªn Äá»™i BÃ¡o chÃ­ - Truyá»n thÃ´ng Spotlight 2025 vÃ  TrÆ°á»Ÿng ban Ná»™i dung HS14 nÄƒm 2023 - 2024."
     ],
-    fit: "Phù hợp với học sinh cần học tốt môn Văn, muốn cải thiện kỹ năng thuyết trình, tham gia hoạt động ngoại khóa, làm truyền thông học đường hoặc xây dựng hồ sơ cá nhân chỉn chu hơn.",
+    fit: "PhÃ¹ há»£p vá»›i há»c sinh cáº§n há»c tá»‘t mÃ´n VÄƒn, muá»‘n cáº£i thiá»‡n ká»¹ nÄƒng thuyáº¿t trÃ¬nh, tham gia hoáº¡t Ä‘á»™ng ngoáº¡i khÃ³a, lÃ m truyá»n thÃ´ng há»c Ä‘Æ°á»ng hoáº·c xÃ¢y dá»±ng há»“ sÆ¡ cÃ¡ nhÃ¢n chá»‰n chu hÆ¡n.",
     searchableText: "nguyen tien dung ngu van van hoc truyen thong thuyet trinh ky nang mem hoat dong ngoai khoa hoc vien bao chi truyen thong chinh sach spotlight hs14 ho so"
   },
   "thuy-trang": {
     id: "thuy-trang",
-    name: "ĐỖ THÙY TRANG",
+    name: "Äá»– THÃ™Y TRANG",
     image: "mentor3.jpg",
-    workplace: "Trường Đại học Kinh tế - Đại học Quốc gia Hà Nội",
-    tag: "Mentor định hướng và kỹ năng mềm",
-    role: "Mentor định hướng nghề nghiệp, kỹ năng mềm và hoạt động ngoại khóa",
-    bio: "Đỗ Thùy Trang nổi bật ở hoạt động Đoàn - Hội, tổ chức sự kiện, khởi nghiệp và định hướng phát triển cá nhân cho học sinh, sinh viên.",
-    focus: "Định hướng nghề nghiệp, kỹ năng mềm, hoạt động ngoại khóa",
+    workplace: "TrÆ°á»ng Äáº¡i há»c Kinh táº¿ - Äáº¡i há»c Quá»‘c gia HÃ  Ná»™i",
+    tag: "Mentor Ä‘á»‹nh hÆ°á»›ng vÃ  ká»¹ nÄƒng má»m",
+    role: "Mentor Ä‘á»‹nh hÆ°á»›ng nghá» nghiá»‡p, ká»¹ nÄƒng má»m vÃ  hoáº¡t Ä‘á»™ng ngoáº¡i khÃ³a",
+    bio: "Äá»— ThÃ¹y Trang ná»•i báº­t á»Ÿ hoáº¡t Ä‘á»™ng ÄoÃ n - Há»™i, tá»• chá»©c sá»± kiá»‡n, khá»Ÿi nghiá»‡p vÃ  Ä‘á»‹nh hÆ°á»›ng phÃ¡t triá»ƒn cÃ¡ nhÃ¢n cho há»c sinh, sinh viÃªn.",
+    focus: "Äá»‹nh hÆ°á»›ng nghá» nghiá»‡p, ká»¹ nÄƒng má»m, hoáº¡t Ä‘á»™ng ngoáº¡i khÃ³a",
     field: "ky-nang",
     availability: ["sang", "chieu", "toi", "cuoi-tuan"],
-    availabilityText: "Linh hoạt theo lịch hẹn",
+    availabilityText: "Linh hoáº¡t theo lá»‹ch háº¹n",
     service: ["1-1", "group", "roadmap", "competition"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn định hướng, đồng hành hoạt động",
+    serviceText: "Mentor 1 kÃ¨m 1, mentor theo nhÃ³m, tÆ° váº¥n Ä‘á»‹nh hÆ°á»›ng, Ä‘á»“ng hÃ nh hoáº¡t Ä‘á»™ng",
     achievements: [
-      "Chủ nhiệm CLB Định hướng và Phát triển khởi nghiệp thành phố Cẩm Phả nhiệm kỳ 2024 và 2024 - 2025.",
-      "Ủy viên Ủy ban Hội LHTN Việt Nam thành phố Cẩm Phả khóa V, nhiệm kỳ 2024 - 2029 và đại biểu tham dự Đại hội Đại biểu Hội LHTN Việt Nam tỉnh Quảng Ninh lần thứ VII.",
-      "Trưởng ban tổ chức các mùa sự kiện gây quỹ thiện nguyện \"Mầm\" và sự kiện hướng nghiệp cho hơn 200 học sinh THPT tại thành phố Cẩm Phả.",
-      "Đạt nhiều giấy khen, bằng khen cấp thành phố, tỉnh và Trung ương Đoàn về công tác Đoàn - Hội, khởi nghiệp và dự án cộng đồng."
+      "Chá»§ nhiá»‡m CLB Äá»‹nh hÆ°á»›ng vÃ  PhÃ¡t triá»ƒn khá»Ÿi nghiá»‡p thÃ nh phá»‘ Cáº©m Pháº£ nhiá»‡m ká»³ 2024 vÃ  2024 - 2025.",
+      "á»¦y viÃªn á»¦y ban Há»™i LHTN Viá»‡t Nam thÃ nh phá»‘ Cáº©m Pháº£ khÃ³a V, nhiá»‡m ká»³ 2024 - 2029 vÃ  Ä‘áº¡i biá»ƒu tham dá»± Äáº¡i há»™i Äáº¡i biá»ƒu Há»™i LHTN Viá»‡t Nam tá»‰nh Quáº£ng Ninh láº§n thá»© VII.",
+      "TrÆ°á»Ÿng ban tá»• chá»©c cÃ¡c mÃ¹a sá»± kiá»‡n gÃ¢y quá»¹ thiá»‡n nguyá»‡n \"Máº§m\" vÃ  sá»± kiá»‡n hÆ°á»›ng nghiá»‡p cho hÆ¡n 200 há»c sinh THPT táº¡i thÃ nh phá»‘ Cáº©m Pháº£.",
+      "Äáº¡t nhiá»u giáº¥y khen, báº±ng khen cáº¥p thÃ nh phá»‘, tá»‰nh vÃ  Trung Æ°Æ¡ng ÄoÃ n vá» cÃ´ng tÃ¡c ÄoÃ n - Há»™i, khá»Ÿi nghiá»‡p vÃ  dá»± Ã¡n cá»™ng Ä‘á»“ng."
     ],
-    fit: "Phù hợp với mentee muốn được định hướng nghề nghiệp, phát triển kỹ năng mềm, xây hồ sơ hoạt động, tổ chức dự án và nâng cao sự tự tin khi tham gia cộng đồng.",
+    fit: "PhÃ¹ há»£p vá»›i mentee muá»‘n Ä‘Æ°á»£c Ä‘á»‹nh hÆ°á»›ng nghá» nghiá»‡p, phÃ¡t triá»ƒn ká»¹ nÄƒng má»m, xÃ¢y há»“ sÆ¡ hoáº¡t Ä‘á»™ng, tá»• chá»©c dá»± Ã¡n vÃ  nÃ¢ng cao sá»± tá»± tin khi tham gia cá»™ng Ä‘á»“ng.",
     searchableText: "do thuy trang dinh huong nghe nghiep ky nang mem hoat dong ngoai khoa khoi nghiep to chuc su kien doan hoi kinh te quoc gia"
   }
 };
@@ -1040,6 +1163,11 @@ function getAcceptedStudentCountForMentor(mentorId) {
 function getResolvedMentorById(mentorId) {
   const approvedStore = getApprovedMentorProfiles();
   const approvedProfile = approvedStore[mentorId] || {};
+
+  if (approvedProfile && approvedProfile._source === "supabase") {
+    return Object.assign({}, mentorData[mentorId] || {}, approvedProfile);
+  }
+
   const baseMentor = mentorData[mentorId] || (approvedProfile._origin === "admin" ? approvedProfile : null);
   if (!baseMentor) return null;
   const experience = mentorExperienceData[mentorId] || {};
@@ -1089,7 +1217,7 @@ function getResolvedMentorList() {
   const approvedStore = getApprovedMentorProfiles();
   const baseIds = Object.keys(mentorData);
   const extraIds = Object.keys(approvedStore).filter(function (mentorId) {
-    return !mentorData[mentorId] && approvedStore[mentorId] && approvedStore[mentorId]._origin === "admin";
+    return !mentorData[mentorId];
   });
   return baseIds.concat(extraIds)
     .map(function (mentorId) {
@@ -1100,13 +1228,13 @@ function getResolvedMentorList() {
 
 function renderMentorStatsBadge(mentor) {
   return `
-    <div class="mentor-stats-badge" aria-label="Đánh giá và số học sinh">
+    <div class="mentor-stats-badge" aria-label="ÄÃ¡nh giÃ¡ vÃ  sá»‘ há»c sinh">
       <span class="mentor-stats-pill">
-        <span class="mentor-stats-star">★</span>
+        <span class="mentor-stats-star">â˜…</span>
         <strong>${Number(mentor.rating || 0).toFixed(1)}</strong>
       </span>
       <span class="mentor-stats-pill">
-        <img src="personicon.png" alt="Số học sinh">
+        <img src="personicon.png" alt="Sá»‘ há»c sinh">
         <strong>${mentor.studentsTaught || 0}</strong>
       </span>
     </div>
@@ -1115,7 +1243,7 @@ function renderMentorStatsBadge(mentor) {
 
 function renderReviewStars(rating) {
   const fullStars = Math.max(1, Math.round(Number(rating || 0)));
-  return "★".repeat(Math.min(fullStars, 5)) + "☆".repeat(Math.max(0, 5 - Math.min(fullStars, 5)));
+  return "â˜…".repeat(Math.min(fullStars, 5)) + "â˜†".repeat(Math.max(0, 5 - Math.min(fullStars, 5)));
 }
 
 function createMentorCard(mentor) {
@@ -1136,13 +1264,13 @@ function createMentorCard(mentor) {
         <h3>${safeMentor.name}</h3>
         <div class="mentor-card-rating-line">
           <span>${Number(safeMentor.rating || 0).toFixed(1)} / 5 sao</span>
-          <span>${safeMentor.studentsTaught || 0} học sinh</span>
+          <span>${safeMentor.studentsTaught || 0} há»c sinh</span>
         </div>
         <div class="mentor-card-achievements">
-          <p>Thành tích nổi bật</p>
+          <p>ThÃ nh tÃ­ch ná»•i báº­t</p>
           <ul>${achievementItems}</ul>
         </div>
-        <span class="mentor-card-cta">Xem hồ sơ chi tiết</span>
+        <span class="mentor-card-cta">Xem há»“ sÆ¡ chi tiáº¿t</span>
       </div>
     </a>
   `;
@@ -1181,15 +1309,15 @@ function renderMentorList(mentors, keyword, page) {
   if (!mentors.length) {
     mentorGrid.innerHTML = `
       <div class="mentor-empty-state">
-        <h3>Chưa có mentor khớp hoàn toàn</h3>
-        <p>Bạn có thể đổi cách mô tả ở ô tìm kiếm hoặc nới lỏng bộ lọc để xem thêm mentor phù hợp.</p>
+        <h3>ChÆ°a cÃ³ mentor khá»›p hoÃ n toÃ n</h3>
+        <p>Báº¡n cÃ³ thá»ƒ Ä‘á»•i cÃ¡ch mÃ´ táº£ á»Ÿ Ã´ tÃ¬m kiáº¿m hoáº·c ná»›i lá»ng bá»™ lá»c Ä‘á»ƒ xem thÃªm mentor phÃ¹ há»£p.</p>
       </div>
     `;
     typeTextSlowly(
       summary,
       keyword
-        ? `Không tìm thấy mentor phù hợp cho: "${keyword}".`
-        : "Hiện chưa có mentor phù hợp với bộ lọc bạn chọn.",
+        ? `KhÃ´ng tÃ¬m tháº¥y mentor phÃ¹ há»£p cho: "${keyword}".`
+        : "Hiá»‡n chÆ°a cÃ³ mentor phÃ¹ há»£p vá»›i bá»™ lá»c báº¡n chá»n.",
       26
     );
     pagination.hidden = true;
@@ -1209,8 +1337,8 @@ function renderMentorList(mentors, keyword, page) {
   typeTextSlowly(
     summary,
     keyword
-      ? `Tìm thấy ${mentors.length} mentor phù hợp với mô tả: "${keyword}". Trang ${safePage}/${totalPages}.`
-      : `Đang hiển thị ${mentors.length} mentor phù hợp. Trang ${safePage}/${totalPages}.`,
+      ? `TÃ¬m tháº¥y ${mentors.length} mentor phÃ¹ há»£p vá»›i mÃ´ táº£: "${keyword}". Trang ${safePage}/${totalPages}.`
+      : `Äang hiá»ƒn thá»‹ ${mentors.length} mentor phÃ¹ há»£p. Trang ${safePage}/${totalPages}.`,
     26
   );
 }
@@ -1381,8 +1509,8 @@ function renderMentorDetail() {
   nameElement.textContent = mentor.name;
   document.getElementById("mentorDetailHeadline").textContent = mentor.role;
   document.getElementById("mentorDetailRating").textContent = Number(mentor.rating || 0).toFixed(1) + " / 5 sao";
-  document.getElementById("mentorDetailStudents").textContent = (mentor.studentsTaught || 0) + " học sinh";
-  document.getElementById("mentorDetailWorkplace").textContent = mentor.workplace || "Đang cập nhật";
+  document.getElementById("mentorDetailStudents").textContent = (mentor.studentsTaught || 0) + " há»c sinh";
+  document.getElementById("mentorDetailWorkplace").textContent = mentor.workplace || "Äang cáº­p nháº­t";
   document.getElementById("mentorDetailFocus").textContent = mentor.focus;
   document.getElementById("mentorDetailAvailability").textContent = mentor.availabilityText;
   document.getElementById("mentorDetailService").textContent = mentor.serviceText;
@@ -1419,8 +1547,8 @@ function renderMentorDetail() {
         }).join("")
       : `
           <div class="admin-empty-state">
-            <h3>Chưa có đánh giá</h3>
-            <p>Phần nhận xét từ mentee sẽ hiển thị tại đây khi mentor có thêm review thực tế.</p>
+            <h3>ChÆ°a cÃ³ Ä‘Ã¡nh giÃ¡</h3>
+            <p>Pháº§n nháº­n xÃ©t tá»« mentee sáº½ hiá»ƒn thá»‹ táº¡i Ä‘Ã¢y khi mentor cÃ³ thÃªm review thá»±c táº¿.</p>
           </div>
         `;
   }
@@ -1452,7 +1580,7 @@ function initializeBookingPage() {
     if (goalInput) goalInput.value = currentUser.goal || "";
   }
 
-  bookingForm.addEventListener("submit", function (e) {
+  bookingForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const name = document.getElementById("bookingName").value.trim();
@@ -1461,266 +1589,168 @@ function initializeBookingPage() {
     const time = document.getElementById("bookingTime").value;
     const note = document.getElementById("bookingNote").value.trim();
     const successBox = document.getElementById("bookingSuccessMessage");
-    const createdAt = new Date().toISOString();
 
-    const bookingRequest = {
-      id: "booking-" + Date.now(),
-      mentorId: mentor.id,
-      mentorName: mentor.name,
-      mentorImage: mentor.image,
-      mentorFocus: mentor.focus,
-      menteeUserId: currentUser && normalizeRole(currentUser.role) === "mentee" ? currentUser.id : "",
-      menteeName: name,
-      menteeEmail: email,
-      goal: goal,
-      preferredTime: time,
-      note: note,
-      status: "pending",
-      createdAt: createdAt,
-      updatedAt: createdAt
-    };
+    try {
+      const createdRequest = await submitBookingRequest({
+        mentorId: mentor.id,
+        menteeName: name,
+        menteeEmail: email,
+        goal: goal,
+        preferredTime: time,
+        note: note
+      });
+      replaceBookingRequestInStore(createdRequest);
 
-    addBookingRequest(bookingRequest);
+      successBox.hidden = false;
+      successBox.innerHTML = `
+        YÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c gÃ¡Â»Â­i tÃ¡Â»â€ºi <strong>${mentor.name}</strong>.<br>
+        NgÃ†Â°Ã¡Â»Âi gÃ¡Â»Â­i: <strong>${name}</strong> (${email})<br>
+        MÃ¡Â»Â¥c tiÃƒÂªu: <strong>${goal}</strong><br>
+        ThÃ¡Â»Âi gian mong muÃ¡Â»â€˜n: <strong>${time}</strong>${note ? `<br>Ghi chÃƒÂº: <strong>${note}</strong>` : ""}
+        ${currentUser && normalizeRole(currentUser.role) === "mentee" ? '<br><a href="mentee-schedule.html">Xem lÃ¡Â»â€¹ch hÃ¡Â»Âc cÃ¡Â»Â§a tÃƒÂ´i</a>' : ""}
+      `;
 
-    successBox.hidden = false;
-    successBox.innerHTML = `
-      Yêu cầu đã được gửi tới <strong>${mentor.name}</strong>.<br>
-      Người gửi: <strong>${name}</strong> (${email})<br>
-      Mục tiêu: <strong>${goal}</strong><br>
-      Thời gian mong muốn: <strong>${time}</strong>${note ? `<br>Ghi chú: <strong>${note}</strong>` : ""}
-      ${currentUser && normalizeRole(currentUser.role) === "mentee" ? '<br><a href="mentee-schedule.html">Xem lịch học của tôi</a>' : ""}
-    `;
-
-    bookingForm.reset();
-    if (currentUser) {
-      document.getElementById("bookingName").value = currentUser.name || "";
-      document.getElementById("bookingEmail").value = currentUser.email || "";
-      document.getElementById("bookingGoal").value = currentUser.goal || "";
+      bookingForm.reset();
+      if (currentUser) {
+        document.getElementById("bookingName").value = currentUser.name || "";
+        document.getElementById("bookingEmail").value = currentUser.email || "";
+        document.getElementById("bookingGoal").value = currentUser.goal || "";
+      }
+    } catch (error) {
+      successBox.hidden = false;
+      successBox.textContent = error.message || "KhÃƒÂ´ng thÃ¡Â»Æ’ gÃ¡Â»Â­i yÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜Ã¡ÂºÂ·t lÃ¡Â»â€¹ch lÃƒÂºc nÃƒÂ y.";
     }
   });
 }
 
 async function submitConsultationRequest(payload) {
-  const response = await fetch("/api/consultation-requests", {
+  return apiRequest("/api/consultation-requests", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
+    body: payload,
+    skipAuth: true,
+    errorMessage: "Khong the gui yeu cau tu van luc nay."
   });
-
-  const data = await response.json().catch(function () {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || "Không thể gửi yêu cầu tư vấn lúc này.");
-  }
-
-  return data;
 }
 
 async function submitMentorApplication(payload) {
-  const response = await fetch("/api/mentor-applications", {
+  return apiRequest("/api/mentor-applications", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
+    body: payload,
+    skipAuth: true,
+    errorMessage: "Khong the gui ho so ung tuyen mentor luc nay."
   });
-
-  const data = await response.json().catch(function () {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || "Không thể gửi hồ sơ ứng tuyển mentor lúc này.");
-  }
-
-  return data;
 }
 
 async function activateMentorApplication(payload) {
-  const response = await fetch("/api/mentor-applications/activate", {
+  return apiRequest("/api/mentor-applications/activate", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
+    body: payload,
+    errorMessage: "Khong the xac nhan kich hoat mentor."
   });
-
-  const data = await response.json().catch(function () {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || "Không thể xác nhận kích hoạt mentor.");
-  }
-
-  return data;
 }
 
 async function verifyMentorActivation(payload) {
-  const response = await fetch("/api/mentor-applications/verify-activation", {
+  return apiRequest("/api/mentor-applications/verify-activation", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await response.json().catch(function () {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || "Không thể xác minh mã kích hoạt mentor.");
-  }
-
-  return data;
-}
-
-function initializeConsultationRequestForm() {
-  const form = document.getElementById("consultationRequestForm");
-  if (!form) return;
-
-  form.addEventListener("submit", async function (e) {
-    e.preventDefault();
-    clearMessage("consultationMessage");
-
-    const payload = {
-      name: normalizeWhitespace(document.getElementById("consultationName").value),
-      email: normalizeEmail(document.getElementById("consultationEmail").value),
-      phone: normalizePhone(document.getElementById("consultationPhone").value),
-      serviceType: normalizeWhitespace(document.getElementById("consultationServiceType").value),
-      audience: normalizeWhitespace(document.getElementById("consultationAudience").value),
-      goal: normalizeWhitespace(document.getElementById("consultationGoal").value),
-      preferredFormat: normalizeWhitespace(document.getElementById("consultationPreferredFormat").value),
-      preferredChannel: normalizeWhitespace(document.getElementById("consultationPreferredChannel").value),
-      preferredTime: normalizeWhitespace(document.getElementById("consultationPreferredTime").value),
-      note: normalizeWhitespace(document.getElementById("consultationNote").value)
-    };
-
-    if (payload.name.length < 2) {
-      showMessage("consultationMessage", "error", "Vui lòng nhập họ và tên hợp lệ.");
-      return;
-    }
-
-    if (!payload.email.includes("@")) {
-      showMessage("consultationMessage", "error", "Email chưa đúng định dạng.");
-      return;
-    }
-
-    if (payload.phone.length < 10) {
-      showMessage("consultationMessage", "error", "Số điện thoại cần có ít nhất 10 chữ số.");
-      return;
-    }
-
-    if (!payload.serviceType) {
-      showMessage("consultationMessage", "error", "Vui lòng chọn dịch vụ bạn quan tâm.");
-      return;
-    }
-
-    if (payload.goal.length < 10) {
-      showMessage("consultationMessage", "error", "Hãy mô tả nhu cầu chi tiết hơn để đội ngũ tư vấn hỗ trợ chính xác.");
-      return;
-    }
-
-    if (!payload.preferredFormat) {
-      showMessage("consultationMessage", "error", "Vui lòng chọn hình thức muốn được tư vấn.");
-      return;
-    }
-
-    try {
-      await submitConsultationRequest(payload);
-      form.reset();
-      showMessage(
-        "consultationMessage",
-        "success",
-        "Yêu cầu tư vấn đã được gửi. Đội ngũ Mentor Me sẽ liên hệ và sắp xếp buổi tư vấn online nếu phù hợp."
-      );
-    } catch (error) {
-      showMessage("consultationMessage", "error", error.message);
-    }
+    body: payload,
+    skipAuth: true,
+    errorMessage: "Khong the xac minh ma kich hoat mentor."
   });
 }
 
 async function fetchAdminConsultationRequests(adminKey) {
-  const response = await fetch("/api/admin/consultation-requests", {
-    headers: {
-      "X-Admin-Key": adminKey
-    }
+  const data = await apiRequest("/api/admin/consultation-requests", {
+    adminKey: adminKey,
+    skipAuth: true,
+    errorMessage: "Khong the tai danh sach yeu cau tu van."
   });
-
-  const data = await response.json().catch(function () {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || "Không thể tải danh sách yêu cầu tư vấn.");
-  }
-
   return data.requests || [];
 }
 
 async function fetchAdminMentorApplications(adminKey) {
-  const response = await fetch("/api/admin/mentor-applications", {
-    headers: {
-      "X-Admin-Key": adminKey
-    }
+  const data = await apiRequest("/api/admin/mentor-applications", {
+    adminKey: adminKey,
+    skipAuth: true,
+    errorMessage: "Khong the tai danh sach ung tuyen mentor."
   });
-
-  const data = await response.json().catch(function () {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || "Không thể tải danh sách ứng tuyển mentor.");
-  }
-
   return data.applications || [];
 }
 
 async function updateAdminConsultationRequest(adminKey, requestId, payload) {
-  const response = await fetch("/api/admin/consultation-requests/" + requestId, {
+  const data = await apiRequest("/api/admin/consultation-requests/" + requestId, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Admin-Key": adminKey
-    },
-    body: JSON.stringify(payload)
+    adminKey: adminKey,
+    body: payload,
+    skipAuth: true,
+    errorMessage: "Khong the cap nhat yeu cau tu van."
   });
-
-  const data = await response.json().catch(function () {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || "Không thể cập nhật yêu cầu tư vấn.");
-  }
-
   return data.request;
 }
 
 async function updateAdminMentorApplication(adminKey, applicationId, payload) {
-  const response = await fetch("/api/admin/mentor-applications/" + applicationId, {
+  const data = await apiRequest("/api/admin/mentor-applications/" + applicationId, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Admin-Key": adminKey
-    },
-    body: JSON.stringify(payload)
+    adminKey: adminKey,
+    body: payload,
+    skipAuth: true,
+    errorMessage: "Khong the cap nhat ho so ung tuyen mentor."
   });
-
-  const data = await response.json().catch(function () {
-    return {};
-  });
-
-  if (!response.ok) {
-    throw new Error(data.message || "Không thể cập nhật hồ sơ ứng tuyển mentor.");
-  }
-
   return data.application;
+}
+
+async function submitBookingRequest(payload) {
+  const data = await apiRequest("/api/booking-requests", {
+    method: "POST",
+    body: payload,
+    errorMessage: "Khong the gui yeu cau dat lich luc nay."
+  });
+  return data.request;
+}
+
+async function updateBookingRequestRemote(requestId, payload, options = {}) {
+  return apiRequest("/api/booking-requests/" + requestId, {
+    method: "PUT",
+    body: payload,
+    adminKey: options.adminKey,
+    skipAuth: Boolean(options.adminKey),
+    errorMessage: "Khong the cap nhat dang ky hoc voi mentor luc nay."
+  });
+}
+
+async function submitMentorReview(payload) {
+  return apiRequest("/api/reviews", {
+    method: "POST",
+    body: payload,
+    errorMessage: "Khong the gui danh gia mentor luc nay."
+  });
+}
+
+async function submitMentorProfileUpdateRemote(payload) {
+  return apiRequest("/api/mentor-profile-updates", {
+    method: "POST",
+    body: payload,
+    errorMessage: "Khong the gui cap nhat ho so mentor luc nay."
+  });
+}
+
+async function updateAdminMentorProfileUpdateRemote(adminKey, requestId, payload) {
+  return apiRequest("/api/admin/mentor-profile-updates/" + requestId, {
+    method: "PUT",
+    adminKey: adminKey,
+    body: payload,
+    skipAuth: true,
+    errorMessage: "Khong the cap nhat yeu cau ho so mentor luc nay."
+  });
+}
+
+async function createAdminMentorProfileRemote(adminKey, payload) {
+  return apiRequest("/api/admin/mentor-profiles", {
+    method: "POST",
+    adminKey: adminKey,
+    body: payload,
+    skipAuth: true,
+    errorMessage: "Khong the tao mentor moi luc nay."
+  });
 }
 
 function buildAdminConsultationCard(request) {
@@ -1728,18 +1758,18 @@ function buildAdminConsultationCard(request) {
   const safeEmail = escapeHtml(request.email);
   const safePhone = escapeHtml(request.phone);
   const safeServiceType = escapeHtml(request.serviceType);
-  const safeAudience = escapeHtml(request.audience || "Chưa chọn");
+  const safeAudience = escapeHtml(request.audience || "ChÆ°a chá»n");
   const safePreferredFormat = escapeHtml(request.preferredFormat);
-  const safePreferredChannel = escapeHtml(request.preferredChannel || "Chưa chọn");
-  const safePreferredTime = escapeHtml(request.preferredTime || "Chưa cập nhật");
+  const safePreferredChannel = escapeHtml(request.preferredChannel || "ChÆ°a chá»n");
+  const safePreferredTime = escapeHtml(request.preferredTime || "ChÆ°a cáº­p nháº­t");
   const safeGoal = escapeHtml(request.goal);
-  const safeNote = escapeHtml(request.note || "Không có ghi chú thêm.");
+  const safeNote = escapeHtml(request.note || "KhÃ´ng cÃ³ ghi chÃº thÃªm.");
   const safeAdminNote = escapeHtml(request.adminNote || "");
   const safeMeetingLink = escapeHtml(request.meetingLink || "");
   const safeStatus = escapeHtml(request.status);
   const meetingLinkHtml = request.meetingLink
     ? `<a href="${safeMeetingLink}" target="_blank" rel="noreferrer">${safeMeetingLink}</a>`
-    : "<span>Chưa có link online</span>";
+    : "<span>ChÆ°a cÃ³ link online</span>";
 
   return `
     <article class="admin-request-card" data-request-id="${request.id}">
@@ -1753,34 +1783,34 @@ function buildAdminConsultationCard(request) {
 
       <div class="admin-request-grid">
         <p><strong>Email:</strong> ${safeEmail}</p>
-        <p><strong>Điện thoại:</strong> ${safePhone}</p>
-        <p><strong>Dịch vụ:</strong> ${safeServiceType}</p>
-        <p><strong>Đối tượng:</strong> ${safeAudience}</p>
-        <p><strong>Muốn tư vấn:</strong> ${safePreferredFormat}</p>
-        <p><strong>Kênh online:</strong> ${safePreferredChannel}</p>
-        <p><strong>Thời gian tiện:</strong> ${safePreferredTime}</p>
-        <p><strong>Ngày tạo:</strong> ${formatDate(request.createdAt)}</p>
+        <p><strong>Äiá»‡n thoáº¡i:</strong> ${safePhone}</p>
+        <p><strong>Dá»‹ch vá»¥:</strong> ${safeServiceType}</p>
+        <p><strong>Äá»‘i tÆ°á»£ng:</strong> ${safeAudience}</p>
+        <p><strong>Muá»‘n tÆ° váº¥n:</strong> ${safePreferredFormat}</p>
+        <p><strong>KÃªnh online:</strong> ${safePreferredChannel}</p>
+        <p><strong>Thá»i gian tiá»‡n:</strong> ${safePreferredTime}</p>
+        <p><strong>NgÃ y táº¡o:</strong> ${formatDate(request.createdAt)}</p>
       </div>
 
       <div class="admin-request-body">
         <div class="admin-request-block">
-          <span>Mục tiêu</span>
+          <span>Má»¥c tiÃªu</span>
           <p>${safeGoal}</p>
         </div>
         <div class="admin-request-block">
-          <span>Ghi chú của người gửi</span>
+          <span>Ghi chÃº cá»§a ngÆ°á»i gá»­i</span>
           <p>${safeNote}</p>
         </div>
       </div>
 
       <div class="admin-request-online">
-        <span>Link tư vấn online</span>
+        <span>Link tÆ° váº¥n online</span>
         <div class="admin-request-link">${meetingLinkHtml}</div>
       </div>
 
       <form class="admin-request-form">
         <label class="auth-field">
-          <span>Trạng thái</span>
+          <span>Tráº¡ng thÃ¡i</span>
           <select name="status">
             <option value="new" ${request.status === "new" ? "selected" : ""}>new</option>
             <option value="contacted" ${request.status === "contacted" ? "selected" : ""}>contacted</option>
@@ -1791,15 +1821,15 @@ function buildAdminConsultationCard(request) {
 
         <label class="auth-field">
           <span>Link meeting online</span>
-          <input type="text" name="meetingLink" value="${safeMeetingLink}" placeholder="Ví dụ: https://meet.google.com/abc-defg-hij">
+          <input type="text" name="meetingLink" value="${safeMeetingLink}" placeholder="VÃ­ dá»¥: https://meet.google.com/abc-defg-hij">
         </label>
 
         <label class="auth-field">
-          <span>Ghi chú admin</span>
-          <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã gọi tư vấn sơ bộ, chờ xác nhận lịch.">${safeAdminNote}</textarea>
+          <span>Ghi chÃº admin</span>
+          <textarea name="adminNote" rows="4" placeholder="VÃ­ dá»¥: ÄÃ£ gá»i tÆ° váº¥n sÆ¡ bá»™, chá» xÃ¡c nháº­n lá»‹ch.">${safeAdminNote}</textarea>
         </label>
 
-        <button type="submit" class="mentor-primary-btn">Lưu cập nhật</button>
+        <button type="submit" class="mentor-primary-btn">LÆ°u cáº­p nháº­t</button>
       </form>
     </article>
   `;
@@ -1810,7 +1840,7 @@ function buildAdminMentorApplicationCard(application) {
   const safeEmail = escapeHtml(application.email);
   const safePhone = escapeHtml(application.phone);
   const safeExpertise = escapeHtml(application.expertise);
-  const safeExperience = escapeHtml(application.experience || "Chưa bổ sung.");
+  const safeExperience = escapeHtml(application.experience || "ChÆ°a bá»• sung.");
   const safeMotivation = escapeHtml(application.motivation);
   const safePortfolioLink = escapeHtml(application.portfolioLink || "");
   const safeAdminNote = escapeHtml(application.adminNote || "");
@@ -1818,23 +1848,23 @@ function buildAdminMentorApplicationCard(application) {
 
   const portfolioHtml = application.portfolioLink
     ? `<a href="${safePortfolioLink}" target="_blank" rel="noreferrer">${safePortfolioLink}</a>`
-    : "<span>Không có link hồ sơ</span>";
+    : "<span>KhÃ´ng cÃ³ link há»“ sÆ¡</span>";
   const activationHtml = application.activationCode
     ? `<strong>${escapeHtml(application.activationCode)}</strong>`
-    : "<span>Chưa cấp mã kích hoạt</span>";
+    : "<span>ChÆ°a cáº¥p mÃ£ kÃ­ch hoáº¡t</span>";
   const activationGuideHtml = application.activationCode
     ? `
         <div class="admin-request-inline-note">
-          Gửi mentor link <a href="mentor-activate.html" target="_blank" rel="noreferrer">mentor-activate.html</a>
-          cùng email ứng tuyển và mã kích hoạt này để họ tự tạo mật khẩu đăng nhập.
+          Gá»­i mentor link <a href="mentor-activate.html" target="_blank" rel="noreferrer">mentor-activate.html</a>
+          cÃ¹ng email á»©ng tuyá»ƒn vÃ  mÃ£ kÃ­ch hoáº¡t nÃ y Ä‘á»ƒ há» tá»± táº¡o máº­t kháº©u Ä‘Äƒng nháº­p.
         </div>
       `
     : "";
   const invitedAtHtml = application.invitedAt
-    ? `<p><strong>Đã cấp mã:</strong> ${formatDate(application.invitedAt)}</p>`
+    ? `<p><strong>ÄÃ£ cáº¥p mÃ£:</strong> ${formatDate(application.invitedAt)}</p>`
     : "";
   const activatedAtHtml = application.activatedAt
-    ? `<p><strong>Kích hoạt lúc:</strong> ${formatDate(application.activatedAt)}</p>`
+    ? `<p><strong>KÃ­ch hoáº¡t lÃºc:</strong> ${formatDate(application.activatedAt)}</p>`
     : "";
 
   return `
@@ -1849,20 +1879,20 @@ function buildAdminMentorApplicationCard(application) {
 
       <div class="admin-request-grid">
         <p><strong>Email:</strong> ${safeEmail}</p>
-        <p><strong>Điện thoại:</strong> ${safePhone}</p>
-        <p><strong>Chuyên môn:</strong> ${safeExpertise}</p>
-        <p><strong>Ngày nộp:</strong> ${formatDate(application.createdAt)}</p>
+        <p><strong>Äiá»‡n thoáº¡i:</strong> ${safePhone}</p>
+        <p><strong>ChuyÃªn mÃ´n:</strong> ${safeExpertise}</p>
+        <p><strong>NgÃ y ná»™p:</strong> ${formatDate(application.createdAt)}</p>
         ${invitedAtHtml}
         ${activatedAtHtml}
       </div>
 
       <div class="admin-request-body">
         <div class="admin-request-block">
-          <span>Kinh nghiệm</span>
+          <span>Kinh nghiá»‡m</span>
           <p>${safeExperience}</p>
         </div>
         <div class="admin-request-block">
-          <span>Động lực ứng tuyển</span>
+          <span>Äá»™ng lá»±c á»©ng tuyá»ƒn</span>
           <p>${safeMotivation}</p>
         </div>
       </div>
@@ -1873,7 +1903,7 @@ function buildAdminMentorApplicationCard(application) {
           <div class="admin-request-link">${portfolioHtml}</div>
         </div>
         <div class="admin-request-online">
-          <span>Mã kích hoạt</span>
+          <span>MÃ£ kÃ­ch hoáº¡t</span>
           <div class="admin-request-link">${activationHtml}</div>
           ${activationGuideHtml}
         </div>
@@ -1881,7 +1911,7 @@ function buildAdminMentorApplicationCard(application) {
 
       <form class="admin-mentor-application-form">
         <label class="auth-field">
-          <span>Trạng thái</span>
+          <span>Tráº¡ng thÃ¡i</span>
           <select name="status">
             <option value="pending" ${application.status === "pending" ? "selected" : ""}>pending</option>
             <option value="interviewing" ${application.status === "interviewing" ? "selected" : ""}>interviewing</option>
@@ -1892,19 +1922,19 @@ function buildAdminMentorApplicationCard(application) {
         </label>
 
         <label class="auth-field">
-          <span>Cấp mã kích hoạt</span>
+          <span>Cáº¥p mÃ£ kÃ­ch hoáº¡t</span>
           <select name="generateActivation">
-            <option value="no">Không</option>
-            <option value="yes">Có, tạo mã mới</option>
+            <option value="no">KhÃ´ng</option>
+            <option value="yes">CÃ³, táº¡o mÃ£ má»›i</option>
           </select>
         </label>
 
         <label class="auth-field">
-          <span>Ghi chú admin</span>
-          <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã phỏng vấn ổn, gửi mã kích hoạt qua email.">${safeAdminNote}</textarea>
+          <span>Ghi chÃº admin</span>
+          <textarea name="adminNote" rows="4" placeholder="VÃ­ dá»¥: ÄÃ£ phá»ng váº¥n á»•n, gá»­i mÃ£ kÃ­ch hoáº¡t qua email.">${safeAdminNote}</textarea>
         </label>
 
-        <button type="submit" class="mentor-primary-btn">Lưu hồ sơ mentor</button>
+        <button type="submit" class="mentor-primary-btn">LÆ°u há»“ sÆ¡ mentor</button>
       </form>
     </article>
   `;
@@ -1928,24 +1958,24 @@ function buildAdminMentorApplicationSummary(applications) {
   return `
     <div class="admin-summary-grid">
       <article class="admin-summary-card">
-        <span>Tổng hồ sơ mentor</span>
+        <span>Tá»•ng há»“ sÆ¡ mentor</span>
         <strong>${counts.total}</strong>
-        <p>Toàn bộ hồ sơ ứng tuyển đang có trong hệ thống.</p>
+        <p>ToÃ n bá»™ há»“ sÆ¡ á»©ng tuyá»ƒn Ä‘ang cÃ³ trong há»‡ thá»‘ng.</p>
       </article>
       <article class="admin-summary-card">
-        <span>Chờ xử lý</span>
+        <span>Chá» xá»­ lÃ½</span>
         <strong>${counts.pending}</strong>
-        <p>Các hồ sơ mới cần sàng lọc hoặc liên hệ ban đầu.</p>
+        <p>CÃ¡c há»“ sÆ¡ má»›i cáº§n sÃ ng lá»c hoáº·c liÃªn há»‡ ban Ä‘áº§u.</p>
       </article>
       <article class="admin-summary-card">
-        <span>Đang phỏng vấn</span>
+        <span>Äang phá»ng váº¥n</span>
         <strong>${counts.interviewing}</strong>
-        <p>Ứng viên đang ở vòng trao đổi, đánh giá và chọn lọc.</p>
+        <p>á»¨ng viÃªn Ä‘ang á»Ÿ vÃ²ng trao Ä‘á»•i, Ä‘Ã¡nh giÃ¡ vÃ  chá»n lá»c.</p>
       </article>
       <article class="admin-summary-card">
-        <span>Đã cấp quyền</span>
+        <span>ÄÃ£ cáº¥p quyá»n</span>
         <strong>${counts.approved + counts.activated}</strong>
-        <p>Mentor đã được duyệt hoặc đã kích hoạt tài khoản thành công.</p>
+        <p>Mentor Ä‘Ã£ Ä‘Æ°á»£c duyá»‡t hoáº·c Ä‘Ã£ kÃ­ch hoáº¡t tÃ i khoáº£n thÃ nh cÃ´ng.</p>
       </article>
     </div>
   `;
@@ -1969,37 +1999,37 @@ function buildAdminMentorProfileUpdateCard(request) {
 
       <div class="admin-request-grid">
         <p><strong>Mentor ID:</strong> ${escapeHtml(request.mentorId)}</p>
-        <p><strong>Gửi lúc:</strong> ${formatDate(request.createdAt)}</p>
-        <p><strong>Headline:</strong> ${escapeHtml(profile.role || "Chưa cập nhật")}</p>
-        <p><strong>Nơi làm việc / học tập:</strong> ${escapeHtml(profile.workplace || "Chưa cập nhật")}</p>
-        <p><strong>Lịch rảnh:</strong> ${escapeHtml(profile.availabilityText || "Chưa cập nhật")}</p>
+        <p><strong>Gá»­i lÃºc:</strong> ${formatDate(request.createdAt)}</p>
+        <p><strong>Headline:</strong> ${escapeHtml(profile.role || "ChÆ°a cáº­p nháº­t")}</p>
+        <p><strong>NÆ¡i lÃ m viá»‡c / há»c táº­p:</strong> ${escapeHtml(profile.workplace || "ChÆ°a cáº­p nháº­t")}</p>
+        <p><strong>Lá»‹ch ráº£nh:</strong> ${escapeHtml(profile.availabilityText || "ChÆ°a cáº­p nháº­t")}</p>
       </div>
 
       <div class="admin-request-body">
         <div class="admin-request-block">
-          <span>Dịch vụ & giá</span>
-          <p>${escapeHtml((profile.serviceText || "Chưa cập nhật") + " | " + (profile.pricing || "Chưa cập nhật"))}</p>
+          <span>Dá»‹ch vá»¥ & giÃ¡</span>
+          <p>${escapeHtml((profile.serviceText || "ChÆ°a cáº­p nháº­t") + " | " + (profile.pricing || "ChÆ°a cáº­p nháº­t"))}</p>
         </div>
         <div class="admin-request-block">
-          <span>Đối tượng phù hợp</span>
-          <p>${escapeHtml(profile.fit || "Chưa cập nhật")}</p>
+          <span>Äá»‘i tÆ°á»£ng phÃ¹ há»£p</span>
+          <p>${escapeHtml(profile.fit || "ChÆ°a cáº­p nháº­t")}</p>
         </div>
       </div>
 
       <div class="admin-request-body">
         <div class="admin-request-block">
-          <span>Giới thiệu mentor</span>
-          <p>${escapeHtml(profile.intro || "Chưa cập nhật")}</p>
+          <span>Giá»›i thiá»‡u mentor</span>
+          <p>${escapeHtml(profile.intro || "ChÆ°a cáº­p nháº­t")}</p>
         </div>
         <div class="admin-request-block">
-          <span>Thành tích nổi bật</span>
-          <p>${escapeHtml(String(profile.achievements || "").split("\n").filter(Boolean).join(" | ") || "Chưa cập nhật")}</p>
+          <span>ThÃ nh tÃ­ch ná»•i báº­t</span>
+          <p>${escapeHtml(String(profile.achievements || "").split("\n").filter(Boolean).join(" | ") || "ChÆ°a cáº­p nháº­t")}</p>
         </div>
       </div>
 
       <form class="admin-mentor-profile-update-form">
         <label class="auth-field">
-          <span>Trạng thái</span>
+          <span>Tráº¡ng thÃ¡i</span>
           <select name="status">
             <option value="pending" ${request.status === "pending" ? "selected" : ""}>pending</option>
             <option value="approved" ${request.status === "approved" ? "selected" : ""}>approved</option>
@@ -2008,11 +2038,11 @@ function buildAdminMentorProfileUpdateCard(request) {
         </label>
 
         <label class="auth-field">
-          <span>Ghi chú admin</span>
-          <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã duyệt, có thể cập nhật ra trang tìm kiếm mentor.">${safeAdminNote}</textarea>
+          <span>Ghi chÃº admin</span>
+          <textarea name="adminNote" rows="4" placeholder="VÃ­ dá»¥: ÄÃ£ duyá»‡t, cÃ³ thá»ƒ cáº­p nháº­t ra trang tÃ¬m kiáº¿m mentor.">${safeAdminNote}</textarea>
         </label>
 
-        <button type="submit" class="mentor-primary-btn">Duyệt cập nhật</button>
+        <button type="submit" class="mentor-primary-btn">Duyá»‡t cáº­p nháº­t</button>
       </form>
     </article>
   `;
@@ -2037,27 +2067,27 @@ function initializeMentorApplicationPage() {
     };
 
     if (payload.fullName.length < 2) {
-      showMessage("mentorApplicationMessage", "error", "Vui lòng nhập họ và tên hợp lệ.");
+      showMessage("mentorApplicationMessage", "error", "Vui lÃ²ng nháº­p há» vÃ  tÃªn há»£p lá»‡.");
       return;
     }
 
     if (!payload.email.includes("@")) {
-      showMessage("mentorApplicationMessage", "error", "Email chưa đúng định dạng.");
+      showMessage("mentorApplicationMessage", "error", "Email chÆ°a Ä‘Ãºng Ä‘á»‹nh dáº¡ng.");
       return;
     }
 
     if (payload.phone.length < 10) {
-      showMessage("mentorApplicationMessage", "error", "Số điện thoại cần có ít nhất 10 chữ số.");
+      showMessage("mentorApplicationMessage", "error", "Sá»‘ Ä‘iá»‡n thoáº¡i cáº§n cÃ³ Ã­t nháº¥t 10 chá»¯ sá»‘.");
       return;
     }
 
     if (payload.expertise.length < 4) {
-      showMessage("mentorApplicationMessage", "error", "Hãy mô tả lĩnh vực chuyên môn rõ hơn.");
+      showMessage("mentorApplicationMessage", "error", "HÃ£y mÃ´ táº£ lÄ©nh vá»±c chuyÃªn mÃ´n rÃµ hÆ¡n.");
       return;
     }
 
     if (payload.motivation.length < 20) {
-      showMessage("mentorApplicationMessage", "error", "Hãy chia sẻ kỹ hơn lý do bạn muốn trở thành mentor.");
+      showMessage("mentorApplicationMessage", "error", "HÃ£y chia sáº» ká»¹ hÆ¡n lÃ½ do báº¡n muá»‘n trá»Ÿ thÃ nh mentor.");
       return;
     }
 
@@ -2067,7 +2097,7 @@ function initializeMentorApplicationPage() {
       showMessage(
         "mentorApplicationMessage",
         "success",
-        "Hồ sơ ứng tuyển mentor đã được gửi. Nếu phù hợp, đội ngũ Mentor Me sẽ liên hệ và cấp mã kích hoạt tài khoản."
+        "Há»“ sÆ¡ á»©ng tuyá»ƒn mentor Ä‘Ã£ Ä‘Æ°á»£c gá»­i. Náº¿u phÃ¹ há»£p, Ä‘á»™i ngÅ© Mentor Me sáº½ liÃªn há»‡ vÃ  cáº¥p mÃ£ kÃ­ch hoáº¡t tÃ i khoáº£n."
       );
     } catch (error) {
       showMessage("mentorApplicationMessage", "error", error.message);
@@ -2091,27 +2121,27 @@ function initializeMentorActivationPage() {
     const confirmPassword = document.getElementById("mentorActivationConfirmPassword").value;
 
     if (name.length < 2) {
-      showMessage("mentorActivationMessage", "error", "Vui lòng nhập họ và tên hợp lệ.");
+      showMessage("mentorActivationMessage", "error", "Vui lÃ²ng nháº­p há» vÃ  tÃªn há»£p lá»‡.");
       return;
     }
 
     if (!email.includes("@")) {
-      showMessage("mentorActivationMessage", "error", "Email chưa đúng định dạng.");
+      showMessage("mentorActivationMessage", "error", "Email chÆ°a Ä‘Ãºng Ä‘á»‹nh dáº¡ng.");
       return;
     }
 
     if (!activationCode) {
-      showMessage("mentorActivationMessage", "error", "Vui lòng nhập mã kích hoạt mentor.");
+      showMessage("mentorActivationMessage", "error", "Vui lÃ²ng nháº­p mÃ£ kÃ­ch hoáº¡t mentor.");
       return;
     }
 
     if (password.length < 8) {
-      showMessage("mentorActivationMessage", "error", "Mật khẩu cần có tối thiểu 8 ký tự.");
+      showMessage("mentorActivationMessage", "error", "Máº­t kháº©u cáº§n cÃ³ tá»‘i thiá»ƒu 8 kÃ½ tá»±.");
       return;
     }
 
     if (password !== confirmPassword) {
-      showMessage("mentorActivationMessage", "error", "Mật khẩu xác nhận chưa khớp.");
+      showMessage("mentorActivationMessage", "error", "Máº­t kháº©u xÃ¡c nháº­n chÆ°a khá»›p.");
       return;
     }
 
@@ -2137,14 +2167,18 @@ function initializeMentorActivationPage() {
       }
 
       if (!data.user) {
-        throw new Error("Không thể tạo tài khoản mentor lúc này.");
+        throw new Error("KhÃ´ng thá»ƒ táº¡o tÃ i khoáº£n mentor lÃºc nÃ y.");
       }
 
       if (data.session) {
-        await activateMentorApplication({
+        const activationResult = await activateMentorApplication({
           email: email,
           activationCode: activationCode
         });
+
+        if (activationResult && activationResult.mentorProfile) {
+          mergeMentorProfileIntoStore(activationResult.mentorProfile);
+        }
 
         await upsertProfile({
           id: data.user.id,
@@ -2159,7 +2193,7 @@ function initializeMentorActivationPage() {
 
         const sessionUser = await loadCurrentUserFromSupabase();
         saveAuthSession(sessionUser);
-        showMessage("mentorActivationMessage", "success", "Kích hoạt tài khoản mentor thành công. Từ lần sau bạn đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo.");
+        showMessage("mentorActivationMessage", "success", "KÃ­ch hoáº¡t tÃ i khoáº£n mentor thÃ nh cÃ´ng. Tá»« láº§n sau báº¡n Ä‘Äƒng nháº­p báº±ng email á»©ng tuyá»ƒn vÃ  máº­t kháº©u vá»«a táº¡o.");
         window.setTimeout(function () {
           window.location.href = "mentor-dashboard.html";
         }, 900);
@@ -2169,10 +2203,10 @@ function initializeMentorActivationPage() {
       showMessage(
         "mentorActivationMessage",
         "success",
-        "Tài khoản mentor đã được tạo. Từ lần sau bạn đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo. Nếu hệ thống vẫn yêu cầu xác thực email, hãy kiểm tra thiết lập xác thực trong Supabase."
+        "TÃ i khoáº£n mentor Ä‘Ã£ Ä‘Æ°á»£c táº¡o. Tá»« láº§n sau báº¡n Ä‘Äƒng nháº­p báº±ng email á»©ng tuyá»ƒn vÃ  máº­t kháº©u vá»«a táº¡o. Náº¿u há»‡ thá»‘ng váº«n yÃªu cáº§u xÃ¡c thá»±c email, hÃ£y kiá»ƒm tra thiáº¿t láº­p xÃ¡c thá»±c trong Supabase."
       );
     } catch (error) {
-      showMessage("mentorActivationMessage", "error", error.message || "Không thể kích hoạt tài khoản mentor lúc này.");
+      showMessage("mentorActivationMessage", "error", error.message || "KhÃ´ng thá»ƒ kÃ­ch hoáº¡t tÃ i khoáº£n mentor lÃºc nÃ y.");
     }
   });
 }
@@ -2199,13 +2233,13 @@ function initializeAdminConsultationPage() {
 
   const currentUser = getCurrentUser();
   if (!currentUser) {
-    showMessage("adminConsultationMessage", "error", "Hãy đăng nhập bằng tài khoản admin để truy cập khu vực này.");
+    showMessage("adminConsultationMessage", "error", "HÃ£y Ä‘Äƒng nháº­p báº±ng tÃ i khoáº£n admin Ä‘á»ƒ truy cáº­p khu vá»±c nÃ y.");
     accessForm.hidden = true;
     return;
   }
 
   if (normalizeRole(currentUser.role) !== "admin") {
-    showMessage("adminConsultationMessage", "error", "Chỉ tài khoản admin mới có thể truy cập dashboard tư vấn.");
+    showMessage("adminConsultationMessage", "error", "Chá»‰ tÃ i khoáº£n admin má»›i cÃ³ thá»ƒ truy cáº­p dashboard tÆ° váº¥n.");
     accessForm.hidden = true;
     return;
   }
@@ -2227,8 +2261,8 @@ function initializeAdminConsultationPage() {
       if (!requests.length) {
         listElement.innerHTML = `
           <div class="admin-empty-state">
-            <h3>Chưa có yêu cầu tư vấn nào</h3>
-            <p>Khi người dùng gửi form ở trang dịch vụ, danh sách sẽ xuất hiện tại đây.</p>
+            <h3>ChÆ°a cÃ³ yÃªu cáº§u tÆ° váº¥n nÃ o</h3>
+            <p>Khi ngÆ°á»i dÃ¹ng gá»­i form á»Ÿ trang dá»‹ch vá»¥, danh sÃ¡ch sáº½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y.</p>
           </div>
         `;
         return;
@@ -2255,8 +2289,8 @@ function initializeAdminConsultationPage() {
       if (!applications.length) {
         mentorListElement.innerHTML = `
           <div class="admin-empty-state">
-            <h3>Chưa có hồ sơ ứng tuyển mentor</h3>
-            <p>Khi có mentor nộp hồ sơ, danh sách sẽ xuất hiện tại đây.</p>
+            <h3>ChÆ°a cÃ³ há»“ sÆ¡ á»©ng tuyá»ƒn mentor</h3>
+            <p>Khi cÃ³ mentor ná»™p há»“ sÆ¡, danh sÃ¡ch sáº½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y.</p>
           </div>
         `;
         return;
@@ -2278,8 +2312,8 @@ function initializeAdminConsultationPage() {
     if (!requests.length) {
       bookingListElement.innerHTML = `
         <div class="admin-empty-state">
-          <h3>Chưa có đăng ký học nào với mentor</h3>
-          <p>Khi mentee gửi yêu cầu đặt lịch, admin sẽ thấy toàn bộ luồng tại đây để tiện theo dõi.</p>
+          <h3>ChÆ°a cÃ³ Ä‘Äƒng kÃ½ há»c nÃ o vá»›i mentor</h3>
+          <p>Khi mentee gá»­i yÃªu cáº§u Ä‘áº·t lá»‹ch, admin sáº½ tháº¥y toÃ n bá»™ luá»“ng táº¡i Ä‘Ã¢y Ä‘á»ƒ tiá»‡n theo dÃµi.</p>
         </div>
       `;
       return;
@@ -2297,8 +2331,8 @@ function initializeAdminConsultationPage() {
     if (!requests.length) {
       mentorProfileUpdateList.innerHTML = `
         <div class="admin-empty-state">
-          <h3>Chưa có yêu cầu cập nhật hồ sơ mentor</h3>
-          <p>Khi mentor bấm lưu hồ sơ, yêu cầu sẽ được chuyển tới admin để duyệt trước khi cập nhật ra trang tìm kiếm.</p>
+          <h3>ChÆ°a cÃ³ yÃªu cáº§u cáº­p nháº­t há»“ sÆ¡ mentor</h3>
+          <p>Khi mentor báº¥m lÆ°u há»“ sÆ¡, yÃªu cáº§u sáº½ Ä‘Æ°á»£c chuyá»ƒn tá»›i admin Ä‘á»ƒ duyá»‡t trÆ°á»›c khi cáº­p nháº­t ra trang tÃ¬m kiáº¿m.</p>
         </div>
       `;
       return;
@@ -2313,11 +2347,19 @@ function initializeAdminConsultationPage() {
 
     currentAdminKey = normalizeWhitespace(document.getElementById("adminAccessKey").value);
     if (!currentAdminKey) {
-      showMessage("adminConsultationMessage", "error", "Vui lòng nhập mật khẩu quản trị.");
+      showMessage("adminConsultationMessage", "error", "Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u quÃ¡ÂºÂ£n trÃ¡Â»â€¹.");
       return;
     }
 
     sessionStorage.setItem("mentorMeAdminKey", currentAdminKey);
+
+    try {
+      await syncBusinessStateFromServer({ adminKey: currentAdminKey });
+    } catch (error) {
+      showMessage("adminConsultationMessage", "error", error.message);
+      return;
+    }
+
     await loadRequests();
     await loadMentorApplications();
     loadBookingRequestsForAdmin();
@@ -2336,11 +2378,25 @@ function initializeAdminConsultationPage() {
   }
 
   if (bookingRefreshButton) {
-    bookingRefreshButton.addEventListener("click", loadBookingRequestsForAdmin);
+    bookingRefreshButton.addEventListener("click", async function () {
+      try {
+        await syncBusinessStateFromServer({ adminKey: currentAdminKey });
+        loadBookingRequestsForAdmin();
+      } catch (error) {
+        showMessage("adminConsultationMessage", "error", error.message);
+      }
+    });
   }
 
   if (mentorProfileUpdateRefreshButton) {
-    mentorProfileUpdateRefreshButton.addEventListener("click", loadMentorProfileUpdates);
+    mentorProfileUpdateRefreshButton.addEventListener("click", async function () {
+      try {
+        await syncBusinessStateFromServer({ adminKey: currentAdminKey });
+        loadMentorProfileUpdates();
+      } catch (error) {
+        showMessage("adminConsultationMessage", "error", error.message);
+      }
+    });
   }
 
   listElement.addEventListener("submit", async function (e) {
@@ -2363,7 +2419,7 @@ function initializeAdminConsultationPage() {
       });
 
       card.outerHTML = buildAdminConsultationCard(updatedRequest);
-      showMessage("adminConsultationMessage", "success", "Đã cập nhật yêu cầu tư vấn.");
+      showMessage("adminConsultationMessage", "success", "ÄÃ£ cáº­p nháº­t yÃªu cáº§u tÆ° váº¥n.");
     } catch (error) {
       showMessage("adminConsultationMessage", "error", error.message);
     }
@@ -2390,7 +2446,7 @@ function initializeAdminConsultationPage() {
         });
 
         card.outerHTML = buildAdminMentorApplicationCard(updatedApplication);
-        showMessage("adminConsultationMessage", "success", "Đã cập nhật hồ sơ ứng tuyển mentor.");
+        showMessage("adminConsultationMessage", "success", "ÄÃ£ cáº­p nháº­t há»“ sÆ¡ á»©ng tuyá»ƒn mentor.");
       } catch (error) {
         showMessage("adminConsultationMessage", "error", error.message);
       }
@@ -2398,7 +2454,7 @@ function initializeAdminConsultationPage() {
   }
 
   if (mentorProfileUpdateList) {
-    mentorProfileUpdateList.addEventListener("submit", function (e) {
+    mentorProfileUpdateList.addEventListener("submit", async function (e) {
       const form = e.target.closest(".admin-mentor-profile-update-form");
       if (!form) return;
 
@@ -2409,26 +2465,28 @@ function initializeAdminConsultationPage() {
 
       const requestId = card.getAttribute("data-mentor-profile-update-id");
       const formData = new FormData(form);
-      const status = normalizeWhitespace(formData.get("status"));
-      const adminNote = normalizeWhitespace(formData.get("adminNote"));
-      const request = updatePendingMentorProfileUpdate(requestId, {
-        status: status,
-        adminNote: adminNote
-      });
 
-      if (request && status === "approved") {
-        const approvedStore = getApprovedMentorProfiles();
-        approvedStore[request.mentorId] = Object.assign({}, approvedStore[request.mentorId] || {}, request.profile || {});
-        saveApprovedMentorProfiles(approvedStore);
+      try {
+        const result = await updateAdminMentorProfileUpdateRemote(currentAdminKey, requestId, {
+          status: normalizeWhitespace(formData.get("status")),
+          adminNote: normalizeWhitespace(formData.get("adminNote"))
+        });
+
+        replaceMentorProfileUpdateInStore(result.request);
+        if (result.mentorProfile) {
+          mergeMentorProfileIntoStore(result.mentorProfile);
+        }
+
+        loadMentorProfileUpdates();
+        showMessage("adminConsultationMessage", "success", "Ã„ÂÃƒÂ£ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu cÃ¡ÂºÂ§u chÃ¡Â»â€°nh sÃ¡Â»Â­a hÃ¡Â»â€œ sÃ†Â¡ mentor.");
+      } catch (error) {
+        showMessage("adminConsultationMessage", "error", error.message);
       }
-
-      loadMentorProfileUpdates();
-      showMessage("adminConsultationMessage", "success", "Đã cập nhật yêu cầu chỉnh sửa hồ sơ mentor.");
     });
   }
 
   if (bookingListElement) {
-    bookingListElement.addEventListener("submit", function (e) {
+    bookingListElement.addEventListener("submit", async function (e) {
       const form = e.target.closest(".admin-booking-request-form");
       if (!form) return;
 
@@ -2439,17 +2497,30 @@ function initializeAdminConsultationPage() {
 
       const requestId = card.getAttribute("data-admin-booking-id");
       const formData = new FormData(form);
-      updateBookingRequest(requestId, {
-        status: normalizeWhitespace(formData.get("status")),
-        adminNote: normalizeWhitespace(formData.get("adminNote"))
-      });
-      loadBookingRequestsForAdmin();
-      showMessage("adminConsultationMessage", "success", "Đã cập nhật đăng ký học với mentor.");
+
+      try {
+        const result = await updateBookingRequestRemote(requestId, {
+          status: normalizeWhitespace(formData.get("status")),
+          adminNote: normalizeWhitespace(formData.get("adminNote"))
+        }, {
+          adminKey: currentAdminKey
+        });
+
+        replaceBookingRequestInStore(result.request);
+        if (result.mentorProfile) {
+          mergeMentorProfileIntoStore(result.mentorProfile);
+        }
+
+        loadBookingRequestsForAdmin();
+        showMessage("adminConsultationMessage", "success", "Ã„ÂÃƒÂ£ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t Ã„â€˜Ã„Æ’ng kÃƒÂ½ hÃ¡Â»Âc vÃ¡Â»â€ºi mentor.");
+      } catch (error) {
+        showMessage("adminConsultationMessage", "error", error.message);
+      }
     });
   }
 
   if (mentorCreateForm) {
-    mentorCreateForm.addEventListener("submit", function (e) {
+    mentorCreateForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       clearMessage("adminConsultationMessage");
 
@@ -2469,64 +2540,55 @@ function initializeAdminConsultationPage() {
       const service = collectCheckedValues(mentorCreateForm, "adminMentorCreateService");
 
       if (!name || name.length < 2) {
-        showMessage("adminConsultationMessage", "error", "Tên mentor cần có ít nhất 2 ký tự.");
+        showMessage("adminConsultationMessage", "error", "TÃƒÂªn mentor cÃ¡ÂºÂ§n cÃƒÂ³ ÃƒÂ­t nhÃ¡ÂºÂ¥t 2 kÃƒÂ½ tÃ¡Â»Â±.");
         return;
       }
 
       if (!focus) {
-        showMessage("adminConsultationMessage", "error", "Hãy thêm lĩnh vực chính để mentor dễ tìm.");
+        showMessage("adminConsultationMessage", "error", "HÃƒÂ£y thÃƒÂªm lÃ„Â©nh vÃ¡Â»Â±c chÃƒÂ­nh Ã„â€˜Ã¡Â»Æ’ mentor dÃ¡Â»â€¦ tÃƒÂ¬m.");
         return;
       }
 
       if (!field) {
-        showMessage("adminConsultationMessage", "error", "Vui lòng chọn nhóm lĩnh vực.");
+        showMessage("adminConsultationMessage", "error", "Vui lÃƒÂ²ng chÃ¡Â»Ân nhÃƒÂ³m lÃ„Â©nh vÃ¡Â»Â±c.");
         return;
       }
 
       const achievements = achievementsText
         ? achievementsText.split("\n").map(normalizeWhitespace).filter(Boolean)
         : [];
-
-      const mentorId = buildUniqueMentorId(name);
       const finalService = service.length ? service : ["1-1"];
       const finalAvailability = availability.length ? availability : ["sang", "chieu", "toi"];
-      const mentorProfile = {
-        id: mentorId,
-        name: name,
-        image: image || "mentor2.jpg",
-        workplace: workplace || "Đang cập nhật",
-        tag: tag || ("Mentor " + focus),
-        role: role || ("Mentor " + focus),
-        bio: bio || "Thông tin mentor sẽ được bổ sung thêm.",
-        focus: focus,
-        field: field,
-        availability: finalAvailability,
-        availabilityText: buildMentorAvailabilityText(finalAvailability),
-        service: finalService,
-        serviceText: buildMentorServiceText(finalService),
-        achievements: achievements,
-        fit: fit || "Phù hợp với mentee đang cần mentor đồng hành theo mục tiêu học tập cụ thể.",
-        searchableText: ""
-      };
 
-      if (ratingValue) {
-        mentorProfile.rating = Number(ratingValue);
+      try {
+        const result = await createAdminMentorProfileRemote(currentAdminKey, {
+          name: name,
+          image: image || "mentor2.jpg",
+          workplace: workplace || "Ã„Âang cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t",
+          tag: tag || ("Mentor " + focus),
+          role: role || ("Mentor " + focus),
+          bio: bio || "ThÃƒÂ´ng tin mentor sÃ¡ÂºÂ½ Ã„â€˜Ã†Â°Ã¡Â»Â£c bÃ¡Â»â€¢ sung thÃƒÂªm.",
+          focus: focus,
+          field: field,
+          availability: finalAvailability,
+          availabilityText: buildMentorAvailabilityText(finalAvailability),
+          service: finalService,
+          serviceText: buildMentorServiceText(finalService),
+          achievements: achievements,
+          fit: fit || "PhÃƒÂ¹ hÃ¡Â»Â£p vÃ¡Â»â€ºi mentee Ã„â€˜ang cÃ¡ÂºÂ§n mentor Ã„â€˜Ã¡Â»â€œng hÃƒÂ nh theo mÃ¡Â»Â¥c tiÃƒÂªu hÃ¡Â»Âc tÃ¡ÂºÂ­p cÃ¡Â»Â¥ thÃ¡Â»Æ’.",
+          rating: ratingValue ? Number(ratingValue) : undefined,
+          studentsTaught: studentsValue ? Number(studentsValue) : undefined
+        });
+
+        if (result.mentorProfile) {
+          mergeMentorProfileIntoStore(result.mentorProfile);
+        }
+
+        mentorCreateForm.reset();
+        showMessage("adminConsultationMessage", "success", "Ã„ÂÃƒÂ£ thÃƒÂªm mentor mÃ¡Â»â€ºi. HÃƒÂ£y mÃ¡Â»Å¸ trang tÃƒÂ¬m kiÃ¡ÂºÂ¿m Ã„â€˜Ã¡Â»Æ’ xem hiÃ¡Â»Æ’n thÃ¡Â»â€¹.");
+      } catch (error) {
+        showMessage("adminConsultationMessage", "error", error.message);
       }
-
-      if (studentsValue) {
-        mentorProfile.studentsTaught = Number(studentsValue);
-      }
-
-      mentorProfile.searchableText = buildMentorSearchableText(mentorProfile);
-      mentorProfile._origin = "admin";
-      mentorProfile._createdAt = new Date().toISOString();
-
-      const approvedStore = getApprovedMentorProfiles();
-      approvedStore[mentorId] = mentorProfile;
-      saveApprovedMentorProfiles(approvedStore);
-
-      mentorCreateForm.reset();
-      showMessage("adminConsultationMessage", "success", "Đã thêm mentor mới. Hãy mở trang tìm kiếm để xem hiển thị.");
     });
   }
 
@@ -2557,7 +2619,7 @@ function initializeMentorDashboardPage() {
 
   const currentRole = normalizeRole(currentUser.role);
   if (!["mentor", "admin"].includes(currentRole)) {
-    showMessage("mentorDashboardMessage", "error", "Chỉ tài khoản mentor hoặc admin mới có thể dùng dashboard này.");
+    showMessage("mentorDashboardMessage", "error", "Chá»‰ tÃ i khoáº£n mentor hoáº·c admin má»›i cÃ³ thá»ƒ dÃ¹ng dashboard nÃ y.");
     form.hidden = true;
     return;
   }
@@ -2650,17 +2712,17 @@ function initializeMentorDashboardPage() {
 
   function renderPreview(payload) {
     previewElements.avatar.src = currentUser.avatar || createAvatarFallback(payload.displayName || currentUser.name);
-    previewElements.name.textContent = payload.displayName || currentUser.name || "Tên mentor";
-    previewElements.headline.textContent = payload.headline || "Headline chuyên môn sẽ hiển thị ở đây.";
-    previewElements.workplace.textContent = payload.workplace || "Chưa cập nhật";
-    previewElements.expertise.textContent = payload.expertise || "Chưa cập nhật";
-    previewElements.services.textContent = payload.services || "Chưa cập nhật";
-    previewElements.pricing.textContent = payload.pricing || "Chưa cập nhật";
-    previewElements.availability.textContent = payload.availability || "Chưa cập nhật";
-    previewElements.intro.textContent = payload.intro || "Phần giới thiệu mentor sẽ xuất hiện ở đây để bạn xem trước cách hiển thị.";
-    previewElements.fit.textContent = payload.fit || "Mô tả nhóm mentee phù hợp sẽ hiển thị tại đây.";
+    previewElements.name.textContent = payload.displayName || currentUser.name || "TÃªn mentor";
+    previewElements.headline.textContent = payload.headline || "Headline chuyÃªn mÃ´n sáº½ hiá»ƒn thá»‹ á»Ÿ Ä‘Ã¢y.";
+    previewElements.workplace.textContent = payload.workplace || "ChÆ°a cáº­p nháº­t";
+    previewElements.expertise.textContent = payload.expertise || "ChÆ°a cáº­p nháº­t";
+    previewElements.services.textContent = payload.services || "ChÆ°a cáº­p nháº­t";
+    previewElements.pricing.textContent = payload.pricing || "ChÆ°a cáº­p nháº­t";
+    previewElements.availability.textContent = payload.availability || "ChÆ°a cáº­p nháº­t";
+    previewElements.intro.textContent = payload.intro || "Pháº§n giá»›i thiá»‡u mentor sáº½ xuáº¥t hiá»‡n á»Ÿ Ä‘Ã¢y Ä‘á»ƒ báº¡n xem trÆ°á»›c cÃ¡ch hiá»ƒn thá»‹.";
+    previewElements.fit.textContent = payload.fit || "MÃ´ táº£ nhÃ³m mentee phÃ¹ há»£p sáº½ hiá»ƒn thá»‹ táº¡i Ä‘Ã¢y.";
     previewElements.statusBadge.textContent =
-      payload.visibility === "public" ? "Sẵn sàng công khai" : "Lưu nháp nội bộ";
+      payload.visibility === "public" ? "Sáºµn sÃ ng cÃ´ng khai" : "LÆ°u nhÃ¡p ná»™i bá»™";
     previewElements.statusBadge.className =
       "mentor-preview-status " + (payload.visibility === "public" ? "is-public" : "is-draft");
 
@@ -2675,7 +2737,7 @@ function initializeMentorDashboardPage() {
       ? achievements.map(function (item) {
           return "<li>" + escapeHtml(item) + "</li>";
         }).join("")
-      : "<li>Chưa có thành tích nổi bật.</li>";
+      : "<li>ChÆ°a cÃ³ thÃ nh tÃ­ch ná»•i báº­t.</li>";
   }
 
   function syncFromForm() {
@@ -2709,49 +2771,54 @@ function initializeMentorDashboardPage() {
     input.addEventListener("change", syncFromForm);
   });
 
-  form.addEventListener("submit", function (e) {
+  form.addEventListener("submit", async function (e) {
     e.preventDefault();
     clearMessage("mentorDashboardMessage");
     syncFromForm();
 
     if ((draftProfile.displayName || currentUser.name).length < 2) {
-      showMessage("mentorDashboardMessage", "error", "Tên hiển thị mentor cần có ít nhất 2 ký tự.");
+      showMessage("mentorDashboardMessage", "error", "TÃƒÂªn hiÃ¡Â»Æ’n thÃ¡Â»â€¹ mentor cÃ¡ÂºÂ§n cÃƒÂ³ ÃƒÂ­t nhÃ¡ÂºÂ¥t 2 kÃƒÂ½ tÃ¡Â»Â±.");
       return;
     }
 
     if (!draftProfile.headline) {
-      showMessage("mentorDashboardMessage", "error", "Hãy thêm headline chuyên môn để hồ sơ rõ ràng hơn.");
+      showMessage("mentorDashboardMessage", "error", "HÃƒÂ£y thÃƒÂªm headline chuyÃƒÂªn mÃƒÂ´n Ã„â€˜Ã¡Â»Æ’ hÃ¡Â»â€œ sÃ†Â¡ rÃƒÂµ rÃƒÂ ng hÃ†Â¡n.");
       return;
     }
 
-    saveMentorProfileByUserId(currentUser.id, draftProfile);
-    upsertPendingMentorProfileUpdate({
-      id: "mentor-profile-update-" + (mentorContext.mentorId || slugifyText(draftProfile.displayName || currentUser.name)),
-      mentorId: mentorContext.mentorId || slugifyText(draftProfile.displayName || currentUser.name),
-      mentorName: draftProfile.displayName || currentUser.name,
-      status: "pending",
-      adminNote: "",
-      profile: {
+    try {
+      const result = await submitMentorProfileUpdateRemote({
         displayName: draftProfile.displayName || currentUser.name,
         name: draftProfile.displayName || currentUser.name,
         image: approvedMentor ? approvedMentor.image : currentUser.avatar,
         role: draftProfile.headline,
+        headline: draftProfile.headline,
         workplace: draftProfile.workplace,
         focus: draftProfile.expertise,
+        expertise: draftProfile.expertise,
         serviceText: draftProfile.services,
+        services: draftProfile.services,
         pricing: draftProfile.pricing,
         availabilityText: draftProfile.availability,
+        availability: draftProfile.availability,
         bio: draftProfile.intro,
+        intro: draftProfile.intro,
         achievements: String(draftProfile.achievements || "").split("\n").map(function (item) { return item.trim(); }).filter(Boolean),
         fit: draftProfile.fit,
         rating: Number(draftProfile.rating || (approvedMentor && approvedMentor.rating) || 4.8),
         studentsTaught: Number(draftProfile.studentsTaught || (approvedMentor && approvedMentor.studentsTaught) || 0),
-        reviews: approvedMentor ? approvedMentor.reviews : []
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    });
-    showMessage("mentorDashboardMessage", "success", "Hồ sơ mentor đã được gửi về admin để duyệt. Sau khi approved, trang tìm kiếm mentor sẽ tự cập nhật.");
+        visibility: draftProfile.visibility
+      });
+
+      saveMentorProfileByUserId(currentUser.id, result.draft || draftProfile);
+      if (result.request) {
+        replaceMentorProfileUpdateInStore(result.request);
+      }
+
+      showMessage("mentorDashboardMessage", "success", "HÃ¡Â»â€œ sÃ†Â¡ mentor Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c gÃ¡Â»Â­i vÃ¡Â»Â admin Ã„â€˜Ã¡Â»Æ’ duyÃ¡Â»â€¡t. Sau khi approved, trang tÃƒÂ¬m kiÃ¡ÂºÂ¿m mentor sÃ¡ÂºÂ½ tÃ¡Â»Â± cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t.");
+    } catch (error) {
+      showMessage("mentorDashboardMessage", "error", error.message);
+    }
   });
 }
 
@@ -2793,32 +2860,32 @@ function initializeRegisterPage() {
     const confirmPassword = document.getElementById("registerConfirmPassword").value;
     const agreed = document.getElementById("registerAgree").checked;
     if (name.length < 2) {
-      showMessage("registerMessage", "error", "Họ và tên cần có ít nhất 2 ký tự.");
+      showMessage("registerMessage", "error", "Há» vÃ  tÃªn cáº§n cÃ³ Ã­t nháº¥t 2 kÃ½ tá»±.");
       return;
     }
 
     if (!email.includes("@")) {
-      showMessage("registerMessage", "error", "Email chưa đúng định dạng.");
+      showMessage("registerMessage", "error", "Email chÆ°a Ä‘Ãºng Ä‘á»‹nh dáº¡ng.");
       return;
     }
 
     if (phone.length < 10) {
-      showMessage("registerMessage", "error", "Số điện thoại cần có ít nhất 10 chữ số.");
+      showMessage("registerMessage", "error", "Sá»‘ Ä‘iá»‡n thoáº¡i cáº§n cÃ³ Ã­t nháº¥t 10 chá»¯ sá»‘.");
       return;
     }
 
     if (password.length < 8) {
-      showMessage("registerMessage", "error", "Mật khẩu cần có tối thiểu 8 ký tự.");
+      showMessage("registerMessage", "error", "Máº­t kháº©u cáº§n cÃ³ tá»‘i thiá»ƒu 8 kÃ½ tá»±.");
       return;
     }
 
     if (password !== confirmPassword) {
-      showMessage("registerMessage", "error", "Mật khẩu xác nhận chưa khớp.");
+      showMessage("registerMessage", "error", "Máº­t kháº©u xÃ¡c nháº­n chÆ°a khá»›p.");
       return;
     }
 
     if (!agreed) {
-      showMessage("registerMessage", "error", "Bạn cần đồng ý với điều khoản lưu trữ thông tin để tiếp tục.");
+      showMessage("registerMessage", "error", "Báº¡n cáº§n Ä‘á»“ng Ã½ vá»›i Ä‘iá»u khoáº£n lÆ°u trá»¯ thÃ´ng tin Ä‘á»ƒ tiáº¿p tá»¥c.");
       return;
     }
 
@@ -2839,7 +2906,7 @@ function initializeRegisterPage() {
       }
 
       if (!data.user) {
-        throw new Error("Không thể tạo tài khoản lúc này.");
+        throw new Error("KhÃ´ng thá»ƒ táº¡o tÃ i khoáº£n lÃºc nÃ y.");
       }
 
       if (data.session) {
@@ -2856,16 +2923,16 @@ function initializeRegisterPage() {
 
         const sessionUser = await loadCurrentUserFromSupabase();
         saveAuthSession(sessionUser);
-        showMessage("registerMessage", "success", "Tạo tài khoản thành công. Bạn đang được chuyển tới hồ sơ cá nhân...");
+        showMessage("registerMessage", "success", "Táº¡o tÃ i khoáº£n thÃ nh cÃ´ng. Báº¡n Ä‘ang Ä‘Æ°á»£c chuyá»ƒn tá»›i há»“ sÆ¡ cÃ¡ nhÃ¢n...");
         window.setTimeout(function () {
           window.location.href = "profile.html";
         }, 900);
         return;
       }
 
-      showMessage("registerMessage", "success", "Tài khoản đã được tạo. Hãy kiểm tra email để xác nhận trước khi đăng nhập.");
+      showMessage("registerMessage", "success", "TÃ i khoáº£n Ä‘Ã£ Ä‘Æ°á»£c táº¡o. HÃ£y kiá»ƒm tra email Ä‘á»ƒ xÃ¡c nháº­n trÆ°á»›c khi Ä‘Äƒng nháº­p.");
     } catch (error) {
-      showMessage("registerMessage", "error", error.message || "Không thể tạo tài khoản trên Supabase.");
+      showMessage("registerMessage", "error", error.message || "KhÃ´ng thá»ƒ táº¡o tÃ i khoáº£n trÃªn Supabase.");
     }
   });
 }
@@ -2881,7 +2948,7 @@ function initializeLoginPage() {
     const identifier = document.getElementById("loginIdentifier").value.trim();
     const password = document.getElementById("loginPassword").value;
     if (!identifier || !password) {
-      showMessage("loginMessage", "error", "Vui lòng nhập đầy đủ thông tin đăng nhập.");
+      showMessage("loginMessage", "error", "Vui lÃ²ng nháº­p Ä‘áº§y Ä‘á»§ thÃ´ng tin Ä‘Äƒng nháº­p.");
       return;
     }
 
@@ -2895,7 +2962,7 @@ function initializeLoginPage() {
       }
 
       saveAuthSession(demoUser);
-      showMessage("loginMessage", "success", "Đăng nhập tài khoản test thành công. Đang chuyển đến trang phù hợp...");
+      showMessage("loginMessage", "success", "ÄÄƒng nháº­p tÃ i khoáº£n test thÃ nh cÃ´ng. Äang chuyá»ƒn Ä‘áº¿n trang phÃ¹ há»£p...");
       window.setTimeout(function () {
         window.location.href = getRedirectTarget() || getRoleHomePath(demoUser.role);
       }, 500);
@@ -2905,7 +2972,7 @@ function initializeLoginPage() {
     if (!ensureSupabaseReady("loginMessage")) return;
 
     if (!identifier.includes("@")) {
-      showMessage("loginMessage", "error", "Với tài khoản thật, vui lòng dùng email đã đăng ký. Mentor sau khi kích hoạt sẽ đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo, giống như mentee.");
+      showMessage("loginMessage", "error", "Vá»›i tÃ i khoáº£n tháº­t, vui lÃ²ng dÃ¹ng email Ä‘Ã£ Ä‘Äƒng kÃ½. Mentor sau khi kÃ­ch hoáº¡t sáº½ Ä‘Äƒng nháº­p báº±ng email á»©ng tuyá»ƒn vÃ  máº­t kháº©u vá»«a táº¡o, giá»‘ng nhÆ° mentee.");
       return;
     }
 
@@ -2921,15 +2988,15 @@ function initializeLoginPage() {
 
       const sessionUser = await loadCurrentUserFromSupabase();
       if (!sessionUser) {
-        throw new Error("Đăng nhập thành công nhưng không tải được hồ sơ.");
+        throw new Error("ÄÄƒng nháº­p thÃ nh cÃ´ng nhÆ°ng khÃ´ng táº£i Ä‘Æ°á»£c há»“ sÆ¡.");
       }
 
-      showMessage("loginMessage", "success", "Đăng nhập thành công. Đang chuyển đến trang tiếp theo...");
+      showMessage("loginMessage", "success", "ÄÄƒng nháº­p thÃ nh cÃ´ng. Äang chuyá»ƒn Ä‘áº¿n trang tiáº¿p theo...");
       window.setTimeout(function () {
         window.location.href = getRedirectTarget() || getRoleHomePath(sessionUser.role);
       }, 700);
     } catch (error) {
-      showMessage("loginMessage", "error", error.message || "Không thể đăng nhập lúc này.");
+      showMessage("loginMessage", "error", error.message || "KhÃ´ng thá»ƒ Ä‘Äƒng nháº­p lÃºc nÃ y.");
     }
   });
 }
@@ -2983,7 +3050,7 @@ function initializeProfilePage() {
     }
 
     if (profileBioLabel) {
-      profileBioLabel.textContent = normalizedRole === "mentee" ? "Giới thiệu ngắn" : "Mô tả ngắn";
+      profileBioLabel.textContent = normalizedRole === "mentee" ? "Giá»›i thiá»‡u ngáº¯n" : "MÃ´ táº£ ngáº¯n";
     }
 
     if (profileBioInput) {
@@ -2992,32 +3059,32 @@ function initializeProfilePage() {
 
     if (profileRoleHint) {
       profileRoleHint.textContent = normalizedRole === "mentee"
-        ? "Tài khoản mentee được đăng ký công khai. Mentor được cấp riêng sau khi chọn lọc."
-        : "Loại tài khoản này được cấp riêng theo quy trình nội bộ nên không đổi trực tiếp tại hồ sơ cá nhân.";
+        ? "TÃ i khoáº£n mentee Ä‘Æ°á»£c Ä‘Äƒng kÃ½ cÃ´ng khai. Mentor Ä‘Æ°á»£c cáº¥p riÃªng sau khi chá»n lá»c."
+        : "Loáº¡i tÃ i khoáº£n nÃ y Ä‘Æ°á»£c cáº¥p riÃªng theo quy trÃ¬nh ná»™i bá»™ nÃªn khÃ´ng Ä‘á»•i trá»±c tiáº¿p táº¡i há»“ sÆ¡ cÃ¡ nhÃ¢n.";
     }
 
     if (profileBannerTitle) {
       profileBannerTitle.textContent = normalizedRole === "mentor"
-        ? "Quản lý tài khoản mentor và sẵn sàng hoàn thiện dashboard chuyên môn."
+        ? "Quáº£n lÃ½ tÃ i khoáº£n mentor vÃ  sáºµn sÃ ng hoÃ n thiá»‡n dashboard chuyÃªn mÃ´n."
         : normalizedRole === "admin"
-          ? "Quản lý tài khoản nội bộ và phạm vi công việc được phân quyền."
-          : "Quản lý thông tin và sẵn sàng kết nối với mentor phù hợp.";
+          ? "Quáº£n lÃ½ tÃ i khoáº£n ná»™i bá»™ vÃ  pháº¡m vi cÃ´ng viá»‡c Ä‘Æ°á»£c phÃ¢n quyá»n."
+          : "Quáº£n lÃ½ thÃ´ng tin vÃ  sáºµn sÃ ng káº¿t ná»‘i vá»›i mentor phÃ¹ há»£p.";
     }
 
     if (profileBannerDescription) {
       profileBannerDescription.textContent = normalizedRole === "mentor"
-        ? "Giữ thông tin liên hệ nhất quán để đội ngũ Mentor Me dễ xác minh và mentee dễ nhận diện khi hồ sơ được mở công khai."
+        ? "Giá»¯ thÃ´ng tin liÃªn há»‡ nháº¥t quÃ¡n Ä‘á»ƒ Ä‘á»™i ngÅ© Mentor Me dá»… xÃ¡c minh vÃ  mentee dá»… nháº­n diá»‡n khi há»“ sÆ¡ Ä‘Æ°á»£c má»Ÿ cÃ´ng khai."
         : normalizedRole === "admin"
-          ? "Hồ sơ nội bộ tập trung vào liên hệ công việc và phạm vi phụ trách, còn phần vận hành chính nằm ở khu quản trị nội bộ."
-          : "Cập nhật mục tiêu, cách học và thông tin liên hệ để trải nghiệm tìm mentor trở nên sát nhu cầu hơn.";
+          ? "Há»“ sÆ¡ ná»™i bá»™ táº­p trung vÃ o liÃªn há»‡ cÃ´ng viá»‡c vÃ  pháº¡m vi phá»¥ trÃ¡ch, cÃ²n pháº§n váº­n hÃ nh chÃ­nh náº±m á»Ÿ khu quáº£n trá»‹ ná»™i bá»™."
+          : "Cáº­p nháº­t má»¥c tiÃªu, cÃ¡ch há»c vÃ  thÃ´ng tin liÃªn há»‡ Ä‘á»ƒ tráº£i nghiá»‡m tÃ¬m mentor trá»Ÿ nÃªn sÃ¡t nhu cáº§u hÆ¡n.";
     }
 
     if (profileSectionDescription) {
       profileSectionDescription.textContent = normalizedRole === "mentor"
-        ? "Cập nhật thông tin tài khoản cơ bản. Phần chuyên môn, dịch vụ và lịch rảnh nằm ở dashboard mentor."
+        ? "Cáº­p nháº­t thÃ´ng tin tÃ i khoáº£n cÆ¡ báº£n. Pháº§n chuyÃªn mÃ´n, dá»‹ch vá»¥ vÃ  lá»‹ch ráº£nh náº±m á»Ÿ dashboard mentor."
         : normalizedRole === "admin"
-          ? "Cập nhật thông tin tài khoản nội bộ cơ bản. Việc xử lý lead và hồ sơ mentor được thực hiện ở khu quản trị nội bộ."
-          : "Cập nhật hồ sơ để mentor hiểu rõ hơn về nhu cầu và mục tiêu học tập của bạn.";
+          ? "Cáº­p nháº­t thÃ´ng tin tÃ i khoáº£n ná»™i bá»™ cÆ¡ báº£n. Viá»‡c xá»­ lÃ½ lead vÃ  há»“ sÆ¡ mentor Ä‘Æ°á»£c thá»±c hiá»‡n á»Ÿ khu quáº£n trá»‹ ná»™i bá»™."
+          : "Cáº­p nháº­t há»“ sÆ¡ Ä‘á»ƒ mentor hiá»ƒu rÃµ hÆ¡n vá» nhu cáº§u vÃ  má»¥c tiÃªu há»c táº­p cá»§a báº¡n.";
     }
   }
 
@@ -3025,14 +3092,14 @@ function initializeProfilePage() {
     const normalizedRole = normalizeRole(account.role);
     profileAvatar.src = account.avatar || createAvatarFallback(account.name);
     profileDisplayName.textContent = account.name;
-    profileHeadline.textContent = account.bio || "Hồ sơ cá nhân Mentor Me";
+    profileHeadline.textContent = account.bio || "Há»“ sÆ¡ cÃ¡ nhÃ¢n Mentor Me";
     profileGoalPreview.textContent = account.goal
-      ? (normalizedRole === "mentee" ? "Mục tiêu hiện tại: " : "Định hướng hiện tại: ") + account.goal
+      ? (normalizedRole === "mentee" ? "Má»¥c tiÃªu hiá»‡n táº¡i: " : "Äá»‹nh hÆ°á»›ng hiá»‡n táº¡i: ") + account.goal
       : normalizedRole === "mentor"
-        ? "Bạn chưa thêm định hướng mentoring. Hãy cập nhật để đội ngũ Mentor Me và mentee hiểu rõ hơn về vai trò của bạn."
+        ? "Báº¡n chÆ°a thÃªm Ä‘á»‹nh hÆ°á»›ng mentoring. HÃ£y cáº­p nháº­t Ä‘á»ƒ Ä‘á»™i ngÅ© Mentor Me vÃ  mentee hiá»ƒu rÃµ hÆ¡n vá» vai trÃ² cá»§a báº¡n."
         : normalizedRole === "admin"
-          ? "Bạn chưa thêm phạm vi phụ trách. Hãy cập nhật để nội bộ dễ nhận biết vai trò của tài khoản này."
-          : "Bạn chưa thêm mục tiêu học tập. Hãy cập nhật để mentor hiểu rõ hơn về nhu cầu của bạn.";
+          ? "Báº¡n chÆ°a thÃªm pháº¡m vi phá»¥ trÃ¡ch. HÃ£y cáº­p nháº­t Ä‘á»ƒ ná»™i bá»™ dá»… nháº­n biáº¿t vai trÃ² cá»§a tÃ i khoáº£n nÃ y."
+          : "Báº¡n chÆ°a thÃªm má»¥c tiÃªu há»c táº­p. HÃ£y cáº­p nháº­t Ä‘á»ƒ mentor hiá»ƒu rÃµ hÆ¡n vá» nhu cáº§u cá»§a báº¡n.";
     profileEmailText.textContent = account.email;
     profilePhoneText.textContent = account.phone;
     profileRoleText.textContent = formatRoleLabel(normalizedRole);
@@ -3089,12 +3156,12 @@ function initializeProfilePage() {
     const updatedRole = normalizeRole(profileRoleInput.value);
     const updatedBio = profileBioInput.value.trim();
     if (updatedName.length < 2) {
-      showMessage("profileMessage", "error", "Tên hiển thị cần có ít nhất 2 ký tự.");
+      showMessage("profileMessage", "error", "TÃªn hiá»ƒn thá»‹ cáº§n cÃ³ Ã­t nháº¥t 2 kÃ½ tá»±.");
       return;
     }
 
     if (updatedPhone.length < 10) {
-      showMessage("profileMessage", "error", "Số điện thoại cần có ít nhất 10 chữ số.");
+      showMessage("profileMessage", "error", "Sá»‘ Ä‘iá»‡n thoáº¡i cáº§n cÃ³ Ã­t nháº¥t 10 chá»¯ sá»‘.");
       return;
     }
 
@@ -3110,7 +3177,7 @@ function initializeProfilePage() {
         });
         saveCurrentUser(currentProfileUser);
         fillProfile(currentProfileUser);
-        showMessage("profileMessage", "success", "Đã cập nhật hồ sơ tài khoản test.");
+        showMessage("profileMessage", "success", "ÄÃ£ cáº­p nháº­t há»“ sÆ¡ tÃ i khoáº£n test.");
         return;
       }
 
@@ -3139,7 +3206,7 @@ function initializeProfilePage() {
       });
       saveCurrentUser(currentProfileUser);
       fillProfile(currentProfileUser);
-      showMessage("profileMessage", "success", "Hồ sơ đã được cập nhật thành công.");
+      showMessage("profileMessage", "success", "Há»“ sÆ¡ Ä‘Ã£ Ä‘Æ°á»£c cáº­p nháº­t thÃ nh cÃ´ng.");
     } catch (error) {
       showMessage("profileMessage", "error", error.message);
     }
@@ -3155,19 +3222,19 @@ function initializeProfilePage() {
       const newPassword = document.getElementById("newPasswordInput").value;
       const confirmNewPassword = document.getElementById("confirmNewPasswordInput").value;
       if (newPassword.length < 8) {
-        showMessage("profileMessage", "error", "Mật khẩu mới cần có tối thiểu 8 ký tự.");
+        showMessage("profileMessage", "error", "Máº­t kháº©u má»›i cáº§n cÃ³ tá»‘i thiá»ƒu 8 kÃ½ tá»±.");
         return;
       }
 
       if (newPassword !== confirmNewPassword) {
-        showMessage("profileMessage", "error", "Mật khẩu mới và xác nhận mật khẩu chưa khớp.");
+        showMessage("profileMessage", "error", "Máº­t kháº©u má»›i vÃ  xÃ¡c nháº­n máº­t kháº©u chÆ°a khá»›p.");
         return;
       }
 
       try {
         if (demoMode) {
           changePasswordForm.reset();
-          showMessage("profileMessage", "success", "Đã đổi mật khẩu giả lập cho tài khoản test.");
+          showMessage("profileMessage", "success", "ÄÃ£ Ä‘á»•i máº­t kháº©u giáº£ láº­p cho tÃ i khoáº£n test.");
           return;
         }
 
@@ -3177,7 +3244,7 @@ function initializeProfilePage() {
         });
 
         if (reauthError) {
-          throw new Error("Mật khẩu hiện tại chưa chính xác.");
+          throw new Error("Máº­t kháº©u hiá»‡n táº¡i chÆ°a chÃ­nh xÃ¡c.");
         }
 
         const { error: updateError } = await supabaseClient.auth.updateUser({
@@ -3189,7 +3256,7 @@ function initializeProfilePage() {
         }
 
         changePasswordForm.reset();
-        showMessage("profileMessage", "success", "Mật khẩu đã được cập nhật thành công.");
+        showMessage("profileMessage", "success", "Máº­t kháº©u Ä‘Ã£ Ä‘Æ°á»£c cáº­p nháº­t thÃ nh cÃ´ng.");
       } catch (error) {
         showMessage("profileMessage", "error", error.message);
       }
@@ -3211,10 +3278,10 @@ function initializeProfilePage() {
 
 function buildBookingStatusLabel(status) {
   const normalizedStatus = normalizeWhitespace(status).toLowerCase();
-  if (normalizedStatus === "accepted") return "Đã nhận";
-  if (normalizedStatus === "rejected") return "Đã từ chối";
-  if (normalizedStatus === "completed") return "Đã hoàn thành";
-  return "Chờ phản hồi";
+  if (normalizedStatus === "accepted") return "ÄÃ£ nháº­n";
+  if (normalizedStatus === "rejected") return "ÄÃ£ tá»« chá»‘i";
+  if (normalizedStatus === "completed") return "ÄÃ£ hoÃ n thÃ nh";
+  return "Chá» pháº£n há»“i";
 }
 
 function buildMenteeScheduleCard(request) {
@@ -3223,31 +3290,31 @@ function buildMenteeScheduleCard(request) {
   const reviewHtml = !canReview
     ? `
         <div class="schedule-review-box is-muted">
-          <span>Đánh giá mentor</span>
-          <p>Bạn có thể đánh giá mentor sau khi yêu cầu đã được nhận.</p>
+          <span>ÄÃ¡nh giÃ¡ mentor</span>
+          <p>Báº¡n cÃ³ thá»ƒ Ä‘Ã¡nh giÃ¡ mentor sau khi yÃªu cáº§u Ä‘Ã£ Ä‘Æ°á»£c nháº­n.</p>
         </div>
       `
     : submittedReview
       ? `
           <div class="schedule-review-box">
-            <span>Đánh giá của bạn</span>
+            <span>ÄÃ¡nh giÃ¡ cá»§a báº¡n</span>
             <div class="schedule-review-summary">
               <strong>${Number(submittedReview.rating || 0).toFixed(1)} / 5 sao</strong>
-              <p>${escapeHtml(submittedReview.content || "Bạn đã gửi đánh giá cho mentor này.")}</p>
+              <p>${escapeHtml(submittedReview.content || "Báº¡n Ä‘Ã£ gá»­i Ä‘Ã¡nh giÃ¡ cho mentor nÃ y.")}</p>
             </div>
           </div>
         `
       : `
           <form class="schedule-review-form" data-booking-review-id="${request.id}">
             <div class="schedule-review-form-head">
-              <span>Đánh giá mentor</span>
-              <p>Chia sẻ nhanh trải nghiệm của bạn để hồ sơ mentor hiển thị chân thực hơn.</p>
+              <span>ÄÃ¡nh giÃ¡ mentor</span>
+              <p>Chia sáº» nhanh tráº£i nghiá»‡m cá»§a báº¡n Ä‘á»ƒ há»“ sÆ¡ mentor hiá»ƒn thá»‹ chÃ¢n thá»±c hÆ¡n.</p>
             </div>
             <div class="schedule-review-fields">
               <label class="auth-field">
-                <span>Số sao</span>
+                <span>Sá»‘ sao</span>
                 <select name="rating" required>
-                  <option value="">Chọn số sao</option>
+                  <option value="">Chá»n sá»‘ sao</option>
                   <option value="5">5 sao</option>
                   <option value="4">4 sao</option>
                   <option value="3">3 sao</option>
@@ -3256,11 +3323,11 @@ function buildMenteeScheduleCard(request) {
                 </select>
               </label>
               <label class="auth-field profile-full-width">
-                <span>Nhận xét</span>
-                <textarea name="content" rows="4" placeholder="Ví dụ: Mentor giải thích rõ, theo sát và giúp mình tự tin hơn." required></textarea>
+                <span>Nháº­n xÃ©t</span>
+                <textarea name="content" rows="4" placeholder="VÃ­ dá»¥: Mentor giáº£i thÃ­ch rÃµ, theo sÃ¡t vÃ  giÃºp mÃ¬nh tá»± tin hÆ¡n." required></textarea>
               </label>
             </div>
-            <button type="submit" class="mentor-primary-btn">Gửi đánh giá</button>
+            <button type="submit" class="mentor-primary-btn">Gá»­i Ä‘Ã¡nh giÃ¡</button>
           </form>
         `;
 
@@ -3274,14 +3341,14 @@ function buildMenteeScheduleCard(request) {
         <span class="admin-request-status status-${escapeHtml(request.status)}">${buildBookingStatusLabel(request.status)}</span>
       </div>
       <div class="schedule-card-grid">
-        <p><strong>Mục tiêu:</strong> ${escapeHtml(request.goal)}</p>
-        <p><strong>Thời gian mong muốn:</strong> ${escapeHtml(request.preferredTime)}</p>
-        <p><strong>Gửi lúc:</strong> ${formatDate(request.createdAt)}</p>
-        <p><strong>Lĩnh vực:</strong> ${escapeHtml(request.mentorFocus || "Chưa cập nhật")}</p>
+        <p><strong>Má»¥c tiÃªu:</strong> ${escapeHtml(request.goal)}</p>
+        <p><strong>Thá»i gian mong muá»‘n:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Gá»­i lÃºc:</strong> ${formatDate(request.createdAt)}</p>
+        <p><strong>LÄ©nh vá»±c:</strong> ${escapeHtml(request.mentorFocus || "ChÆ°a cáº­p nháº­t")}</p>
       </div>
       <div class="schedule-card-note">
-        <span>Ghi chú</span>
-        <p>${escapeHtml(request.note || "Không có ghi chú thêm.")}</p>
+        <span>Ghi chÃº</span>
+        <p>${escapeHtml(request.note || "KhÃ´ng cÃ³ ghi chÃº thÃªm.")}</p>
       </div>
       ${reviewHtml}
     </article>
@@ -3293,24 +3360,24 @@ function buildMentorLeadCard(request) {
     <article class="schedule-card">
       <div class="schedule-card-head">
         <div>
-          <span class="schedule-card-label">Yêu cầu mới</span>
+          <span class="schedule-card-label">YÃªu cáº§u má»›i</span>
           <h3>${escapeHtml(request.menteeName)}</h3>
         </div>
         <span class="admin-request-status status-${escapeHtml(request.status)}">${buildBookingStatusLabel(request.status)}</span>
       </div>
       <div class="schedule-card-grid">
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
-        <p><strong>Mentor được chọn:</strong> ${escapeHtml(request.mentorName)}</p>
-        <p><strong>Thời gian mong muốn:</strong> ${escapeHtml(request.preferredTime)}</p>
-        <p><strong>Ngày gửi:</strong> ${formatDate(request.createdAt)}</p>
+        <p><strong>Mentor Ä‘Æ°á»£c chá»n:</strong> ${escapeHtml(request.mentorName)}</p>
+        <p><strong>Thá»i gian mong muá»‘n:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>NgÃ y gá»­i:</strong> ${formatDate(request.createdAt)}</p>
       </div>
       <div class="schedule-card-note">
-        <span>Mục tiêu mentee</span>
+        <span>Má»¥c tiÃªu mentee</span>
         <p>${escapeHtml(request.goal)}</p>
       </div>
       <div class="schedule-card-actions">
-        <button type="button" class="mentor-primary-btn" data-booking-action="accept" data-booking-id="${request.id}">Nhận mentee</button>
-        <button type="button" class="mentor-secondary-btn" data-booking-action="reject" data-booking-id="${request.id}">Từ chối</button>
+        <button type="button" class="mentor-primary-btn" data-booking-action="accept" data-booking-id="${request.id}">Nháº­n mentee</button>
+        <button type="button" class="mentor-secondary-btn" data-booking-action="reject" data-booking-id="${request.id}">Tá»« chá»‘i</button>
       </div>
     </article>
   `;
@@ -3330,24 +3397,24 @@ function buildAdminBookingRequestCard(request) {
       <div class="admin-request-grid">
         <p><strong>Email mentee:</strong> ${escapeHtml(request.menteeEmail)}</p>
         <p><strong>Mentor:</strong> ${escapeHtml(request.mentorName)}</p>
-        <p><strong>Khung giờ:</strong> ${escapeHtml(request.preferredTime)}</p>
-        <p><strong>Ngày gửi:</strong> ${formatDate(request.createdAt)}</p>
+        <p><strong>Khung giá»:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>NgÃ y gá»­i:</strong> ${formatDate(request.createdAt)}</p>
       </div>
 
       <div class="admin-request-body">
         <div class="admin-request-block">
-          <span>Mục tiêu học</span>
-          <p>${escapeHtml(request.goal || "Chưa cập nhật")}</p>
+          <span>Má»¥c tiÃªu há»c</span>
+          <p>${escapeHtml(request.goal || "ChÆ°a cáº­p nháº­t")}</p>
         </div>
         <div class="admin-request-block">
-          <span>Ghi chú mentee</span>
-          <p>${escapeHtml(request.note || "Không có ghi chú thêm.")}</p>
+          <span>Ghi chÃº mentee</span>
+          <p>${escapeHtml(request.note || "KhÃ´ng cÃ³ ghi chÃº thÃªm.")}</p>
         </div>
       </div>
 
       <form class="admin-booking-request-form">
         <label class="auth-field">
-          <span>Trạng thái</span>
+          <span>Tráº¡ng thÃ¡i</span>
           <select name="status">
             <option value="pending" ${request.status === "pending" ? "selected" : ""}>pending</option>
             <option value="accepted" ${request.status === "accepted" ? "selected" : ""}>accepted</option>
@@ -3357,11 +3424,11 @@ function buildAdminBookingRequestCard(request) {
         </label>
 
         <label class="auth-field">
-          <span>Ghi chú admin</span>
-          <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã xác nhận đây là lead phù hợp cho mentor.">${escapeHtml(request.adminNote || "")}</textarea>
+          <span>Ghi chÃº admin</span>
+          <textarea name="adminNote" rows="4" placeholder="VÃ­ dá»¥: ÄÃ£ xÃ¡c nháº­n Ä‘Ã¢y lÃ  lead phÃ¹ há»£p cho mentor.">${escapeHtml(request.adminNote || "")}</textarea>
         </label>
 
-        <button type="submit" class="mentor-primary-btn">Lưu cập nhật</button>
+        <button type="submit" class="mentor-primary-btn">LÆ°u cáº­p nháº­t</button>
       </form>
     </article>
   `;
@@ -3372,7 +3439,7 @@ function buildAcceptedMenteeCard(request) {
     <article class="schedule-card">
       <div class="schedule-card-head">
         <div>
-          <span class="schedule-card-label">Mentee đã nhận</span>
+          <span class="schedule-card-label">Mentee Ä‘Ã£ nháº­n</span>
           <h3>${escapeHtml(request.menteeName)}</h3>
         </div>
         <span class="admin-request-status status-${escapeHtml(request.status)}">${buildBookingStatusLabel(request.status)}</span>
@@ -3380,12 +3447,12 @@ function buildAcceptedMenteeCard(request) {
       <div class="schedule-card-grid">
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
         <p><strong>Mentor:</strong> ${escapeHtml(request.mentorName)}</p>
-        <p><strong>Lịch dạy:</strong> ${escapeHtml(request.preferredTime)}</p>
-        <p><strong>Mục tiêu:</strong> ${escapeHtml(request.goal)}</p>
+        <p><strong>Lá»‹ch dáº¡y:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Má»¥c tiÃªu:</strong> ${escapeHtml(request.goal)}</p>
       </div>
       <div class="schedule-card-note">
-        <span>Ghi chú của mentee</span>
-        <p>${escapeHtml(request.note || "Không có ghi chú thêm.")}</p>
+        <span>Ghi chÃº cá»§a mentee</span>
+        <p>${escapeHtml(request.note || "KhÃ´ng cÃ³ ghi chÃº thÃªm.")}</p>
       </div>
     </article>
   `;
@@ -3396,20 +3463,20 @@ function buildAcceptedMenteeDetailCard(request) {
     <a class="schedule-card schedule-card-link" href="mentor-booking-detail.html?id=${encodeURIComponent(request.id)}">
       <div class="schedule-card-head">
         <div>
-          <span class="schedule-card-label">Mentee đã nhận</span>
+          <span class="schedule-card-label">Mentee Ä‘Ã£ nháº­n</span>
           <h3>${escapeHtml(request.menteeName)}</h3>
         </div>
         <span class="admin-request-status status-${escapeHtml(request.status)}">${buildBookingStatusLabel(request.status)}</span>
       </div>
       <div class="schedule-card-grid">
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
-        <p><strong>Khung giờ:</strong> ${escapeHtml(request.preferredTime)}</p>
-        <p><strong>Mục tiêu:</strong> ${escapeHtml(request.goal)}</p>
+        <p><strong>Khung giá»:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Má»¥c tiÃªu:</strong> ${escapeHtml(request.goal)}</p>
         <p><strong>Mentor:</strong> ${escapeHtml(request.mentorName)}</p>
       </div>
       <div class="schedule-card-note">
-        <span>Đi tới chi tiết</span>
-        <p>Bấm vào ô này để xem đầy đủ thông tin mentee, buổi học và hồ sơ mentor liên quan.</p>
+        <span>Äi tá»›i chi tiáº¿t</span>
+        <p>Báº¥m vÃ o Ã´ nÃ y Ä‘á»ƒ xem Ä‘áº§y Ä‘á»§ thÃ´ng tin mentee, buá»•i há»c vÃ  há»“ sÆ¡ mentor liÃªn quan.</p>
       </div>
     </a>
   `;
@@ -3417,13 +3484,13 @@ function buildAcceptedMenteeDetailCard(request) {
 
 function parsePreferredTimeToWeekday(timeText) {
   const text = normalizeWhitespace(timeText).toLowerCase();
-  if (text.includes("thứ 2")) return 1;
-  if (text.includes("thứ 3")) return 2;
-  if (text.includes("thứ 4")) return 3;
-  if (text.includes("thứ 5")) return 4;
-  if (text.includes("thứ 6")) return 5;
-  if (text.includes("thứ 7")) return 6;
-  if (text.includes("cn") || text.includes("chủ nhật")) return 0;
+  if (text.includes("thá»© 2")) return 1;
+  if (text.includes("thá»© 3")) return 2;
+  if (text.includes("thá»© 4")) return 3;
+  if (text.includes("thá»© 5")) return 4;
+  if (text.includes("thá»© 6")) return 5;
+  if (text.includes("thá»© 7")) return 6;
+  if (text.includes("cn") || text.includes("chá»§ nháº­t")) return 0;
   return null;
 }
 
@@ -3478,7 +3545,7 @@ function renderCalendarGrid(gridElement, monthLabelElement, requests, linkBuilde
   if (!requests.length) {
     gridElement.innerHTML = `
       <div class="admin-empty-state mentor-calendar-empty">
-        <h3>Chưa có lịch học nào</h3>
+        <h3>ChÆ°a cÃ³ lá»‹ch há»c nÃ o</h3>
         <p>${emptyMessage}</p>
       </div>
     `;
@@ -3587,15 +3654,15 @@ function renderMenteeScheduleSummary(summaryElement, requests) {
 
   summaryElement.innerHTML = `
     <article class="schedule-summary-card">
-      <span>Tổng yêu cầu</span>
+      <span>Tá»•ng yÃªu cáº§u</span>
       <strong>${requests.length}</strong>
     </article>
     <article class="schedule-summary-card">
-      <span>Đã nhận</span>
+      <span>ÄÃ£ nháº­n</span>
       <strong>${requests.filter(function (request) { return request.status === "accepted"; }).length}</strong>
     </article>
     <article class="schedule-summary-card">
-      <span>Chờ phản hồi</span>
+      <span>Chá» pháº£n há»“i</span>
       <strong>${requests.filter(function (request) { return request.status === "pending"; }).length}</strong>
     </article>
   `;
@@ -3622,8 +3689,8 @@ function initializeMenteeSchedulePage() {
   if (!requests.length) {
     scheduleList.innerHTML = `
       <div class="admin-empty-state">
-        <h3>Bạn chưa có lịch học nào</h3>
-        <p>Hãy đặt lịch với mentor để các buổi học và trạng thái xử lý xuất hiện tại đây.</p>
+        <h3>Báº¡n chÆ°a cÃ³ lá»‹ch há»c nÃ o</h3>
+        <p>HÃ£y Ä‘áº·t lá»‹ch vá»›i mentor Ä‘á»ƒ cÃ¡c buá»•i há»c vÃ  tráº¡ng thÃ¡i xá»­ lÃ½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y.</p>
       </div>
     `;
     renderCalendarGrid(
@@ -3633,7 +3700,7 @@ function initializeMenteeSchedulePage() {
       function () {
         return "search.html";
       },
-      "Khi mentor nhận yêu cầu của bạn, buổi học sẽ xuất hiện ở đây dưới dạng calendar.",
+      "Khi mentor nháº­n yÃªu cáº§u cá»§a báº¡n, buá»•i há»c sáº½ xuáº¥t hiá»‡n á»Ÿ Ä‘Ã¢y dÆ°á»›i dáº¡ng calendar.",
       new Date()
     );
     return;
@@ -3651,15 +3718,16 @@ function initializeMenteeSchedulePage() {
     linkBuilder: function (request) {
       return "mentor-detail.html?id=" + encodeURIComponent(request.mentorId);
     },
-    emptyMessage: "Khi mentor nhận yêu cầu của bạn, buổi học sẽ xuất hiện ở đây dưới dạng calendar."
+    emptyMessage: "Khi mentor nháº­n yÃªu cáº§u cá»§a báº¡n, buá»•i há»c sáº½ xuáº¥t hiá»‡n á»Ÿ Ä‘Ã¢y dÆ°á»›i dáº¡ng calendar."
   });
 
   if (!scheduleList.dataset.reviewBound) {
-    scheduleList.addEventListener("submit", function (event) {
+    scheduleList.addEventListener("submit", async function (event) {
       const form = event.target.closest(".schedule-review-form");
       if (!form) return;
 
       event.preventDefault();
+      clearMessage("menteeScheduleMessage");
 
       const bookingId = form.getAttribute("data-booking-review-id");
       const currentRequest = getBookingRequests().find(function (item) {
@@ -3676,18 +3744,31 @@ function initializeMenteeSchedulePage() {
         return;
       }
 
-      saveSubmittedReview({
-        bookingId: currentRequest.id,
-        mentorId: currentRequest.mentorId,
-        mentorName: currentRequest.mentorName,
-        author: activeUser.name || currentRequest.menteeName,
-        role: "Mentee Mentor Me",
-        rating: rating,
-        content: content,
-        createdAt: new Date().toISOString()
-      });
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (submitButton) {
+        submitButton.disabled = true;
+      }
 
-      initializeMenteeSchedulePage();
+      try {
+        const result = await submitMentorReview({
+          bookingId: currentRequest.id,
+          rating: rating,
+          content: content
+        });
+
+        saveSubmittedReview(result.review);
+        if (result.mentorProfile) {
+          mergeMentorProfileIntoStore(result.mentorProfile);
+        }
+
+        initializeMenteeSchedulePage();
+      } catch (error) {
+        showMessage("menteeScheduleMessage", "error", error.message || "Khong the gui danh gia mentor luc nay.");
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+        }
+      }
     });
     scheduleList.dataset.reviewBound = "true";
   }
@@ -3721,7 +3802,7 @@ function initializeMenteeCalendarPage() {
     linkBuilder: function (request) {
       return "mentor-detail.html?id=" + encodeURIComponent(request.mentorId);
     },
-    emptyMessage: "Khi mentor nhận yêu cầu của bạn, buổi học sẽ xuất hiện tại đây theo dạng calendar riêng."
+    emptyMessage: "Khi mentor nháº­n yÃªu cáº§u cá»§a báº¡n, buá»•i há»c sáº½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y theo dáº¡ng calendar riÃªng."
   });
 }
 
@@ -3750,20 +3831,20 @@ function initializeMentorRequestsPage() {
     });
 
     note.textContent = mentorContext.mentorId
-      ? "Đang hiển thị yêu cầu đăng ký dành cho mentor: " + mentorContext.mentorName + "."
-      : "Tài khoản này chưa được gắn với một hồ sơ mentor cụ thể, nên đang hiển thị toàn bộ yêu cầu để tiện theo dõi nội bộ.";
+      ? "Äang hiá»ƒn thá»‹ yÃªu cáº§u Ä‘Äƒng kÃ½ dÃ nh cho mentor: " + mentorContext.mentorName + "."
+      : "TÃ i khoáº£n nÃ y chÆ°a Ä‘Æ°á»£c gáº¯n vá»›i má»™t há»“ sÆ¡ mentor cá»¥ thá»ƒ, nÃªn Ä‘ang hiá»ƒn thá»‹ toÃ n bá»™ yÃªu cáº§u Ä‘á»ƒ tiá»‡n theo dÃµi ná»™i bá»™.";
 
     summary.innerHTML = `
       <article class="schedule-summary-card">
-        <span>Yêu cầu mới</span>
+        <span>YÃªu cáº§u má»›i</span>
         <strong>${pendingRequests.length}</strong>
       </article>
       <article class="schedule-summary-card">
-        <span>Đã nhận</span>
+        <span>ÄÃ£ nháº­n</span>
         <strong>${scopedRequests.filter(function (request) { return request.status === "accepted"; }).length}</strong>
       </article>
       <article class="schedule-summary-card">
-        <span>Đã từ chối</span>
+        <span>ÄÃ£ tá»« chá»‘i</span>
         <strong>${scopedRequests.filter(function (request) { return request.status === "rejected"; }).length}</strong>
       </article>
     `;
@@ -3771,8 +3852,8 @@ function initializeMentorRequestsPage() {
     if (!pendingRequests.length) {
       listElement.innerHTML = `
         <div class="admin-empty-state">
-          <h3>Chưa có mentee mới muốn đăng ký</h3>
-          <p>Khi mentee gửi yêu cầu đặt lịch, danh sách này sẽ cập nhật để mentor xử lý.</p>
+          <h3>ChÆ°a cÃ³ mentee má»›i muá»‘n Ä‘Äƒng kÃ½</h3>
+          <p>Khi mentee gá»­i yÃªu cáº§u Ä‘áº·t lá»‹ch, danh sÃ¡ch nÃ y sáº½ cáº­p nháº­t Ä‘á»ƒ mentor xá»­ lÃ½.</p>
         </div>
       `;
       return;
@@ -3781,16 +3862,34 @@ function initializeMentorRequestsPage() {
     listElement.innerHTML = pendingRequests.map(buildMentorLeadCard).join("");
   }
 
-  listElement.addEventListener("click", function (event) {
+  listElement.addEventListener("click", async function (event) {
     const button = event.target.closest("[data-booking-action]");
     if (!button) return;
 
     const bookingId = button.getAttribute("data-booking-id");
     const action = button.getAttribute("data-booking-action");
-    updateBookingRequest(bookingId, {
-      status: action === "accept" ? "accepted" : "rejected"
-    });
-    render();
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    button.disabled = true;
+    clearMessage("mentorRequestsMessage");
+
+    try {
+      const result = await updateBookingRequestRemote(bookingId, {
+        status: action === "accept" ? "accepted" : "rejected"
+      });
+
+      replaceBookingRequestInStore(result.request);
+      if (result.mentorProfile) {
+        mergeMentorProfileIntoStore(result.mentorProfile);
+      }
+
+      render();
+    } catch (error) {
+      showMessage("mentorRequestsMessage", "error", error.message || "Khong the cap nhat yeu cau luc nay.");
+    } finally {
+      button.disabled = false;
+    }
   });
 
   render();
@@ -3818,25 +3917,25 @@ function initializeMentorMenteesPage() {
   const acceptedRequests = getAcceptedRequestsForCurrentMentor(currentUser);
 
   note.textContent = mentorContext.mentorId
-    ? "Đang hiển thị mentee và lịch dạy của mentor: " + mentorContext.mentorName + "."
-    : "Tài khoản này chưa được gắn với một hồ sơ mentor cụ thể, nên đang hiển thị toàn bộ khu quản lý đã nhận trong hệ thống.";
+    ? "Äang hiá»ƒn thá»‹ mentee vÃ  lá»‹ch dáº¡y cá»§a mentor: " + mentorContext.mentorName + "."
+    : "TÃ i khoáº£n nÃ y chÆ°a Ä‘Æ°á»£c gáº¯n vá»›i má»™t há»“ sÆ¡ mentor cá»¥ thá»ƒ, nÃªn Ä‘ang hiá»ƒn thá»‹ toÃ n bá»™ khu quáº£n lÃ½ Ä‘Ã£ nháº­n trong há»‡ thá»‘ng.";
 
   summary.innerHTML = `
     <article class="schedule-summary-card">
-      <span>Mentee đã nhận</span>
+      <span>Mentee Ä‘Ã£ nháº­n</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
     <article class="schedule-summary-card">
-      <span>Lịch dạy sắp tới</span>
+      <span>Lá»‹ch dáº¡y sáº¯p tá»›i</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
     <article class="schedule-summary-card">
-      <span>Đã hoàn thành</span>
+      <span>ÄÃ£ hoÃ n thÃ nh</span>
       <strong>${acceptedRequests.filter(function (request) { return request.status === "completed"; }).length}</strong>
     </article>
   `;
   acceptedPreview.textContent = acceptedRequests.length + " mentee";
-  teachingPreview.textContent = acceptedRequests.length + " buổi";
+  teachingPreview.textContent = acceptedRequests.length + " buá»•i";
 }
 
 function initializeMentorAcceptedPage() {
@@ -3860,20 +3959,20 @@ function initializeMentorAcceptedPage() {
   const acceptedRequests = getAcceptedRequestsForCurrentMentor(currentUser);
 
   note.textContent = mentorContext.mentorId
-    ? "Đang hiển thị danh sách mentee đã nhận cho mentor: " + mentorContext.mentorName + "."
-    : "Tài khoản này chưa được gắn mentor cụ thể nên đang hiển thị toàn bộ mentee đã nhận.";
+    ? "Äang hiá»ƒn thá»‹ danh sÃ¡ch mentee Ä‘Ã£ nháº­n cho mentor: " + mentorContext.mentorName + "."
+    : "TÃ i khoáº£n nÃ y chÆ°a Ä‘Æ°á»£c gáº¯n mentor cá»¥ thá»ƒ nÃªn Ä‘ang hiá»ƒn thá»‹ toÃ n bá»™ mentee Ä‘Ã£ nháº­n.";
 
   summary.innerHTML = `
     <article class="schedule-summary-card">
-      <span>Mentee đã nhận</span>
+      <span>Mentee Ä‘Ã£ nháº­n</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
     <article class="schedule-summary-card">
-      <span>Đã hoàn thành</span>
+      <span>ÄÃ£ hoÃ n thÃ nh</span>
       <strong>${acceptedRequests.filter(function (request) { return request.status === "completed"; }).length}</strong>
     </article>
     <article class="schedule-summary-card">
-      <span>Mở chi tiết</span>
+      <span>Má»Ÿ chi tiáº¿t</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
   `;
@@ -3881,8 +3980,8 @@ function initializeMentorAcceptedPage() {
   if (!acceptedRequests.length) {
     listElement.innerHTML = `
       <div class="admin-empty-state">
-        <h3>Chưa có mentee đã nhận</h3>
-        <p>Sau khi mentor nhận yêu cầu đăng ký, danh sách mentee sẽ xuất hiện tại đây.</p>
+        <h3>ChÆ°a cÃ³ mentee Ä‘Ã£ nháº­n</h3>
+        <p>Sau khi mentor nháº­n yÃªu cáº§u Ä‘Äƒng kÃ½, danh sÃ¡ch mentee sáº½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y.</p>
       </div>
     `;
     return;
@@ -3915,16 +4014,16 @@ function initializeMentorTeachingCalendarPage() {
   const acceptedRequests = getAcceptedRequestsForCurrentMentor(currentUser);
 
   note.textContent = mentorContext.mentorId
-    ? "Calendar đang hiển thị lịch dạy của mentor: " + mentorContext.mentorName + "."
-    : "Calendar đang hiển thị toàn bộ các lịch dạy đã được nhận trong hệ thống.";
+    ? "Calendar Ä‘ang hiá»ƒn thá»‹ lá»‹ch dáº¡y cá»§a mentor: " + mentorContext.mentorName + "."
+    : "Calendar Ä‘ang hiá»ƒn thá»‹ toÃ n bá»™ cÃ¡c lá»‹ch dáº¡y Ä‘Ã£ Ä‘Æ°á»£c nháº­n trong há»‡ thá»‘ng.";
 
   summary.innerHTML = `
     <article class="schedule-summary-card">
-      <span>Buổi đã nhận</span>
+      <span>Buá»•i Ä‘Ã£ nháº­n</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
     <article class="schedule-summary-card">
-      <span>Tuần này</span>
+      <span>Tuáº§n nÃ y</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
     <article class="schedule-summary-card">
@@ -3941,7 +4040,7 @@ function initializeMentorTeachingCalendarPage() {
       function () {
         return "mentor-booking-detail.html";
       },
-      "Khi mentor nhận mentee, buổi học sẽ xuất hiện ở đây dưới dạng calendar.",
+      "Khi mentor nháº­n mentee, buá»•i há»c sáº½ xuáº¥t hiá»‡n á»Ÿ Ä‘Ã¢y dÆ°á»›i dáº¡ng calendar.",
       new Date()
     );
     return;
@@ -3955,7 +4054,7 @@ function initializeMentorTeachingCalendarPage() {
     linkBuilder: function (request) {
       return "mentor-booking-detail.html?id=" + encodeURIComponent(request.id);
     },
-    emptyMessage: "Khi mentor nhận mentee, buổi học sẽ xuất hiện ở đây dưới dạng calendar."
+    emptyMessage: "Khi mentor nháº­n mentee, buá»•i há»c sáº½ xuáº¥t hiá»‡n á»Ÿ Ä‘Ã¢y dÆ°á»›i dáº¡ng calendar."
   });
 }
 
@@ -3984,51 +4083,51 @@ function initializeMentorBookingDetailPage() {
   if (!request) {
     content.innerHTML = `
       <div class="admin-empty-state">
-        <h3>Không tìm thấy buổi dạy</h3>
-        <p>Buổi học này không còn tồn tại hoặc không thuộc mentor hiện tại.</p>
+        <h3>KhÃ´ng tÃ¬m tháº¥y buá»•i dáº¡y</h3>
+        <p>Buá»•i há»c nÃ y khÃ´ng cÃ²n tá»“n táº¡i hoáº·c khÃ´ng thuá»™c mentor hiá»‡n táº¡i.</p>
       </div>
     `;
     return;
   }
 
   const mentor = getResolvedMentorById(request.mentorId);
-  note.textContent = "Đây là trang chi tiết của buổi dạy giữa " + request.mentorName + " và " + request.menteeName + ".";
+  note.textContent = "ÄÃ¢y lÃ  trang chi tiáº¿t cá»§a buá»•i dáº¡y giá»¯a " + request.mentorName + " vÃ  " + request.menteeName + ".";
 
   content.innerHTML = `
     <article class="mentor-booking-detail-card">
-      <span class="schedule-card-label">Mentee đã nhận</span>
+      <span class="schedule-card-label">Mentee Ä‘Ã£ nháº­n</span>
       <h2>${escapeHtml(request.menteeName)}</h2>
       <div class="schedule-card-grid">
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
-        <p><strong>Khung giờ:</strong> ${escapeHtml(request.preferredTime)}</p>
-        <p><strong>Trạng thái:</strong> ${escapeHtml(buildBookingStatusLabel(request.status))}</p>
-        <p><strong>Ngày gửi:</strong> ${escapeHtml(formatDate(request.createdAt))}</p>
+        <p><strong>Khung giá»:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Tráº¡ng thÃ¡i:</strong> ${escapeHtml(buildBookingStatusLabel(request.status))}</p>
+        <p><strong>NgÃ y gá»­i:</strong> ${escapeHtml(formatDate(request.createdAt))}</p>
       </div>
       <div class="schedule-card-note">
-        <span>Mục tiêu học tập</span>
-        <p>${escapeHtml(request.goal || "Chưa cập nhật")}</p>
+        <span>Má»¥c tiÃªu há»c táº­p</span>
+        <p>${escapeHtml(request.goal || "ChÆ°a cáº­p nháº­t")}</p>
       </div>
       <div class="schedule-card-note">
-        <span>Ghi chú của mentee</span>
-        <p>${escapeHtml(request.note || "Không có ghi chú thêm.")}</p>
+        <span>Ghi chÃº cá»§a mentee</span>
+        <p>${escapeHtml(request.note || "KhÃ´ng cÃ³ ghi chÃº thÃªm.")}</p>
       </div>
     </article>
     <article class="mentor-booking-detail-card">
-      <span class="schedule-card-label">Mentor phụ trách</span>
+      <span class="schedule-card-label">Mentor phá»¥ trÃ¡ch</span>
       <h2>${escapeHtml(request.mentorName)}</h2>
       <div class="schedule-card-grid">
-        <p><strong>Nơi làm việc / học tập:</strong> ${escapeHtml((mentor && mentor.workplace) || "Đang cập nhật")}</p>
-        <p><strong>Lĩnh vực:</strong> ${escapeHtml((mentor && mentor.focus) || request.mentorFocus || "Đang cập nhật")}</p>
-        <p><strong>Đánh giá:</strong> ${escapeHtml(mentor ? Number(mentor.rating || 0).toFixed(1) + " / 5 sao" : "Đang cập nhật")}</p>
-        <p><strong>Đã đồng hành:</strong> ${escapeHtml(mentor ? String(mentor.studentsTaught || 0) + " học sinh" : "Đang cập nhật")}</p>
+        <p><strong>NÆ¡i lÃ m viá»‡c / há»c táº­p:</strong> ${escapeHtml((mentor && mentor.workplace) || "Äang cáº­p nháº­t")}</p>
+        <p><strong>LÄ©nh vá»±c:</strong> ${escapeHtml((mentor && mentor.focus) || request.mentorFocus || "Äang cáº­p nháº­t")}</p>
+        <p><strong>ÄÃ¡nh giÃ¡:</strong> ${escapeHtml(mentor ? Number(mentor.rating || 0).toFixed(1) + " / 5 sao" : "Äang cáº­p nháº­t")}</p>
+        <p><strong>ÄÃ£ Ä‘á»“ng hÃ nh:</strong> ${escapeHtml(mentor ? String(mentor.studentsTaught || 0) + " há»c sinh" : "Äang cáº­p nháº­t")}</p>
       </div>
       <div class="schedule-card-note">
-        <span>Giới thiệu ngắn</span>
-        <p>${escapeHtml((mentor && mentor.bio) || "Thông tin mentor sẽ hiển thị tại đây sau khi hồ sơ được cập nhật.")}</p>
+        <span>Giá»›i thiá»‡u ngáº¯n</span>
+        <p>${escapeHtml((mentor && mentor.bio) || "ThÃ´ng tin mentor sáº½ hiá»ƒn thá»‹ táº¡i Ä‘Ã¢y sau khi há»“ sÆ¡ Ä‘Æ°á»£c cáº­p nháº­t.")}</p>
       </div>
       <div class="schedule-card-actions">
-        <a href="mentor-detail.html?id=${encodeURIComponent(request.mentorId)}" class="mentor-primary-btn">Xem chi tiết mentor</a>
-        <a href="mentor-accepted.html" class="mentor-secondary-btn">Quay lại mentee đã nhận</a>
+        <a href="mentor-detail.html?id=${encodeURIComponent(request.mentorId)}" class="mentor-primary-btn">Xem chi tiáº¿t mentor</a>
+        <a href="mentor-accepted.html" class="mentor-secondary-btn">Quay láº¡i mentee Ä‘Ã£ nháº­n</a>
       </div>
     </article>
   `;
@@ -4045,7 +4144,7 @@ function initializeForgotPasswordPage() {
 
     const email = normalizeEmail(document.getElementById("forgotEmail").value);
     if (!email.includes("@")) {
-      showMessage("forgotPasswordMessage", "error", "Vui lòng nhập đúng email đã đăng ký.");
+      showMessage("forgotPasswordMessage", "error", "Vui lÃ²ng nháº­p Ä‘Ãºng email Ä‘Ã£ Ä‘Äƒng kÃ½.");
       return;
     }
 
@@ -4058,7 +4157,7 @@ function initializeForgotPasswordPage() {
         throw error;
       }
 
-      showMessage("forgotPasswordMessage", "success", "Đã gửi email đặt lại mật khẩu. Hãy kiểm tra hộp thư của bạn.");
+      showMessage("forgotPasswordMessage", "success", "ÄÃ£ gá»­i email Ä‘áº·t láº¡i máº­t kháº©u. HÃ£y kiá»ƒm tra há»™p thÆ° cá»§a báº¡n.");
     } catch (error) {
       showMessage("forgotPasswordMessage", "error", error.message);
     }
@@ -4078,19 +4177,19 @@ function initializeResetPasswordPage() {
     const confirmPassword = document.getElementById("resetConfirmPassword").value;
 
     if (newPassword.length < 8) {
-      showMessage("resetPasswordMessage", "error", "Mật khẩu mới cần có tối thiểu 8 ký tự.");
+      showMessage("resetPasswordMessage", "error", "Máº­t kháº©u má»›i cáº§n cÃ³ tá»‘i thiá»ƒu 8 kÃ½ tá»±.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      showMessage("resetPasswordMessage", "error", "Mật khẩu xác nhận chưa khớp.");
+      showMessage("resetPasswordMessage", "error", "Máº­t kháº©u xÃ¡c nháº­n chÆ°a khá»›p.");
       return;
     }
 
     try {
       const session = await getSupabaseSession();
       if (!session) {
-        throw new Error("Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.");
+        throw new Error("LiÃªn káº¿t Ä‘áº·t láº¡i máº­t kháº©u khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n.");
       }
 
       const { error } = await supabaseClient.auth.updateUser({
@@ -4101,7 +4200,7 @@ function initializeResetPasswordPage() {
         throw error;
       }
 
-      showMessage("resetPasswordMessage", "success", "Mật khẩu mới đã được lưu thành công. Bạn có thể đăng nhập lại.");
+      showMessage("resetPasswordMessage", "success", "Máº­t kháº©u má»›i Ä‘Ã£ Ä‘Æ°á»£c lÆ°u thÃ nh cÃ´ng. Báº¡n cÃ³ thá»ƒ Ä‘Äƒng nháº­p láº¡i.");
       window.setTimeout(async function () {
         await supabaseClient.auth.signOut();
         clearAuthSession();
@@ -4115,12 +4214,19 @@ function initializeResetPasswordPage() {
 
 async function bootstrapApp() {
   initializePasswordToggles();
-  syncApprovedMentorProfilesWithRealData();
-  syncSubmittedReviewsWithCurrentData();
-  ensureDemoBookingRequests();
   if (isSupabaseReady()) {
     await loadCurrentUserFromSupabase();
   }
+
+  try {
+    const storedAdminKey = window.location.pathname.endsWith("admin-consultations.html")
+      ? normalizeWhitespace(sessionStorage.getItem("mentorMeAdminKey") || "")
+      : "";
+    await syncBusinessStateFromServer({ adminKey: storedAdminKey });
+  } catch (error) {
+    // Keep static fallbacks when the API is temporarily unavailable.
+  }
+
   redirectIfAuthenticated();
   initializeRegisterPage();
   initializeLoginPage();

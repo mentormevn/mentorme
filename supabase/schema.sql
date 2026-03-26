@@ -53,9 +53,124 @@ create table if not exists public.mentor_applications (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.mentor_profiles (
+  id text primary key,
+  owner_user_id uuid references auth.users (id) on delete set null,
+  source_application_id bigint references public.mentor_applications (id) on delete set null,
+  display_name text not null,
+  image_url text not null default '',
+  workplace text not null default '',
+  tag text not null default '',
+  headline text not null default '',
+  bio text not null default '',
+  focus text not null default '',
+  field text not null default 'khac',
+  availability_tokens text[] not null default '{}',
+  availability_text text not null default '',
+  service_tokens text[] not null default '{}',
+  service_text text not null default '',
+  pricing text not null default '',
+  achievements text[] not null default '{}',
+  fit text not null default '',
+  searchable_text text not null default '',
+  rating numeric(4,2) not null default 0,
+  students_taught integer not null default 0,
+  visibility text not null default 'public' check (visibility in ('public', 'draft', 'archived')),
+  status text not null default 'approved' check (status in ('pending', 'approved', 'rejected', 'inactive')),
+  origin text not null default 'admin' check (origin in ('seed', 'admin', 'application', 'mentor_update')),
+  published_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists mentor_profiles_owner_user_idx
+  on public.mentor_profiles (owner_user_id);
+
+create index if not exists mentor_profiles_visibility_status_idx
+  on public.mentor_profiles (visibility, status);
+
+alter table public.profiles
+  add column if not exists mentor_profile_id text references public.mentor_profiles (id) on delete set null;
+
+alter table public.mentor_applications
+  add column if not exists mentor_profile_id text references public.mentor_profiles (id) on delete set null;
+
+alter table public.mentor_applications
+  add column if not exists activated_user_id uuid references auth.users (id) on delete set null;
+
+create table if not exists public.mentor_profile_drafts (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  mentor_profile_id text references public.mentor_profiles (id) on delete set null,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.mentor_profile_update_requests (
+  id uuid primary key default gen_random_uuid(),
+  mentor_profile_id text not null references public.mentor_profiles (id) on delete cascade,
+  requester_user_id uuid references auth.users (id) on delete set null,
+  mentor_name text not null default '',
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  admin_note text not null default '',
+  profile_snapshot jsonb not null default '{}'::jsonb,
+  reviewed_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists mentor_profile_update_requests_profile_idx
+  on public.mentor_profile_update_requests (mentor_profile_id, status, created_at desc);
+
+create table if not exists public.mentor_booking_requests (
+  id uuid primary key default gen_random_uuid(),
+  mentor_profile_id text not null references public.mentor_profiles (id) on delete cascade,
+  mentee_user_id uuid references auth.users (id) on delete set null,
+  mentee_name text not null,
+  mentee_email text not null,
+  goal text not null,
+  preferred_time text not null,
+  note text not null default '',
+  admin_note text not null default '',
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'rejected', 'completed')),
+  mentor_name_snapshot text not null default '',
+  mentor_image_snapshot text not null default '',
+  mentor_focus_snapshot text not null default '',
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists mentor_booking_requests_profile_status_idx
+  on public.mentor_booking_requests (mentor_profile_id, status, created_at desc);
+
+create index if not exists mentor_booking_requests_mentee_idx
+  on public.mentor_booking_requests (mentee_user_id, created_at desc);
+
+create table if not exists public.mentor_reviews (
+  id uuid primary key default gen_random_uuid(),
+  booking_request_id uuid not null unique references public.mentor_booking_requests (id) on delete cascade,
+  mentor_profile_id text not null references public.mentor_profiles (id) on delete cascade,
+  mentee_user_id uuid references auth.users (id) on delete set null,
+  author_name text not null,
+  author_role text not null default 'Mentee Mentor Me',
+  rating integer not null check (rating between 1 and 5),
+  content text not null,
+  is_published boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists mentor_reviews_profile_idx
+  on public.mentor_reviews (mentor_profile_id, created_at desc);
+
 alter table public.profiles enable row level security;
 alter table public.consultation_requests enable row level security;
 alter table public.mentor_applications enable row level security;
+alter table public.mentor_profiles enable row level security;
+alter table public.mentor_profile_drafts enable row level security;
+alter table public.mentor_profile_update_requests enable row level security;
+alter table public.mentor_booking_requests enable row level security;
+alter table public.mentor_reviews enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own"
@@ -78,3 +193,180 @@ create policy "profiles_update_own"
   to authenticated
   using (auth.uid() = id)
   with check (auth.uid() = id);
+
+drop policy if exists "mentor_profiles_public_select" on public.mentor_profiles;
+create policy "mentor_profiles_public_select"
+  on public.mentor_profiles
+  for select
+  to public
+  using (status = 'approved' and visibility = 'public');
+
+drop policy if exists "mentor_profiles_owner_select" on public.mentor_profiles;
+create policy "mentor_profiles_owner_select"
+  on public.mentor_profiles
+  for select
+  to authenticated
+  using (owner_user_id = auth.uid());
+
+drop policy if exists "mentor_profiles_owner_write" on public.mentor_profiles;
+create policy "mentor_profiles_owner_write"
+  on public.mentor_profiles
+  for all
+  to authenticated
+  using (owner_user_id = auth.uid())
+  with check (owner_user_id = auth.uid());
+
+drop policy if exists "mentor_profile_drafts_owner_all" on public.mentor_profile_drafts;
+create policy "mentor_profile_drafts_owner_all"
+  on public.mentor_profile_drafts
+  for all
+  to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+drop policy if exists "mentor_profile_updates_owner_select" on public.mentor_profile_update_requests;
+create policy "mentor_profile_updates_owner_select"
+  on public.mentor_profile_update_requests
+  for select
+  to authenticated
+  using (requester_user_id = auth.uid());
+
+drop policy if exists "mentor_profile_updates_owner_insert" on public.mentor_profile_update_requests;
+create policy "mentor_profile_updates_owner_insert"
+  on public.mentor_profile_update_requests
+  for insert
+  to authenticated
+  with check (requester_user_id = auth.uid());
+
+drop policy if exists "mentor_reviews_public_select" on public.mentor_reviews;
+create policy "mentor_reviews_public_select"
+  on public.mentor_reviews
+  for select
+  to public
+  using (is_published = true);
+
+insert into public.mentor_profiles (
+  id,
+  display_name,
+  image_url,
+  workplace,
+  tag,
+  headline,
+  bio,
+  focus,
+  field,
+  availability_tokens,
+  availability_text,
+  service_tokens,
+  service_text,
+  pricing,
+  achievements,
+  fit,
+  searchable_text,
+  rating,
+  students_taught,
+  visibility,
+  status,
+  origin,
+  published_at,
+  created_at,
+  updated_at
+)
+values
+  (
+    'tra-my',
+    'BUI VU TRA MY',
+    'mentorbuivutramy.jpg',
+    'Vien Tieng, Dai hoc Konkuk - Han Quoc',
+    'Mentor ngoai ngu va dinh huong',
+    'Mentor tieng Trung, du hoc va hoat dong ngoai khoa',
+    'Tra My dong hanh voi hoc sinh, sinh vien trong hanh trinh hoc ngoai ngu, dinh huong phat trien ban than va xay dung su tu tin khi buoc ra moi truong quoc te.',
+    'Tieng Trung, ngoai ngu, du hoc Han Quoc, ky nang mem',
+    'ngoai-ngu',
+    array['sang', 'chieu', 'toi', 'cuoi-tuan'],
+    'Linh hoat theo lich hen',
+    array['1-1', 'group', 'roadmap'],
+    'Mentor 1 kem 1, mentor theo nhom, tu van lo trinh',
+    '',
+    array[
+      'Dang la du hoc sinh Vien Tieng, Dai hoc Konkuk tai Han Quoc.',
+      'Pho Chu nhiem CLB Dinh huong va Phat trien Khoi nghiep Thanh pho Cam Pha nhiem ky 2024.',
+      'Dong Truong ban to chuc su kien gay quy thien nguyen "Mam" 2024 va tham gia nhieu du an truyen thong, huong nghiep tai Quang Ninh.',
+      'Hoan thanh cac khoa dao tao va chung nhan chuyen mon tu WHO cung khoa dao tao giao vien tieng Trung ngan han.'
+    ],
+    'Phu hop voi hoc sinh, sinh vien can dong hanh ve ngoai ngu, dinh huong nghe nghiep, hoat dong ngoai khoa hoac muon hoc cung mot mentor giau trai nghiem thuc te.',
+    'tra my tieng trung ngoai ngu hsk du hoc han quoc dinh huong nghe nghiep ky nang mem hoat dong ngoai khoa truyen thong huong nghiep',
+    0,
+    0,
+    'public',
+    'approved',
+    'seed',
+    timezone('utc', now()),
+    timezone('utc', now()),
+    timezone('utc', now())
+  ),
+  (
+    'tien-dung',
+    'NGUYEN TIEN DUNG',
+    'mentor2.jpg',
+    'Hoc vien Bao chi va Tuyen truyen - Chuyen nganh Truyen thong chinh sach',
+    'Mentor Ngu van, truyen thong va ho so',
+    'Mentor Ngu van, truyen thong, thuyet trinh va hoat dong ngoai khoa',
+    'Nguyen Tien Dung co nen tang hoc thuat manh o mon Ngu van va nhieu trai nghiem thuc te trong truyen thong, to chuc hoat dong hoc sinh va xay dung ho so ca nhan.',
+    'Ngu van, truyen thong, thuyet trinh, hoat dong ngoai khoa',
+    'van',
+    array['sang', 'chieu', 'toi', 'cuoi-tuan'],
+    'Linh hoat theo lich hen',
+    array['1-1', 'group', 'roadmap', 'competition'],
+    'Mentor 1 kem 1, mentor theo nhom, tu van dinh huong, dong hanh hoat dong va cuoc thi',
+    '',
+    array[
+      'Hoc sinh gioi Tinh mon Ngu van cap THPT nam hoc 2023 - 2024 va 2024 - 2025.',
+      'Giai Nhat thuyet trinh Ngay hoi Van hoa Doc nam hoc 2024 - 2025.',
+      'Giai Nhi cuoc thi Sang kien phong, chong bao luc hoc duong nam hoc 2024 - 2025.',
+      'Thanh vien ACC - Cau lac bo truyen thong Hoc vien Bao chi va Tuyen truyen, thanh vien Doi Bao chi - Truyen thong Spotlight 2025 va Truong ban Noi dung HS14 nam 2023 - 2024.'
+    ],
+    'Phu hop voi hoc sinh can hoc tot mon Van, cai thien ky nang thuyet trinh, tham gia hoat dong ngoai khoa va xay dung ho so ca nhan chin chu hon.',
+    'nguyen tien dung ngu van van hoc truyen thong thuyet trinh ky nang mem hoat dong ngoai khoa hoc vien bao chi truyen thong chinh sach spotlight hs14 ho so',
+    0,
+    0,
+    'public',
+    'approved',
+    'seed',
+    timezone('utc', now()),
+    timezone('utc', now()),
+    timezone('utc', now())
+  ),
+  (
+    'thuy-trang',
+    'DO THUY TRANG',
+    'mentor3.jpg',
+    'Truong Dai hoc Kinh te - Dai hoc Quoc gia Ha Noi',
+    'Mentor dinh huong va ky nang mem',
+    'Mentor dinh huong nghe nghiep, ky nang mem va hoat dong ngoai khoa',
+    'Do Thuy Trang noi bat o hoat dong Doan - Hoi, to chuc su kien, khoi nghiep va dinh huong phat trien ca nhan cho hoc sinh, sinh vien.',
+    'Dinh huong nghe nghiep, ky nang mem, hoat dong ngoai khoa',
+    'ky-nang',
+    array['sang', 'chieu', 'toi', 'cuoi-tuan'],
+    'Linh hoat theo lich hen',
+    array['1-1', 'group', 'roadmap', 'competition'],
+    'Mentor 1 kem 1, mentor theo nhom, tu van dinh huong, dong hanh hoat dong',
+    '',
+    array[
+      'Chu nhiem CLB Dinh huong va Phat trien Khoi nghiep thanh pho Cam Pha nhiem ky 2024 va 2024 - 2025.',
+      'Uy vien Uy ban Hoi LHTN Viet Nam thanh pho Cam Pha khoa V, nhiem ky 2024 - 2029.',
+      'Truong ban to chuc cac mua su kien gay quy thien nguyen "Mam" va su kien huong nghiep cho hon 200 hoc sinh THPT tai thanh pho Cam Pha.',
+      'Dat nhieu giay khen, bang khen cap thanh pho, tinh va Trung uong Doan ve cong tac Doan - Hoi, khoi nghiep va du an cong dong.'
+    ],
+    'Phu hop voi mentee muon duoc dinh huong nghe nghiep, phat trien ky nang mem, xay ho so hoat dong, to chuc du an va nang cao su tu tin khi tham gia cong dong.',
+    'do thuy trang dinh huong nghe nghiep ky nang mem hoat dong ngoai khoa khoi nghiep to chuc su kien doan hoi kinh te quoc gia',
+    0,
+    0,
+    'public',
+    'approved',
+    'seed',
+    timezone('utc', now()),
+    timezone('utc', now()),
+    timezone('utc', now())
+  )
+on conflict (id) do nothing;
