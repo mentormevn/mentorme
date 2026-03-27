@@ -386,35 +386,7 @@ function addBookingRequest(request) {
 }
 
 function ensureDemoBookingRequests() {
-  const demoMentor = mentorData["tien-dung"];
-  if (!demoMentor) return;
-
-  const requests = getBookingRequests();
-  const existingDemoRequest = requests.some(function (request) {
-    return request.id === "booking-demo-do-thuy-trang-tien-dung";
-  });
-
-  if (existingDemoRequest) return;
-
-  requests.unshift({
-    id: "booking-demo-do-thuy-trang-tien-dung",
-    mentorId: demoMentor.id,
-    mentorName: demoMentor.name,
-    mentorImage: demoMentor.image,
-    mentorFocus: demoMentor.focus,
-    menteeUserId: "demo-mentee-do-thuy-trang",
-    menteeName: "Đỗ Thùy Trang",
-    menteeEmail: DEMO_MENTEE_EMAIL,
-    goal: "Muốn học Văn vào tối thứ 4 để cải thiện cách phân tích và viết bài mạch lạc hơn.",
-    preferredTime: "Tối thứ 4",
-    note: "Em muốn đăng ký mentor Nguyễn Tiến Dũng và cần người theo sát phần Văn, nhất là phân tích và lên ý.",
-    adminNote: "Lead demo để kiểm thử luồng admin - mentor - mentee.",
-    status: "pending",
-    createdAt: "2026-03-26T07:00:00.000Z",
-    updatedAt: "2026-03-26T07:00:00.000Z"
-  });
-
-  saveBookingRequests(requests);
+  return;
 }
 
 function updateBookingRequest(requestId, updates) {
