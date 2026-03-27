@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentee đã nhận & lịch dạy | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="mentor-dashboard-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
+      <li><a href="mentor-accepted.html">Mentee đã nhận</a></li>
+      <li><a href="mentor-teaching-calendar.html">Lịch dạy</a></li>
+      <li><a href="mentor-requests.html">Mentee muốn đăng ký</a></li>
+    </ul>
+
+    <div id="authArea"></div>
+  </div>
+
+  <main class="schedule-shell">
+    <section class="schedule-hero-card">
+      <h1>Quản lý mentee đã nhận và lịch dạy theo từng khu riêng rõ ràng hơn.</h1>
+      <p id="mentorTeachingScopeNote">Chọn đúng khu bạn muốn xem: danh sách mentee đã nhận hoặc lịch dạy dạng calendar.</p>
+    </section>
+
+    <section id="mentorTeachingSummary" class="schedule-summary-grid"></section>
+
+    <section class="mentor-workspace-grid">
+      <a href="mentor-accepted.html" class="mentor-workspace-card">
+        <span class="mentor-workspace-kicker">Danh sách chi tiết</span>
+        <h2>Mentee đã nhận</h2>
+        <p>Xem toàn bộ mentee đã được nhận, mở từng ô thông tin và đi vào trang chi tiết riêng.</p>
+        <strong id="mentorAcceptedCountPreview">0 mentee</strong>
+      </a>
+
+      <a href="mentor-teaching-calendar.html" class="mentor-workspace-card">
+        <span class="mentor-workspace-kicker">Calendar dạy học</span>
+        <h2>Lịch dạy</h2>
+        <p>Xem các buổi đã nhận theo lịch dạng calendar để theo dõi khung giờ và điều hướng nhanh sang chi tiết.</p>
+        <strong id="mentorTeachingCountPreview">0 buổi</strong>
+      </a>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

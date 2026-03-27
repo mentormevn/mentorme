@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ Mentor | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="mentor-dashboard-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
+      <li><a href="mentor-accepted.html">Mentee đã nhận</a></li>
+      <li><a href="mentor-teaching-calendar.html">Lịch dạy</a></li>
+      <li><a href="mentor-requests.html">Mentee muốn đăng ký</a></li>
+    </ul>
+
+    <div id="authArea"></div>
+  </div>
+
+  <main class="mentor-dashboard-shell">
+    <section class="mentor-dashboard-hero">
+      <div class="mentor-dashboard-hero-copy">
+        <h1>Hoàn thiện hồ sơ chuyên nghiệp!</h1>
+        <p>
+          Cập nhật nơi làm việc hoặc học tập, chuyên môn, dịch vụ, mức giá và lịch rảnh.
+          Mỗi lần lưu, hồ sơ sẽ được gửi tới đội ngũ Mentor Me để kiểm tra trước khi cập nhật ra trang tìm kiếm mentor.
+        </p>
+      </div>
+    </section>
+
+    <div id="mentorDashboardMessage" class="auth-message" hidden></div>
+
+    <section class="mentor-dashboard-grid">
+      <div class="mentor-dashboard-form-card">
+        <div class="profile-section-header">
+          <h2>Thông tin nghề nghiệp</h2>
+          <p>Điền ngắn gọn nhưng rõ ràng để hồ sơ mentor trông đáng tin và dễ hiểu.</p>
+        </div>
+
+        <form id="mentorDashboardForm" class="mentor-dashboard-form" novalidate>
+          <label class="auth-field">
+            <span>Tên hiển thị mentor</span>
+            <input type="text" id="mentorDashboardName" placeholder="Ví dụ: Nguyễn Minh Anh">
+          </label>
+
+          <label class="auth-field">
+            <span>Headline chuyên môn</span>
+            <input type="text" id="mentorDashboardHeadline" placeholder="Ví dụ: Mentor IELTS chuyên speaking và writing">
+          </label>
+
+          <label class="auth-field">
+            <span>Nơi làm việc / học tập</span>
+            <input type="text" id="mentorDashboardWorkplace" placeholder="Ví dụ: Sinh viên Đại học Ngoại thương, thành viên CLB Debate">
+          </label>
+
+          <label class="auth-field">
+            <span>Lĩnh vực chính</span>
+            <input type="text" id="mentorDashboardExpertise" placeholder="Ví dụ: IELTS, Tiếng Anh giao tiếp, kỹ năng học tập">
+          </label>
+
+          <label class="auth-field">
+            <span>Dịch vụ cung cấp</span>
+            <input type="text" id="mentorDashboardServices" placeholder="Ví dụ: 1:1 mentoring, coaching nhóm nhỏ, roadmap">
+          </label>
+
+          <label class="auth-field">
+            <span>Mức giá tham khảo</span>
+            <input type="text" id="mentorDashboardPricing" placeholder="Ví dụ: 250.000 - 400.000 VNĐ / buổi">
+          </label>
+
+          <label class="auth-field">
+            <span>Lịch rảnh</span>
+            <input type="text" id="mentorDashboardAvailability" placeholder="Ví dụ: Tối thứ 3, 5 và cuối tuần">
+          </label>
+
+          <label class="auth-field">
+            <span>Số sao hiển thị</span>
+            <input type="number" id="mentorDashboardRating" min="0" max="5" step="0.1" placeholder="Ví dụ: 4.8">
+          </label>
+
+          <label class="auth-field">
+            <span>Số học sinh đã dạy</span>
+            <input type="number" id="mentorDashboardStudents" min="0" step="1" placeholder="Ví dụ: 41">
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Giới thiệu mentor</span>
+            <textarea id="mentorDashboardIntro" rows="5" placeholder="Chia sẻ phong cách đồng hành, thế mạnh và nhóm mentee phù hợp."></textarea>
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Thành tích nổi bật</span>
+            <textarea id="mentorDashboardAchievements" rows="5" placeholder="Mỗi dòng là một thành tích hoặc điểm mạnh nổi bật."></textarea>
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Đối tượng mentee phù hợp</span>
+            <textarea id="mentorDashboardFit" rows="4" placeholder="Ví dụ: Học sinh cần tăng band IELTS trong 3 tháng hoặc người học mất gốc speaking."></textarea>
+          </label>
+
+          <label class="auth-field">
+            <span>Trạng thái hồ sơ</span>
+            <select id="mentorDashboardVisibility">
+              <option value="draft">Lưu nháp nội bộ</option>
+              <option value="public">Sẵn sàng công khai</option>
+            </select>
+          </label>
+
+          <div class="profile-actions">
+            <button type="submit" class="auth-submit-btn">Lưu hồ sơ mentor</button>
+          </div>
+        </form>
+      </div>
+
+      <aside class="mentor-dashboard-preview-card">
+        <div class="mentor-preview-badge-row">
+          <span class="mentor-preview-badge">Preview hồ sơ</span>
+          <span id="mentorDashboardStatusBadge" class="mentor-preview-status">Lưu nháp nội bộ</span>
+        </div>
+
+        <div class="mentor-preview-header">
+          <img id="mentorDashboardPreviewAvatar" src="logo.png" alt="Mentor avatar">
+          <div>
+            <h2 id="mentorDashboardPreviewName">Tên mentor</h2>
+            <p id="mentorDashboardPreviewHeadline">Headline chuyên môn sẽ hiển thị ở đây.</p>
+          </div>
+        </div>
+
+        <div class="mentor-preview-meta">
+          <div>
+            <span>Nơi làm việc / học tập</span>
+            <strong id="mentorDashboardPreviewWorkplace">Chưa cập nhật</strong>
+          </div>
+          <div>
+            <span>Lĩnh vực</span>
+            <strong id="mentorDashboardPreviewExpertise">Chưa cập nhật</strong>
+          </div>
+          <div>
+            <span>Dịch vụ</span>
+            <strong id="mentorDashboardPreviewServices">Chưa cập nhật</strong>
+          </div>
+          <div>
+            <span>Mức giá</span>
+            <strong id="mentorDashboardPreviewPricing">Chưa cập nhật</strong>
+          </div>
+          <div>
+            <span>Lịch rảnh</span>
+            <strong id="mentorDashboardPreviewAvailability">Chưa cập nhật</strong>
+          </div>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Giới thiệu</span>
+          <p id="mentorDashboardPreviewIntro">Phần giới thiệu mentor sẽ xuất hiện ở đây để bạn xem trước cách hiển thị.</p>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Thành tích nổi bật</span>
+          <ul id="mentorDashboardPreviewAchievements">
+            <li>Chưa có thành tích nổi bật.</li>
+          </ul>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Phù hợp với</span>
+          <p id="mentorDashboardPreviewFit">Mô tả nhóm mentee phù hợp sẽ hiển thị tại đây.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>
