@@ -564,24 +564,41 @@ display:flex;
 @media (max-width:768px){
 
     .about{
-        flex-direction:column;
+        display:grid;
+        grid-template-columns:minmax(0, 1.15fr) 170px;
         align-items:center;
-        text-align:center;
-        gap:40px;
+        text-align:left;
+        gap:20px;
     }
 
     .about-left{
         max-width:100%;
     }
 
+    .about-left h3{
+        font-size:clamp(20px, 4.6vw, 30px);
+        line-height:1.18;
+        margin-bottom:14px;
+    }
+
+    .about-left p{
+        font-size:15px;
+        line-height:1.7;
+        margin-bottom:8px;
+        text-align:left;
+    }
+
+    .about-right{
+        display:flex;
+        justify-content:flex-end;
+    }
+
     .about-robot{
-        width:260px;
+        width:150px;
     }
 
     .about-chat{
-        top:-20px;
-        right:-20px;
-        width:130px;
+        display:none;
     }
 }
 
@@ -2885,6 +2902,175 @@ body{
   text-wrap:balance;
   overflow-wrap:normal;
   word-break:keep-all;
+}
+
+@keyframes fadeRise{
+  from{
+    opacity:0;
+    transform:translateY(22px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes fadeSlide{
+  from{
+    opacity:0;
+    transform:translateX(-22px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+
+@keyframes softReveal{
+  from{
+    opacity:0;
+    transform:scale(0.96);
+  }
+
+  to{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+.hero-image{
+  animation:fadeSlide 0.8s ease both;
+}
+
+.hero-content{
+  animation:fadeRise 0.8s ease 0.08s both;
+}
+
+.search-box{
+  animation:softReveal 0.7s ease 0.18s both;
+}
+
+.hero-sub{
+  animation:fadeRise 0.75s ease 0.24s both;
+}
+
+.hero-stat-card{
+  animation:fadeRise 0.65s ease both;
+}
+
+.hero-stat-card:nth-child(1){
+  animation-delay:0.18s;
+}
+
+.hero-stat-card:nth-child(2){
+  animation-delay:0.26s;
+}
+
+.hero-stat-card:nth-child(3){
+  animation-delay:0.34s;
+}
+
+.about{
+  animation:fadeRise 0.8s ease both;
+}
+
+.mentor-card,
+.service-card,
+.mentee-card,
+.profile-avatar-card,
+.profile-summary-card,
+.profile-section-card,
+.admin-request-card,
+.services-hero-copy,
+.services-hero-highlight,
+.services-consult-copy,
+.services-consult-form-card,
+.mentor-dashboard-hero-copy,
+.mentor-dashboard-form-card,
+.mentor-dashboard-preview-card{
+  animation:softReveal 0.72s ease both;
+}
+
+.mentor-card:nth-child(1),
+.service-card:nth-child(1),
+.services-intro-card:nth-child(1){
+  animation-delay:0.04s;
+}
+
+.mentor-card:nth-child(2),
+.service-card:nth-child(2),
+.services-intro-card:nth-child(2){
+  animation-delay:0.1s;
+}
+
+.mentor-card:nth-child(3),
+.service-card:nth-child(3),
+.services-intro-card:nth-child(3){
+  animation-delay:0.16s;
+}
+
+.service-card:nth-child(4){
+  animation-delay:0.22s;
+}
+
+.footer{
+  animation:fadeRise 0.8s ease both;
+}
+
+.footer-btn,
+.mentor-primary-btn,
+.mentor-secondary-btn,
+.booking-submit-btn,
+.auth-submit-btn{
+  transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.footer-btn:hover,
+.mentor-primary-btn:hover,
+.mentor-secondary-btn:hover,
+.booking-submit-btn:hover,
+.auth-submit-btn:hover{
+  transform:translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce){
+  .hero-image,
+  .hero-content,
+  .search-box,
+  .hero-sub,
+  .hero-stat-card,
+  .about,
+  .mentor-card,
+  .service-card,
+  .mentee-card,
+  .profile-avatar-card,
+  .profile-summary-card,
+  .profile-section-card,
+  .admin-request-card,
+  .services-hero-copy,
+  .services-hero-highlight,
+  .services-consult-copy,
+  .services-consult-form-card,
+  .mentor-dashboard-hero-copy,
+  .mentor-dashboard-form-card,
+  .mentor-dashboard-preview-card,
+  .footer{
+    animation:none !important;
+  }
+
+  .footer-btn,
+  .mentor-primary-btn,
+  .mentor-secondary-btn,
+  .booking-submit-btn,
+  .auth-submit-btn,
+  .search-box,
+  .search-btn,
+  .mentor-card,
+  .service-card{
+    transition:none !important;
+  }
 }
 
 .about-scale{
@@ -5542,6 +5728,27 @@ body{
 
   .mentee h2{
     white-space:nowrap;
+  }
+
+  .about{
+    grid-template-columns:minmax(0, 1fr) 112px;
+    gap:14px;
+    padding:0 12px;
+  }
+
+  .about-left h3{
+    font-size:clamp(18px, 5.6vw, 24px);
+    margin-bottom:10px;
+  }
+
+  .about-left p{
+    font-size:13px;
+    line-height:1.6;
+    margin-bottom:8px;
+  }
+
+  .about-robot{
+    width:104px;
   }
 
   .auth-panel-header h2,
