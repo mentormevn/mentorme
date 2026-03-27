@@ -3184,6 +3184,24 @@ body{
   text-align:left;
 }
 
+body,
+.hero,
+.about-scale,
+.mentor,
+.mentee,
+.search-hero,
+.mentor-results,
+.mentor-detail-page,
+.booking-page,
+.services-page,
+.profile-page,
+.admin-page,
+.mentor-dashboard-page{
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.65), rgba(255,255,255,0) 26%),
+    linear-gradient(180deg, #e9f3ff 0%, #dcecff 100%) !important;
+}
+
 .mentor-card h3{
   text-align:left;
   font-size:24px;
