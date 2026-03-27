@@ -414,6 +414,30 @@ function buildServicePackageSummary(packages) {
   return list.length ? list.join(", ") : "Chưa cập nhật";
 }
 
+function buildCompactServicePackageSummary(packages) {
+  const items = (packages || []).filter(Boolean);
+  if (!items.length) {
+    return "Chưa cập nhật";
+  }
+
+  const titles = items.slice(0, 3).map(function (item) {
+    return item.title;
+  });
+
+  return items.length + " gói dịch vụ: " + titles.join(", ");
+}
+
+function buildProposedTimeSummary(proposedOptions) {
+  const options = Array.isArray(proposedOptions) ? proposedOptions.filter(Boolean) : [];
+  if (!options.length) {
+    return "Chưa chọn khung giờ";
+  }
+
+  return options.map(function (item) {
+    return item.label;
+  }).join(" | ");
+}
+
 function getOccupiedSlotIdsForMentor(mentorId) {
   const occupied = [];
 
@@ -486,6 +510,7 @@ function buildMentorScheduleLegendHtml() {
 function buildMentorScheduleTable(mentorId, availableSlots, occupiedSlots, options) {
   const config = options || {};
   const selectedSlotId = config.selectedSlotId || "";
+  const selectedSlotIds = Array.isArray(config.selectedSlotIds) ? config.selectedSlotIds : (selectedSlotId ? [selectedSlotId] : []);
   const selectable = Boolean(config.selectable);
   const durationMinutes = Number(config.durationMinutes || 60);
 
@@ -499,7 +524,7 @@ function buildMentorScheduleTable(mentorId, availableSlots, occupiedSlots, optio
       const slotId = createWeeklySlotId(day.key, hourLabel);
       const isAvailable = availableSlots.includes(slotId);
       const isBooked = occupiedSlots.includes(slotId);
-      const isSelected = selectedSlotId === slotId;
+      const isSelected = selectedSlotIds.includes(slotId);
       const isSelectable = selectable && isAvailable && !isBooked && canBookSlot(mentorId, availableSlots, occupiedSlots, slotId, durationMinutes);
       const classes = [
         "mentor-weekly-schedule-cell",
@@ -1862,8 +1887,11 @@ function renderMentorDetail() {
   document.getElementById("mentorDetailStudents").textContent = (mentor.studentsTaught || 0) + " học sinh";
   document.getElementById("mentorDetailWorkplace").textContent = mentor.workplace || "Đang cập nhật";
   document.getElementById("mentorDetailFocus").textContent = mentor.focus;
-  document.getElementById("mentorDetailAvailability").textContent = "Xem bảng lịch phía dưới";
-  document.getElementById("mentorDetailService").textContent = buildServicePackageSummary(mentor.servicePackages || []);
+  const availabilityElement = document.getElementById("mentorDetailAvailability");
+  if (availabilityElement) {
+    availabilityElement.textContent = "Xem bảng lịch phía dưới";
+  }
+  document.getElementById("mentorDetailService").textContent = buildCompactServicePackageSummary(mentor.servicePackages || []);
   document.getElementById("mentorDetailFit").textContent = mentor.fit;
 
   const bookingLink = document.getElementById("mentorBookingLink");
@@ -1904,7 +1932,6 @@ function renderMentorDetail() {
   }
 
   const scheduleContainer = document.getElementById("mentorDetailScheduleGrid");
-  const scheduleSummary = document.getElementById("mentorDetailScheduleSummary");
   if (scheduleContainer) {
     const availableSlots = getMentorAvailabilitySlots(mentor);
     const occupiedSlots = getOccupiedSlotIdsForMentor(mentor.id);
@@ -1913,9 +1940,6 @@ function renderMentorDetail() {
       buildMentorScheduleTable(mentor.id, availableSlots, occupiedSlots, {
         selectable: false
       });
-    if (scheduleSummary) {
-      scheduleSummary.textContent = mentor.availabilityText;
-    }
   }
 }
 
@@ -1933,7 +1957,7 @@ function initializeBookingPage() {
   document.getElementById("bookingMentorName").textContent = mentor.name;
   document.getElementById("bookingMentorFocus").textContent = mentor.focus;
   document.getElementById("bookingMentorAvailability").textContent = mentor.availabilityText;
-  document.getElementById("bookingMentorService").textContent = buildServicePackageSummary(mentor.servicePackages || []);
+  document.getElementById("bookingMentorService").textContent = buildCompactServicePackageSummary(mentor.servicePackages || []);
 
   const serviceSelect = document.getElementById("bookingServicePackage");
   const serviceSummary = document.getElementById("bookingServiceSummary");
@@ -1944,7 +1968,7 @@ function initializeBookingPage() {
   const occupiedSlots = getOccupiedSlotIdsForMentor(mentor.id);
   const packages = getMentorServicePackages(mentor);
   let selectedPackage = packages[0] || null;
-  let selectedSlotId = "";
+  let selectedSlotIds = [];
 
   function renderPackageOptions() {
     if (!serviceSelect) {
@@ -1980,27 +2004,35 @@ function initializeBookingPage() {
       return;
     }
 
-    if (selectedSlotId && !canBookSlot(mentor.id, availableSlots, occupiedSlots, selectedSlotId, selectedPackage ? selectedPackage.durationMinutes : 60)) {
-      selectedSlotId = "";
-    }
+    selectedSlotIds = selectedSlotIds.filter(function (slotId) {
+      return canBookSlot(mentor.id, availableSlots, occupiedSlots, slotId, selectedPackage ? selectedPackage.durationMinutes : 60);
+    });
 
     scheduleGrid.innerHTML =
       buildMentorScheduleLegendHtml() +
       buildMentorScheduleTable(mentor.id, availableSlots, occupiedSlots, {
         selectable: true,
-        selectedSlotId: selectedSlotId,
+        selectedSlotIds: selectedSlotIds,
         durationMinutes: selectedPackage ? selectedPackage.durationMinutes : 60
       });
 
     if (selectedSlotText) {
-      selectedSlotText.textContent = selectedSlotId && selectedPackage
-        ? getSlotRangeLabel(selectedSlotId, selectedPackage.durationMinutes)
+      selectedSlotText.textContent = selectedSlotIds.length && selectedPackage
+        ? buildProposedTimeSummary(selectedSlotIds.map(function (slotId) {
+            return {
+              label: getSlotRangeLabel(slotId, selectedPackage.durationMinutes)
+            };
+          }))
         : "Chưa chọn khung giờ";
     }
 
     if (hiddenTimeInput) {
-      hiddenTimeInput.value = selectedSlotId && selectedPackage
-        ? getSlotRangeLabel(selectedSlotId, selectedPackage.durationMinutes)
+      hiddenTimeInput.value = selectedSlotIds.length && selectedPackage
+        ? buildProposedTimeSummary(selectedSlotIds.map(function (slotId) {
+            return {
+              label: getSlotRangeLabel(slotId, selectedPackage.durationMinutes)
+            };
+          }))
         : "";
     }
   }
@@ -2030,7 +2062,18 @@ function initializeBookingPage() {
         return;
       }
 
-      selectedSlotId = cell.getAttribute("data-slot-id") || "";
+      const slotId = cell.getAttribute("data-slot-id") || "";
+      if (!slotId) {
+        return;
+      }
+
+      if (selectedSlotIds.includes(slotId)) {
+        selectedSlotIds = selectedSlotIds.filter(function (item) {
+          return item !== slotId;
+        });
+      } else {
+        selectedSlotIds.push(slotId);
+      }
       renderScheduleChooser();
     }
 
@@ -2076,11 +2119,19 @@ function initializeBookingPage() {
       return;
     }
 
-    if (!selectedSlotId || !time) {
+    if (!selectedSlotIds.length || !time) {
       successBox.hidden = false;
-      successBox.textContent = "Hãy chọn một khung giờ màu xanh trong bảng lịch.";
+      successBox.textContent = "Hãy chọn ít nhất một khung giờ màu xanh trong bảng lịch.";
       return;
     }
+
+    const proposedOptions = selectedSlotIds.map(function (slotId) {
+      return {
+        startSlotId: slotId,
+        slotIds: getSlotIdsForBooking(slotId, selectedPackage.durationMinutes),
+        label: getSlotRangeLabel(slotId, selectedPackage.durationMinutes)
+      };
+    });
 
     const bookingRequest = {
       id: "booking-" + Date.now(),
@@ -2095,10 +2146,10 @@ function initializeBookingPage() {
       serviceName: selectedPackage.title,
       serviceDurationMinutes: selectedPackage.durationMinutes,
       servicePriceText: selectedPackage.priceText,
-      slotId: selectedSlotId,
-      slotIds: getSlotIdsForBooking(selectedSlotId, selectedPackage.durationMinutes),
+      proposedOptions: proposedOptions,
+      slotIds: [],
       goal: goal,
-      preferredTime: time,
+      preferredTime: buildProposedTimeSummary(proposedOptions),
       note: note,
       status: "pending",
       createdAt: createdAt,
@@ -2113,7 +2164,8 @@ function initializeBookingPage() {
       Người gửi: <strong>${name}</strong> (${email})<br>
       Dịch vụ đã chọn: <strong>${selectedPackage.title}</strong> - <strong>${formatDurationLabel(selectedPackage.durationMinutes)}</strong> - <strong>${selectedPackage.priceText || "Admin duyệt sau"}</strong><br>
       Mục tiêu: <strong>${goal}</strong><br>
-      Thời gian mong muốn: <strong>${time}</strong>${note ? `<br>Ghi chú: <strong>${note}</strong>` : ""}
+      Các khung giờ mentee đề xuất: <strong>${buildProposedTimeSummary(proposedOptions)}</strong><br>
+      Mentor sẽ chọn 1 lịch phù hợp để chốt lại.${note ? `<br>Ghi chú: <strong>${note}</strong>` : ""}
       ${currentUser && normalizeRole(currentUser.role) === "mentee" ? '<br><a href="mentee-schedule.html">Xem lịch học của tôi</a>' : ""}
     `;
 
@@ -2123,7 +2175,7 @@ function initializeBookingPage() {
       document.getElementById("bookingEmail").value = currentUser.email || "";
       document.getElementById("bookingGoal").value = currentUser.goal || "";
     }
-    selectedSlotId = "";
+    selectedSlotIds = [];
     if (serviceSelect) {
       serviceSelect.value = "";
     }
@@ -4064,6 +4116,20 @@ function buildMenteeScheduleCard(request) {
 }
 
 function buildMentorLeadCard(request) {
+  const proposedOptions = Array.isArray(request.proposedOptions) ? request.proposedOptions : [];
+  const proposedHtml = proposedOptions.length
+    ? `
+        <label class="auth-field profile-full-width">
+          <span>Mentor chốt 1 lịch trong các lựa chọn mentee đã gửi</span>
+          <select data-booking-proposed-time="${request.id}">
+            ${proposedOptions.map(function (option, index) {
+              return "<option value=\"" + escapeHtml(option.startSlotId) + "\" " + (index === 0 ? "selected" : "") + ">" + escapeHtml(option.label) + "</option>";
+            }).join("")}
+          </select>
+        </label>
+      `
+    : "";
+
   return `
     <article class="schedule-card">
       <div class="schedule-card-head">
@@ -4076,7 +4142,7 @@ function buildMentorLeadCard(request) {
       <div class="schedule-card-grid">
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
         <p><strong>Mentor được chọn:</strong> ${escapeHtml(request.mentorName)}</p>
-        <p><strong>Thời gian mong muốn:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Khung giờ mentee đề xuất:</strong> ${escapeHtml(request.preferredTime)}</p>
         <p><strong>Dịch vụ:</strong> ${escapeHtml(request.serviceName || "Chưa cập nhật")}</p>
         <p><strong>Ngày gửi:</strong> ${formatDate(request.createdAt)}</p>
       </div>
@@ -4084,6 +4150,7 @@ function buildMentorLeadCard(request) {
         <span>Mục tiêu mentee</span>
         <p>${escapeHtml(request.goal)}</p>
       </div>
+      ${proposedHtml}
       <div class="schedule-card-actions">
         <button type="button" class="mentor-primary-btn" data-booking-action="accept" data-booking-id="${request.id}">Nhận mentee</button>
         <button type="button" class="mentor-secondary-btn" data-booking-action="reject" data-booking-id="${request.id}">Từ chối</button>
@@ -4528,10 +4595,12 @@ function initializeMentorRequestsPage() {
     return;
   }
 
+  let currentScopedRequests = [];
+
   function render() {
     const mentorContext = getMentorContextForUser(currentUser);
-    const scopedRequests = filterRequestsForCurrentMentor(getBookingRequests(), currentUser);
-    const pendingRequests = scopedRequests.filter(function (request) {
+    currentScopedRequests = filterRequestsForCurrentMentor(getBookingRequests(), currentUser);
+    const pendingRequests = currentScopedRequests.filter(function (request) {
       return request.status === "pending";
     });
 
@@ -4546,11 +4615,11 @@ function initializeMentorRequestsPage() {
       </article>
       <article class="schedule-summary-card">
         <span>Đã nhận</span>
-        <strong>${scopedRequests.filter(function (request) { return request.status === "accepted"; }).length}</strong>
+        <strong>${currentScopedRequests.filter(function (request) { return request.status === "accepted"; }).length}</strong>
       </article>
       <article class="schedule-summary-card">
         <span>Đã từ chối</span>
-        <strong>${scopedRequests.filter(function (request) { return request.status === "rejected"; }).length}</strong>
+        <strong>${currentScopedRequests.filter(function (request) { return request.status === "rejected"; }).length}</strong>
       </article>
     `;
 
@@ -4573,9 +4642,30 @@ function initializeMentorRequestsPage() {
 
     const bookingId = button.getAttribute("data-booking-id");
     const action = button.getAttribute("data-booking-action");
-    updateBookingRequest(bookingId, {
+    const updates = {
       status: action === "accept" ? "accepted" : "rejected"
-    });
+    };
+
+    if (action === "accept") {
+      const select = listElement.querySelector("[data-booking-proposed-time=\"" + bookingId + "\"]");
+      const currentRequest = currentScopedRequests.find(function (request) {
+        return request.id === bookingId;
+      });
+      const selectedValue = select ? select.value : "";
+      const chosenOption = currentRequest && Array.isArray(currentRequest.proposedOptions)
+        ? currentRequest.proposedOptions.find(function (item) {
+            return item.startSlotId === selectedValue;
+          }) || currentRequest.proposedOptions[0]
+        : null;
+
+      if (chosenOption) {
+        updates.slotId = chosenOption.startSlotId;
+        updates.slotIds = chosenOption.slotIds || [];
+        updates.preferredTime = chosenOption.label;
+      }
+    }
+
+    updateBookingRequest(bookingId, updates);
     render();
   });
 
