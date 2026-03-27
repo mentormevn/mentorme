@@ -20,8 +20,10 @@
 const browserWindow = window;
 
 // ================= MENU MOBILE =================
-const hamburger = document.querySelector(".hamburger");
+const navbar = document.querySelector(".navbar");
+let hamburger = document.querySelector(".hamburger");
 const menu = document.querySelector(".menu");
+const authArea = document.getElementById("authArea");
 const CURRENT_USER_STORAGE_KEY = "currentUser";
 const MENTOR_PROFILE_STORAGE_KEY = "mentorProfileDrafts";
 const BOOKING_REQUESTS_STORAGE_KEY = "mentorBookingRequests";
@@ -44,9 +46,25 @@ const supabaseClient =
     ? browserWindow.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
     : null;
 
-if (hamburger) {
+if (navbar && menu && !hamburger) {
+  hamburger = document.createElement("button");
+  hamburger.type = "button";
+  hamburger.className = "hamburger";
+  hamburger.setAttribute("aria-label", "Mở menu");
+  hamburger.innerHTML = "<span></span><span></span><span></span>";
+  menu.parentNode.insertBefore(hamburger, menu);
+}
+
+if (hamburger && menu) {
   hamburger.addEventListener("click", () => {
-    menu.classList.toggle("active");
+    const isActive = menu.classList.toggle("active");
+    if (authArea) {
+      authArea.classList.toggle("active", isActive);
+    }
+    if (navbar) {
+      navbar.classList.toggle("mobile-open", isActive);
+    }
+    hamburger.setAttribute("aria-expanded", isActive ? "true" : "false");
   });
 }
 
@@ -668,7 +686,6 @@ function initializePasswordToggles() {
 }
 
 // ================= LOGIN STATE =================
-const authArea = document.getElementById("authArea");
 function renderAuthArea(user) {
   if (!authArea) return;
 
