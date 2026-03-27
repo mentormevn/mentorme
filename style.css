@@ -2074,6 +2074,33 @@ a{
   line-height:1.8;
 }
 
+.mentor-detail-section--compact-schedule{
+  margin-top:10px;
+  padding:18px 20px;
+  border-radius:24px;
+  background:#f8fbff;
+  border:1px solid rgba(27,79,163,0.08);
+}
+
+.mentor-detail-section--compact-schedule h2{
+  font-size:22px;
+  margin-bottom:8px;
+}
+
+.mentor-detail-mini-schedule{
+  margin-top:18px;
+  padding:18px 20px;
+  border-radius:24px;
+  background:#f8fbff;
+  border:1px solid rgba(27,79,163,0.08);
+}
+
+.mentor-detail-mini-schedule h2{
+  color:#1b4fa3;
+  font-size:22px;
+  margin-bottom:10px;
+}
+
 .mentor-review-list{
   display:grid;
   gap:16px;
@@ -2202,6 +2229,16 @@ a{
 
 .booking-mentor-meta{
   margin-top:18px;
+}
+
+.booking-mentor-meta p{
+  margin-bottom:10px;
+  line-height:1.65;
+}
+
+#bookingMentorService{
+  font-size:0.95em;
+  color:#54709a;
 }
 
 .booking-form-header h2{
@@ -6272,7 +6309,7 @@ body,
 }
 
 .booking-availability-card{
-  padding:22px;
+  padding:18px 20px;
   border-radius:28px;
   background:#f8fbff;
   border:1px solid rgba(27,79,163,0.1);
@@ -6307,6 +6344,92 @@ body,
 .booking-selected-slot strong{
   color:#1b4fa3;
   font-size:18px;
+}
+
+.booking-availability-card .mentor-weekly-schedule{
+  gap:16px;
+}
+
+.booking-availability-card .mentor-weekly-schedule-head,
+.booking-availability-card .mentor-weekly-schedule-row{
+  grid-template-columns:78px repeat(7, minmax(44px, 1fr));
+  gap:10px;
+  min-width:500px;
+  align-items:center;
+}
+
+.booking-availability-card .mentor-weekly-schedule-head-cell{
+  padding:10px 6px;
+  font-size:13px;
+}
+
+.booking-availability-card .mentor-weekly-schedule-head-cell.is-time{
+  margin-right:10px;
+}
+
+.booking-availability-card .mentor-weekly-schedule-time-cell{
+  min-height:38px;
+  font-size:13px;
+  padding-left:10px;
+  margin-right:10px;
+}
+
+.booking-availability-card .mentor-weekly-schedule-cell{
+  min-height:30px;
+  border-radius:13px;
+  box-shadow:none;
+  border-width:2px;
+}
+
+.mentor-detail-section--compact-schedule .mentor-detail-schedule-summary{
+  font-size:13px;
+  margin-bottom:10px;
+}
+
+.mentor-detail-mini-schedule .mentor-schedule-legend,
+.mentor-detail-section--compact-schedule .mentor-schedule-legend{
+  gap:8px 14px;
+  margin-bottom:10px;
+  font-size:12px;
+}
+
+.mentor-detail-mini-schedule .mentor-weekly-schedule,
+.mentor-detail-section--compact-schedule .mentor-weekly-schedule{
+  gap:10px;
+}
+
+.mentor-detail-mini-schedule .mentor-weekly-schedule-head,
+.mentor-detail-mini-schedule .mentor-weekly-schedule-row,
+.mentor-detail-section--compact-schedule .mentor-weekly-schedule-head,
+.mentor-detail-section--compact-schedule .mentor-weekly-schedule-row{
+  grid-template-columns:64px repeat(7, minmax(30px, 1fr));
+  gap:8px;
+  min-width:340px;
+  align-items:center;
+}
+
+.mentor-detail-mini-schedule .mentor-weekly-schedule-head-cell,
+.mentor-detail-section--compact-schedule .mentor-weekly-schedule-head-cell{
+  padding:8px 4px;
+  font-size:11px;
+  border-radius:12px;
+}
+
+.mentor-detail-mini-schedule .mentor-weekly-schedule-time-cell,
+.mentor-detail-section--compact-schedule .mentor-weekly-schedule-time-cell{
+  min-height:24px;
+  padding-left:8px;
+  font-size:11px;
+  border-radius:12px;
+  margin-right:8px;
+}
+
+.mentor-detail-mini-schedule .mentor-weekly-schedule-cell,
+.mentor-detail-section--compact-schedule .mentor-weekly-schedule-cell{
+  min-height:22px;
+  border-radius:10px;
+  box-shadow:none;
+  border-width:2px;
 }
 
 .mentor-package-builder{
@@ -6378,6 +6501,48 @@ body,
   .booking-availability-card{
     padding:18px;
     border-radius:24px;
+  }
+
+  .booking-availability-card .mentor-weekly-schedule-head,
+  .booking-availability-card .mentor-weekly-schedule-row{
+    grid-template-columns:72px repeat(7, minmax(40px, 1fr));
+    gap:8px;
+    min-width:460px;
+    align-items:center;
+  }
+
+  .booking-availability-card .mentor-weekly-schedule-head-cell.is-time,
+  .booking-availability-card .mentor-weekly-schedule-time-cell{
+    margin-right:8px;
+  }
+
+  .booking-availability-card .mentor-weekly-schedule-cell{
+    min-height:28px;
+  }
+
+  .mentor-detail-section--compact-schedule{
+    padding:16px;
+  }
+
+  .mentor-detail-mini-schedule .mentor-weekly-schedule-head,
+  .mentor-detail-mini-schedule .mentor-weekly-schedule-row,
+  .mentor-detail-section--compact-schedule .mentor-weekly-schedule-head,
+  .mentor-detail-section--compact-schedule .mentor-weekly-schedule-row{
+    grid-template-columns:58px repeat(7, minmax(28px, 1fr));
+    gap:7px;
+    min-width:320px;
+    align-items:center;
+  }
+
+  .mentor-detail-mini-schedule .mentor-weekly-schedule-time-cell,
+  .mentor-detail-section--compact-schedule .mentor-weekly-schedule-time-cell{
+    min-height:22px;
+    margin-right:6px;
+  }
+
+  .mentor-detail-mini-schedule .mentor-weekly-schedule-cell,
+  .mentor-detail-section--compact-schedule .mentor-weekly-schedule-cell{
+    min-height:20px;
   }
 
   .booking-selected-slot strong{
