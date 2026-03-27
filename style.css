@@ -5022,6 +5022,7 @@ body{
   .hero{
     padding-top:56px;
     padding-bottom:68px;
+    overflow:hidden;
   }
 
   .hero-container{
@@ -5444,6 +5445,7 @@ body{
   .hero{
     padding-top:44px;
     padding-bottom:56px;
+    overflow:hidden;
   }
 
   .search-hero{
@@ -5488,8 +5490,8 @@ body{
   .auth-hero-copy h1,
   .services-hero-copy h1,
   .mentor-detail-content h1{
-    font-size:32px;
-    line-height:1.08;
+    font-size:clamp(24px, 7vw, 32px);
+    line-height:1.04;
   }
 
   .hero-content,
@@ -5499,23 +5501,27 @@ body{
   }
 
   .hero-container{
-    flex-direction:row;
+    display:grid;
+    grid-template-columns:96px minmax(0, 1fr);
     align-items:center;
-    gap:14px;
+    gap:10px;
   }
 
   .hero-image,
   .hero-content{
-    flex:1 1 0;
+    min-width:0;
   }
 
   .hero-image{
     display:flex;
-    justify-content:center;
+    justify-content:flex-start;
+    align-items:center;
   }
 
   .hero-image img{
-    width:min(38vw, 190px);
+    width:120px;
+    max-width:none;
+    transform:translateX(-18px);
   }
 
   .hero-content{
@@ -5554,6 +5560,16 @@ body{
   .hero-lead{
     font-size:15px;
     line-height:1.7;
+  }
+
+  .hero-sub{
+    font-size:12px;
+    line-height:1.5;
+    max-width:none;
+  }
+
+  .search-box{
+    max-width:none;
   }
 
   .hero-stats{
