@@ -1203,37 +1203,60 @@ function initializeHomeMentorSection() {
   if (!homeMentorTrack) return;
 
   const featuredMentors = getResolvedMentorList();
-  const mentorPages = [];
-
-  for (let i = 0; i < featuredMentors.length; i += 3) {
-    mentorPages.push(featuredMentors.slice(i, i + 3));
-  }
-
-  homeMentorTrack.innerHTML = mentorPages
-    .map(function (page) {
-      return `
-        <div class="mentor-slide">
-          ${page.map(createMentorCard).join("")}
-        </div>
-      `;
-    })
-    .join("");
-
   const prevButton = document.querySelector(".mentor-home-prev");
   const nextButton = document.querySelector(".mentor-home-next");
   let currentPage = 0;
 
+  function getMentorPages() {
+    const mentorsPerPage = window.matchMedia("(max-width: 768px)").matches ? 1 : 3;
+    const pages = [];
+
+    for (let i = 0; i < featuredMentors.length; i += mentorsPerPage) {
+      pages.push(featuredMentors.slice(i, i + mentorsPerPage));
+    }
+
+    return pages;
+  }
+
+  function renderHomeMentorPages() {
+    const mentorPages = getMentorPages();
+    homeMentorTrack.innerHTML = mentorPages
+      .map(function (page) {
+        return `
+          <div class="mentor-slide">
+            ${page.map(createMentorCard).join("")}
+          </div>
+        `;
+      })
+      .join("");
+
+    currentPage = Math.min(currentPage, Math.max(mentorPages.length - 1, 0));
+    return mentorPages;
+  }
+
+  let mentorPages = renderHomeMentorPages();
+
   function updateHomeMentorSlider() {
-    homeMentorTrack.style.transform = `translateX(-${currentPage * 100}%)`;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    homeMentorTrack.style.transform = isMobile ? "translateX(0)" : `translateX(-${currentPage * 100}%)`;
+
+    if (isMobile) {
+      homeMentorTrack.scrollTo({
+        left: currentPage * homeMentorTrack.clientWidth,
+        behavior: "smooth"
+      });
+    }
 
     if (prevButton) {
       prevButton.disabled = currentPage === 0;
       prevButton.style.opacity = currentPage === 0 ? "0.5" : "1";
+      prevButton.hidden = isMobile;
     }
 
     if (nextButton) {
       nextButton.disabled = currentPage === mentorPages.length - 1;
       nextButton.style.opacity = currentPage === mentorPages.length - 1 ? "0.5" : "1";
+      nextButton.hidden = isMobile;
     }
   }
 
@@ -1254,6 +1277,14 @@ function initializeHomeMentorSection() {
       }
     });
   }
+
+  window.addEventListener("resize", function () {
+    const nextPages = getMentorPages();
+    if (nextPages.length !== mentorPages.length) {
+      mentorPages = renderHomeMentorPages();
+    }
+    updateHomeMentorSlider();
+  });
 
   updateHomeMentorSlider();
 }
