@@ -5007,7 +5007,18 @@ body{
   }
 
   .hero-stats{
-    grid-template-columns:1fr;
+    display:flex;
+    gap:12px;
+    overflow-x:auto;
+    margin-top:26px;
+    padding-bottom:6px;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .hero-stats::-webkit-scrollbar{
+    display:none;
   }
 
   .search-prompt-list{
@@ -5049,7 +5060,10 @@ body{
   }
 
   .hero-stat-card{
+    min-width:220px;
+    flex:0 0 220px;
     padding:14px 10px;
+    scroll-snap-align:start;
   }
 
   .hero-stat-card strong{
@@ -5460,6 +5474,8 @@ body{
   }
 
   .hero-stat-card{
+    min-width:168px;
+    flex-basis:168px;
     padding:12px 8px;
     border-radius:18px;
   }
