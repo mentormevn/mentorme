@@ -870,7 +870,7 @@ function syncSubmittedReviewsWithCurrentData() {
   }
 
   const cleanedReviews = getMentorSubmittedReviews().filter(function (review) {
-    return !["tien-dung", "thuy-trang"].includes(review.mentorId);
+    return !["tra-my", "thuy-trang"].includes(review.mentorId);
   });
 
   saveMentorSubmittedReviews(cleanedReviews);
@@ -1298,29 +1298,6 @@ if (searchInput) {
 }
 
 const mentorData = {
-  "tra-my": {
-    id: "tra-my",
-    name: "BÙI VŨ TRÀ MY",
-    image: "mentorbuivutramy.jpg",
-    workplace: "Konkuk University - Top 12 Đại học Hàn Quốc",
-    tag: "Mentor ngoại ngữ và định hướng",
-    role: "Mentor tiếng Trung, ngoại ngữ, định hướng nghề nghiệp và kỹ năng mềm",
-    bio: "Bùi Vũ Trà My là du học sinh tại Hàn Quốc, có nền tảng hoạt động ngoại khóa mạnh và phù hợp với mentee cần đồng hành ở mảng ngoại ngữ, định hướng và kỹ năng mềm.",
-    focus: "Tiếng Trung, ngoại ngữ, định hướng nghề nghiệp, kỹ năng mềm",
-    field: "trung",
-    availability: ["sang", "chieu", "toi", "cuoi-tuan"],
-    availabilityText: "Linh hoạt theo lịch hẹn",
-    service: ["1-1", "group", "roadmap"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn lộ trình",
-    achievements: [
-      "Đang là du học sinh Viện tiếng, Đại học Konkuk tại Hàn Quốc.",
-      "Phó Chủ nhiệm CLB Định hướng và Phát triển Khởi nghiệp Thành phố Cẩm Phả nhiệm kỳ 2024.",
-      "Đồng Trưởng ban tổ chức sự kiện gây quỹ thiện nguyện \"Mầm\" 2024 và tham gia nhiều dự án truyền thông, hướng nghiệp tại Quảng Ninh.",
-      "Hoàn thành các khóa đào tạo và chứng nhận chuyên môn từ WHO cùng khóa đào tạo giáo viên tiếng Trung ngắn hạn."
-    ],
-    fit: "Phù hợp với học sinh, sinh viên cần đồng hành về ngoại ngữ, định hướng nghề nghiệp, hoạt động ngoại khóa hoặc muốn học cùng một mentor giàu trải nghiệm thực tế.",
-    searchableText: "tra my tieng trung ngoai ngu hsk du hoc han quoc dinh huong nghe nghiep ky nang mem hoat dong ngoai khoa truyen thong huong nghiep"
-  },
   "tien-dung": {
     id: "tien-dung",
     name: "NGUYỄN TIẾN DŨNG",
@@ -1343,44 +1320,11 @@ const mentorData = {
     ],
     fit: "Phù hợp với học sinh cần học tốt môn Văn, muốn cải thiện kỹ năng thuyết trình, tham gia hoạt động ngoại khóa, làm truyền thông học đường hoặc xây dựng hồ sơ cá nhân chỉn chu hơn.",
     searchableText: "nguyen tien dung ngu van van hoc truyen thong thuyet trinh ky nang mem hoat dong ngoai khoa hoc vien bao chi truyen thong chinh sach spotlight hs14 ho so"
-  },
-  "thuy-trang": {
-    id: "thuy-trang",
-    name: "ĐỖ THÙY TRANG",
-    image: "mentor3.jpg",
-    workplace: "Trường Đại học Kinh tế - Đại học Quốc gia Hà Nội",
-    tag: "Mentor định hướng và kỹ năng mềm",
-    role: "Mentor định hướng nghề nghiệp, kỹ năng mềm và hoạt động ngoại khóa",
-    bio: "Đỗ Thùy Trang nổi bật ở hoạt động Đoàn - Hội, tổ chức sự kiện, khởi nghiệp và định hướng phát triển cá nhân cho học sinh, sinh viên.",
-    focus: "Định hướng nghề nghiệp, kỹ năng mềm, hoạt động ngoại khóa",
-    field: "ky-nang",
-    availability: ["sang", "chieu", "toi", "cuoi-tuan"],
-    availabilityText: "Linh hoạt theo lịch hẹn",
-    service: ["1-1", "group", "roadmap", "competition"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn định hướng, đồng hành hoạt động",
-    achievements: [
-      "Chủ nhiệm CLB Định hướng và Phát triển khởi nghiệp thành phố Cẩm Phả nhiệm kỳ 2024 và 2024 - 2025.",
-      "Ủy viên Ủy ban Hội LHTN Việt Nam thành phố Cẩm Phả khóa V, nhiệm kỳ 2024 - 2029 và đại biểu tham dự Đại hội Đại biểu Hội LHTN Việt Nam tỉnh Quảng Ninh lần thứ VII.",
-      "Trưởng ban tổ chức các mùa sự kiện gây quỹ thiện nguyện \"Mầm\" và sự kiện hướng nghiệp cho hơn 200 học sinh THPT tại thành phố Cẩm Phả.",
-      "Đạt nhiều giấy khen, bằng khen cấp thành phố, tỉnh và Trung ương Đoàn về công tác Đoàn - Hội, khởi nghiệp và dự án cộng đồng."
-    ],
-    fit: "Phù hợp với mentee muốn được định hướng nghề nghiệp, phát triển kỹ năng mềm, xây hồ sơ hoạt động, tổ chức dự án và nâng cao sự tự tin khi tham gia cộng đồng.",
-    searchableText: "do thuy trang dinh huong nghe nghiep ky nang mem hoat dong ngoai khoa khoi nghiep to chuc su kien doan hoi kinh te quoc gia"
   }
 };
 
 const mentorExperienceData = {
-  "tra-my": {
-    rating: 0,
-    studentsTaught: 0,
-    reviews: []
-  },
   "tien-dung": {
-    rating: 0,
-    studentsTaught: 0,
-    reviews: []
-  },
-  "thuy-trang": {
     rating: 0,
     studentsTaught: 0,
     reviews: []
@@ -1877,7 +1821,7 @@ function renderMentorDetail() {
 
   const params = new URLSearchParams(window.location.search);
   const mentorId = params.get("id");
-  const mentor = getResolvedMentorById(mentorId) || getResolvedMentorById("tra-my");
+  const mentor = getResolvedMentorById(mentorId) || getResolvedMentorById("tien-dung");
 
   document.getElementById("mentorDetailImage").src = mentor.image;
   document.getElementById("mentorDetailImage").alt = mentor.name;
@@ -1949,7 +1893,7 @@ function initializeBookingPage() {
 
   const params = new URLSearchParams(window.location.search);
   const mentorId = params.get("id");
-  const mentor = getResolvedMentorById(mentorId) || getResolvedMentorById("tra-my");
+  const mentor = getResolvedMentorById(mentorId) || getResolvedMentorById("tien-dung");
   const currentUser = getCurrentUser();
 
   document.getElementById("bookingMentorImage").src = mentor.image;
