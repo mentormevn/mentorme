@@ -490,6 +490,23 @@ async function updateAuthUserById(userId, attributes) {
   });
 }
 
+async function createAuthUser(attributes) {
+  const payload = await authRequest("admin/users", {
+    method: "POST",
+    body: attributes,
+    useServiceRole: true
+  });
+
+  return unwrapAuthUser(payload);
+}
+
+async function deleteAuthUserById(userId) {
+  return authRequest("admin/users/" + encodeURIComponent(userId), {
+    method: "DELETE",
+    useServiceRole: true
+  });
+}
+
 async function logoutAuthenticatedUser(accessToken) {
   return authRequest("logout", {
     method: "POST",
@@ -588,52 +605,55 @@ app.post("/api/auth/register", async (req, res) => {
       return;
     }
 
-    const signupResult = await authRequest("signup", {
-      method: "POST",
-      body: {
-        email: email,
-        password: password,
-        data: {
-          full_name: name,
-          role: role
-        }
-      },
-      useServiceRole: false
+    const createdUser = await createAuthUser({
+      email: email,
+      password: password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: name,
+        role: role
+      }
     });
 
-    const createdUser = unwrapAuthUser(signupResult);
     if (!createdUser) {
       throw new SupabaseError(500, "Khong the tao tai khoan luc nay.");
     }
 
-    const savedProfile = await upsertProfile({
-      id: createdUser.id,
-      full_name: name,
-      phone: phone,
-      goal: goal,
-      bio: "",
-      role: role,
-      avatar_url: "",
-      created_at: createdUser.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
+    let savedProfile = null;
+    try {
+      savedProfile = await upsertProfile({
+        id: createdUser.id,
+        full_name: name,
+        phone: phone,
+        goal: goal,
+        bio: "",
+        role: role,
+        avatar_url: "",
+        created_at: createdUser.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } catch (profileError) {
+      await deleteAuthUserById(createdUser.id).catch(function ignoreCleanupError() {});
+      throw profileError;
+    }
 
-    const token =
-      signupResult.access_token ||
-      (signupResult.session && signupResult.session.access_token) ||
-      "";
+    const loginResult = await signInWithPassword({
+      email: email,
+      password: password
+    });
+    const token = loginResult.access_token || (loginResult.session && loginResult.session.access_token) || "";
     const responseUser =
-      token ? await getAuthUserByToken(token) : createdUser;
+      unwrapAuthUser(loginResult) ||
+      (loginResult.session && loginResult.session.user) ||
+      createdUser;
 
     res.status(201).json({
-      message: token
-        ? "Tao tai khoan thanh cong."
-        : "Tai khoan da duoc tao. Hay kiem tra email de xac nhan truoc khi dang nhap.",
+      message: "Tao tai khoan thanh cong.",
       token: token,
       user: sanitizeUser(responseUser, savedProfile)
     });
   } catch (error) {
-    if (error instanceof SupabaseError && /already registered/i.test(error.message)) {
+    if (error instanceof SupabaseError && /already registered|already been registered|already exists/i.test(error.message)) {
       res.status(409).json({ message: "Email nay da duoc dang ky." });
       return;
     }
@@ -1234,6 +1254,8 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
 
   const email = normalizeEmail(req.body.email);
   const activationCode = String(req.body.activationCode || "").trim().toUpperCase();
+  const fullName = String(req.body.name || "").trim();
+  const password = String(req.body.password || "");
 
   if (!email.includes("@")) {
     res.status(400).json({ message: "Email chua dung dinh dang." });
@@ -1242,6 +1264,16 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
 
   if (!activationCode) {
     res.status(400).json({ message: "Vui long nhap ma kich hoat mentor." });
+    return;
+  }
+
+  if (fullName.length < 2) {
+    res.status(400).json({ message: "Vui long nhap ho va ten hop le." });
+    return;
+  }
+
+  if (password.length < 8) {
+    res.status(400).json({ message: "Mat khau can co toi thieu 8 ky tu." });
     return;
   }
 
@@ -1263,26 +1295,75 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
       return;
     }
 
-    const now = new Date().toISOString();
-    const [updatedApplication] = await restUpdate(
-      "mentor_applications",
-      {
-        status: "activated",
-        activated_at: now,
-        updated_at: now
-      },
-      {
-        query: {
-          id: toEqualityFilter(application.id)
-        }
+    const createdUser = await createAuthUser({
+      email: email,
+      password: password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName,
+        role: "mentor"
       }
-    );
-
-    res.json({
-      message: "Da xac nhan kich hoat mentor.",
-      application: sanitizeMentorApplication(updatedApplication || application)
     });
+
+    if (!createdUser) {
+      throw new SupabaseError(500, "Khong the tao tai khoan mentor luc nay.");
+    }
+
+    let savedProfile = null;
+    const now = new Date().toISOString();
+    try {
+      savedProfile = await upsertProfile({
+        id: createdUser.id,
+        full_name: fullName,
+        phone: normalizePhone(application.phone),
+        goal: "",
+        bio: "",
+        role: "mentor",
+        avatar_url: "",
+        created_at: createdUser.created_at || now,
+        updated_at: now
+      });
+
+      const [updatedApplication] = await restUpdate(
+        "mentor_applications",
+        {
+          status: "activated",
+          activated_at: now,
+          updated_at: now
+        },
+        {
+          query: {
+            id: toEqualityFilter(application.id)
+          }
+        }
+      );
+
+      const loginResult = await signInWithPassword({
+        email: email,
+        password: password
+      });
+      const token = loginResult.access_token || (loginResult.session && loginResult.session.access_token) || "";
+      const responseUser =
+        unwrapAuthUser(loginResult) ||
+        (loginResult.session && loginResult.session.user) ||
+        createdUser;
+
+      res.json({
+        message: "Da kich hoat tai khoan mentor thanh cong.",
+        token: token,
+        user: sanitizeUser(responseUser, savedProfile),
+        application: sanitizeMentorApplication(updatedApplication || application)
+      });
+    } catch (profileError) {
+      await deleteAuthUserById(createdUser.id).catch(function ignoreCleanupError() {});
+      throw profileError;
+    }
   } catch (error) {
+    if (error instanceof SupabaseError && /already registered|already been registered|already exists/i.test(error.message)) {
+      res.status(409).json({ message: "Email nay da duoc su dung cho mot tai khoan khac." });
+      return;
+    }
+
     handleRouteError(res, error, "Khong the hoan tat kich hoat tai khoan mentor luc nay.");
   }
 });

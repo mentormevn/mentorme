@@ -2225,6 +2225,26 @@ async function submitMentorApplication(payload) {
   return data;
 }
 
+async function registerAccount(payload) {
+  const response = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tạo tài khoản lúc này.");
+  }
+
+  return data;
+}
+
 async function activateMentorApplication(payload) {
   const response = await fetch("/api/mentor-applications/activate", {
     method: "POST",
@@ -2812,61 +2832,32 @@ function initializeMentorActivationPage() {
     }
 
     try {
-      await verifyMentorActivation({
+      await activateMentorApplication({
         email: email,
-        activationCode: activationCode
+        activationCode: activationCode,
+        name: name,
+        password: password,
       });
 
-      const { data, error } = await supabaseClient.auth.signUp({
+      const { error } = await supabaseClient.auth.signInWithPassword({
         email: email,
-        password: password,
-        options: {
-          data: {
-            full_name: name,
-            role: "mentor"
-          }
-        }
+        password: password
       });
 
       if (error) {
         throw error;
       }
 
-      if (!data.user) {
-        throw new Error("Không thể tạo tài khoản mentor lúc này.");
+      const sessionUser = await loadCurrentUserFromSupabase();
+      if (!sessionUser) {
+        throw new Error("Kích hoạt thành công nhưng chưa tải được hồ sơ mentor.");
       }
 
-      if (data.session) {
-        await activateMentorApplication({
-          email: email,
-          activationCode: activationCode
-        });
-
-        await upsertProfile({
-          id: data.user.id,
-          full_name: name,
-          phone: "",
-          goal: "",
-          bio: "",
-          role: "mentor",
-          avatar_url: createAvatarFallback(name),
-          updated_at: new Date().toISOString()
-        });
-
-        const sessionUser = await loadCurrentUserFromSupabase();
-        saveAuthSession(sessionUser);
-        showMessage("mentorActivationMessage", "success", "Kích hoạt tài khoản mentor thành công. Từ lần sau bạn đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo.");
-        window.setTimeout(function () {
-          window.location.href = "mentor-dashboard.html";
-        }, 900);
-        return;
-      }
-
-      showMessage(
-        "mentorActivationMessage",
-        "success",
-        "Tài khoản mentor đã được tạo. Từ lần sau bạn đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo. Nếu hệ thống vẫn yêu cầu xác thực email, hãy kiểm tra thiết lập xác thực trong Supabase."
-      );
+      saveAuthSession(sessionUser);
+      showMessage("mentorActivationMessage", "success", "Kích hoạt tài khoản mentor thành công. Từ lần sau bạn đăng nhập bằng email ứng tuyển và mật khẩu vừa tạo.");
+      window.setTimeout(function () {
+        window.location.href = "mentor-dashboard.html";
+      }, 900);
     } catch (error) {
       showMessage("mentorActivationMessage", "error", error.message || "Không thể kích hoạt tài khoản mentor lúc này.");
     }
@@ -3648,49 +3639,36 @@ function initializeRegisterPage() {
     }
 
     try {
-      const { data, error } = await supabaseClient.auth.signUp({
+      await registerAccount({
         email: email,
+        phone: phone,
+        goal: goal,
+        name: name,
+        role: role,
         password: password,
-        options: {
-          data: {
-            full_name: name,
-            role: role
-          }
-        }
+      });
+
+      const { error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
       });
 
       if (error) {
         throw error;
       }
 
-      if (!data.user) {
-        throw new Error("Không thể tạo tài khoản lúc này.");
+      const sessionUser = await loadCurrentUserFromSupabase();
+      if (!sessionUser) {
+        throw new Error("Tạo tài khoản thành công nhưng chưa tải được hồ sơ.");
       }
 
-      if (data.session) {
-        await upsertProfile({
-          id: data.user.id,
-          full_name: name,
-          phone: phone,
-          goal: goal,
-          bio: "",
-          role: role,
-          avatar_url: createAvatarFallback(name),
-          updated_at: new Date().toISOString()
-        });
-
-        const sessionUser = await loadCurrentUserFromSupabase();
-        saveAuthSession(sessionUser);
-        showMessage("registerMessage", "success", "Tạo tài khoản thành công. Bạn đang được chuyển tới hồ sơ cá nhân...");
-        window.setTimeout(function () {
-          window.location.href = "profile.html";
-        }, 900);
-        return;
-      }
-
-      showMessage("registerMessage", "success", "Tài khoản đã được tạo. Hãy kiểm tra email để xác nhận trước khi đăng nhập.");
+      saveAuthSession(sessionUser);
+      showMessage("registerMessage", "success", "Tạo tài khoản thành công. Bạn đang được chuyển tới hồ sơ cá nhân...");
+      window.setTimeout(function () {
+        window.location.href = "profile.html";
+      }, 900);
     } catch (error) {
-      showMessage("registerMessage", "error", error.message || "Không thể tạo tài khoản trên Supabase.");
+      showMessage("registerMessage", "error", error.message || "Không thể tạo tài khoản lúc này.");
     }
   });
 }
