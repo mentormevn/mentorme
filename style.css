@@ -931,8 +931,10 @@ display:flex;
 .footer-bottom{
     text-align:center;
     margin-top:30px;
+    padding-top:18px;
     font-size:14px;
     opacity:0.8;
+    border-top:1px solid rgba(255,255,255,0.18);
 }
 
 .contact-item{
@@ -2831,6 +2833,30 @@ body{
   color:var(--text-muted);
   line-height:1.6;
   font-size:14px;
+}
+
+.hero-content h1,
+.search-content h1,
+.auth-hero-copy h1,
+.services-hero-copy h1,
+.mentor h2,
+.mentee h2,
+.about-left h2,
+.about-left h3,
+.services-section-heading h2,
+.services-consult-copy h2,
+.schedule-hero-card h1,
+.admin-header-card h1,
+.mentor-dashboard-hero-copy h1,
+.mentor-apply-hero-copy h1,
+.mentor-results-header h2,
+.profile-top-banner h2,
+.profile-summary-card h2,
+.profile-section-header h2,
+.auth-panel-header h2{
+  text-wrap:balance;
+  overflow-wrap:normal;
+  word-break:keep-all;
 }
 
 .about-scale{
@@ -4864,7 +4890,9 @@ body{
   }
 
   .hero-stats{
-    grid-template-columns:1fr;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:10px;
+    align-items:stretch;
   }
 
   .services-metrics,
@@ -5018,6 +5046,20 @@ body{
   .mentor-card,
   .admin-request-card{
     border-radius:22px;
+  }
+
+  .hero-stat-card{
+    padding:14px 10px;
+  }
+
+  .hero-stat-card strong{
+    font-size:clamp(18px, 3.8vw, 24px);
+    margin-bottom:6px;
+  }
+
+  .hero-stat-card span{
+    font-size:12px;
+    line-height:1.45;
   }
 
   .mentor{
@@ -5379,6 +5421,22 @@ body{
     max-width:none;
   }
 
+  .mentor h2,
+  .mentee h2,
+  .about-left h2,
+  .about-left h3,
+  .services-section-heading h2,
+  .services-consult-copy h2,
+  .mentor-results-header h2,
+  .profile-top-banner h2{
+    font-size:clamp(24px, 6.4vw, 30px);
+    line-height:1.12;
+  }
+
+  .mentee h2{
+    white-space:nowrap;
+  }
+
   .auth-panel-header h2,
   .services-section-heading h2,
   .services-consult-copy h2,
@@ -5397,12 +5455,23 @@ body{
     line-height:1.7;
   }
 
+  .hero-stats{
+    gap:8px;
+  }
+
   .hero-stat-card{
-    padding:16px;
+    padding:12px 8px;
+    border-radius:18px;
   }
 
   .hero-stat-card strong{
-    font-size:24px;
+    font-size:clamp(16px, 4.2vw, 20px);
+    margin-bottom:4px;
+  }
+
+  .hero-stat-card span{
+    font-size:11px;
+    line-height:1.35;
   }
 
   .mentor-card{
@@ -5580,11 +5649,6 @@ body{
     overflow:hidden;
   }
 
-  .mentee-home-intro p{
-    font-size:15px;
-    line-height:1.7;
-  }
-
   .mentee-slide{
     min-width:88vw;
     flex-basis:88vw;
@@ -5636,5 +5700,52 @@ body{
 
   .admin-request-status{
     align-self:flex-start;
+  }
+
+  .footer{
+    padding:40px 16px 18px;
+  }
+
+  .footer-container{
+    flex-direction:column;
+    gap:24px;
+  }
+
+  .footer-col{
+    min-width:0;
+  }
+
+  .footer-col h3{
+    font-size:22px;
+  }
+
+  .footer-col h4{
+    font-size:16px;
+    margin-bottom:12px;
+  }
+
+  .footer-col p,
+  .contact-item span,
+  .socials a{
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  .footer-btn{
+    display:flex;
+    width:100%;
+    justify-content:center;
+    padding:12px 16px;
+    text-align:center;
+  }
+
+  .contact-item{
+    align-items:flex-start;
+  }
+
+  .footer-bottom{
+    margin-top:22px;
+    padding-top:14px;
+    font-size:12px;
   }
 }
