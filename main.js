@@ -37,6 +37,25 @@ const DEMO_MENTEE_PASSWORD = "trang2007";
 const SEARCH_PAGE_SIZE = 12;
 const REAL_MENTOR_DATA_VERSION = "2026-03-26-real-v2";
 const REVIEW_CLEANUP_VERSION = "2026-03-26-clear-trang-dung";
+const WEEKLY_SCHEDULE_DAYS = [
+  { key: "mon", label: "Thứ 2", shortLabel: "2" },
+  { key: "tue", label: "Thứ 3", shortLabel: "3" },
+  { key: "wed", label: "Thứ 4", shortLabel: "4" },
+  { key: "thu", label: "Thứ 5", shortLabel: "5" },
+  { key: "fri", label: "Thứ 6", shortLabel: "6" },
+  { key: "sat", label: "Thứ 7", shortLabel: "7" },
+  { key: "sun", label: "Chủ nhật", shortLabel: "CN" }
+];
+const WEEKLY_SCHEDULE_HOURS = Array.from({ length: 15 }, function (_, index) {
+  const hour = 7 + index;
+  return String(hour).padStart(2, "0") + ":00";
+});
+const SERVICE_LABELS = {
+  "1-1": "Mentor 1 kèm 1",
+  group: "Mentor theo nhóm",
+  roadmap: "Tư vấn lộ trình",
+  competition: "Luyện thi / cuộc thi"
+};
 let currentSearchPage = 1;
 const appConfig = browserWindow.MENTOR_ME_CONFIG || {};
 const SUPABASE_URL = appConfig.SUPABASE_URL || "";
@@ -184,6 +203,442 @@ function buildMentorServiceText(services) {
     return labels[item];
   }).filter(Boolean);
   return list.length ? list.join(", ") : "Mentor 1 kèm 1";
+}
+
+function getServiceLabel(serviceKey) {
+  return SERVICE_LABELS[serviceKey] || "Dịch vụ mentoring";
+}
+
+function formatCurrencyVnd(amount) {
+  const value = Number(amount || 0);
+  if (!Number.isFinite(value) || value <= 0) {
+    return "";
+  }
+
+  return value.toLocaleString("vi-VN") + " VNĐ";
+}
+
+function formatDurationLabel(durationMinutes) {
+  const totalMinutes = Number(durationMinutes || 0);
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+    return "Chưa cập nhật";
+  }
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours && minutes) {
+    return hours + " giờ " + minutes + " phút";
+  }
+
+  if (hours) {
+    return hours + " giờ";
+  }
+
+  return minutes + " phút";
+}
+
+function createWeeklySlotId(dayKey, hourLabel) {
+  return dayKey + "-" + hourLabel;
+}
+
+function parseWeeklySlotId(slotId) {
+  const rawValue = String(slotId || "");
+  const separatorIndex = rawValue.indexOf("-");
+  if (separatorIndex < 0) {
+    return null;
+  }
+
+  const dayKey = rawValue.slice(0, separatorIndex);
+  const hourLabel = rawValue.slice(separatorIndex + 1);
+  if (!dayKey || !hourLabel) {
+    return null;
+  }
+
+  return {
+    dayKey: dayKey,
+    hourLabel: hourLabel
+  };
+}
+
+function getWeekdayMeta(dayKey) {
+  return WEEKLY_SCHEDULE_DAYS.find(function (day) {
+    return day.key === dayKey;
+  }) || null;
+}
+
+function getHourIndex(hourLabel) {
+  return WEEKLY_SCHEDULE_HOURS.indexOf(hourLabel);
+}
+
+function getSlotLabel(slotId) {
+  const slot = parseWeeklySlotId(slotId);
+  if (!slot) {
+    return "Chưa chọn";
+  }
+
+  const day = getWeekdayMeta(slot.dayKey);
+  return (day ? day.label : slot.dayKey) + " - " + slot.hourLabel;
+}
+
+function getSlotRangeLabel(slotId, durationMinutes) {
+  const slot = parseWeeklySlotId(slotId);
+  if (!slot) {
+    return "Chưa chọn";
+  }
+
+  const startIndex = getHourIndex(slot.hourLabel);
+  if (startIndex < 0) {
+    return getSlotLabel(slotId);
+  }
+
+  const blockCount = Math.max(1, Math.ceil(Number(durationMinutes || 60) / 60));
+  const endHour = 7 + startIndex + blockCount;
+  const endLabel = String(endHour).padStart(2, "0") + ":00";
+  const day = getWeekdayMeta(slot.dayKey);
+  return (day ? day.label : slot.dayKey) + " - " + slot.hourLabel + " đến " + endLabel;
+}
+
+function buildAvailabilitySlotsFromLegacy(availability) {
+  const values = Array.isArray(availability) ? availability : [];
+  const slots = [];
+
+  WEEKLY_SCHEDULE_DAYS.forEach(function (day) {
+    const isWeekend = day.key === "sat" || day.key === "sun";
+
+    WEEKLY_SCHEDULE_HOURS.forEach(function (hourLabel) {
+      const hour = Number(hourLabel.slice(0, 2));
+      let included = false;
+
+      if (values.includes("sang") && hour >= 7 && hour <= 11) {
+        included = true;
+      }
+      if (values.includes("chieu") && hour >= 13 && hour <= 17) {
+        included = true;
+      }
+      if (values.includes("toi") && hour >= 18 && hour <= 21) {
+        included = true;
+      }
+      if (values.includes("cuoi-tuan") && isWeekend) {
+        included = true;
+      }
+
+      if (included) {
+        slots.push(createWeeklySlotId(day.key, hourLabel));
+      }
+    });
+  });
+
+  return slots;
+}
+
+function getMentorAvailabilitySlots(mentor) {
+  const slots = Array.isArray(mentor && mentor.availabilitySlots) ? mentor.availabilitySlots.filter(Boolean) : [];
+  if (slots.length) {
+    return slots;
+  }
+
+  return buildAvailabilitySlotsFromLegacy(mentor && mentor.availability);
+}
+
+function buildAvailabilitySummaryFromSlots(slots) {
+  const normalizedSlots = Array.isArray(slots) ? slots.filter(Boolean) : [];
+  if (!normalizedSlots.length) {
+    return "Chưa mở lịch cụ thể";
+  }
+
+  const daySummaries = WEEKLY_SCHEDULE_DAYS.map(function (day) {
+    const dayHours = normalizedSlots
+      .map(parseWeeklySlotId)
+      .filter(function (slot) {
+        return slot && slot.dayKey === day.key;
+      })
+      .map(function (slot) {
+        return slot.hourLabel;
+      });
+
+    if (!dayHours.length) {
+      return "";
+    }
+
+    const firstHour = dayHours[0];
+    const lastHour = dayHours[dayHours.length - 1];
+    return day.label + " (" + firstHour + " - " + String(Number(lastHour.slice(0, 2)) + 1).padStart(2, "0") + ":00)";
+  }).filter(Boolean);
+
+  return daySummaries.length ? daySummaries.join(", ") : "Chưa mở lịch cụ thể";
+}
+
+function createServicePackage(serviceKey, index, overrides) {
+  const payload = overrides || {};
+  const durationMinutes = Number(payload.durationMinutes || 60);
+  const priceValue = Number(payload.priceValue || 0);
+  const title = normalizeWhitespace(payload.title || getServiceLabel(serviceKey));
+  const packageId = payload.id || "package-" + serviceKey + "-" + index;
+
+  return {
+    id: packageId,
+    serviceKey: serviceKey,
+    title: title || getServiceLabel(serviceKey),
+    durationMinutes: durationMinutes > 0 ? durationMinutes : 60,
+    priceValue: Number.isFinite(priceValue) && priceValue > 0 ? priceValue : 0,
+    priceText: normalizeWhitespace(payload.priceText || formatCurrencyVnd(priceValue) || "Admin duyệt sau")
+  };
+}
+
+function buildServicePackagesFromLegacy(services, pricingText) {
+  const serviceKeys = Array.isArray(services) && services.length ? services : ["1-1"];
+  return serviceKeys.map(function (serviceKey, index) {
+    return createServicePackage(serviceKey, index + 1, {
+      priceText: pricingText || "Admin duyệt sau"
+    });
+  });
+}
+
+function getMentorServicePackages(mentor) {
+  const packages = Array.isArray(mentor && mentor.servicePackages) ? mentor.servicePackages.filter(Boolean) : [];
+  if (packages.length) {
+    return packages.map(function (item, index) {
+      return createServicePackage(item.serviceKey || "1-1", index + 1, item);
+    });
+  }
+
+  return buildServicePackagesFromLegacy(mentor && mentor.service, mentor && mentor.pricing);
+}
+
+function buildServicePackageSummary(packages) {
+  const list = (packages || []).map(function (item) {
+    return item.title + " - " + formatDurationLabel(item.durationMinutes) + " - " + (item.priceText || "Admin duyệt sau");
+  });
+
+  return list.length ? list.join(", ") : "Chưa cập nhật";
+}
+
+function getOccupiedSlotIdsForMentor(mentorId) {
+  const occupied = [];
+
+  getBookingRequests().forEach(function (request) {
+    if (request.mentorId !== mentorId) {
+      return;
+    }
+
+    if (!["accepted", "completed"].includes(request.status)) {
+      return;
+    }
+
+    const slotIds = Array.isArray(request.slotIds) ? request.slotIds : [];
+    slotIds.forEach(function (slotId) {
+      if (!occupied.includes(slotId)) {
+        occupied.push(slotId);
+      }
+    });
+  });
+
+  return occupied;
+}
+
+function getSlotIdsForBooking(startSlotId, durationMinutes) {
+  const slot = parseWeeklySlotId(startSlotId);
+  if (!slot) {
+    return [];
+  }
+
+  const startIndex = getHourIndex(slot.hourLabel);
+  if (startIndex < 0) {
+    return [];
+  }
+
+  const blockCount = Math.max(1, Math.ceil(Number(durationMinutes || 60) / 60));
+  const slotIds = [];
+
+  for (let offset = 0; offset < blockCount; offset += 1) {
+    const hourLabel = WEEKLY_SCHEDULE_HOURS[startIndex + offset];
+    if (!hourLabel) {
+      break;
+    }
+    slotIds.push(createWeeklySlotId(slot.dayKey, hourLabel));
+  }
+
+  return slotIds;
+}
+
+function canBookSlot(mentorId, availableSlots, occupiedSlots, startSlotId, durationMinutes) {
+  const requestedSlots = getSlotIdsForBooking(startSlotId, durationMinutes);
+  if (!requestedSlots.length) {
+    return false;
+  }
+
+  return requestedSlots.every(function (slotId) {
+    return availableSlots.includes(slotId) && !occupiedSlots.includes(slotId);
+  });
+}
+
+function buildMentorScheduleLegendHtml() {
+  return `
+    <div class="mentor-schedule-legend">
+      <span><i class="is-available"></i> Rảnh để nhận mentee</span>
+      <span><i class="is-booked"></i> Đã có lịch dạy</span>
+      <span><i class="is-selected"></i> Mentee đang chọn</span>
+    </div>
+  `;
+}
+
+function buildMentorScheduleTable(mentorId, availableSlots, occupiedSlots, options) {
+  const config = options || {};
+  const selectedSlotId = config.selectedSlotId || "";
+  const selectable = Boolean(config.selectable);
+  const durationMinutes = Number(config.durationMinutes || 60);
+
+  const headerCells = WEEKLY_SCHEDULE_DAYS.map(function (day) {
+    return "<div class=\"mentor-weekly-schedule-head-cell\">" + day.shortLabel + "</div>";
+  }).join("");
+
+  const bodyRows = WEEKLY_SCHEDULE_HOURS.map(function (hourLabel) {
+    const hourCell = "<div class=\"mentor-weekly-schedule-time-cell\">" + hourLabel + "</div>";
+    const dayCells = WEEKLY_SCHEDULE_DAYS.map(function (day) {
+      const slotId = createWeeklySlotId(day.key, hourLabel);
+      const isAvailable = availableSlots.includes(slotId);
+      const isBooked = occupiedSlots.includes(slotId);
+      const isSelected = selectedSlotId === slotId;
+      const isSelectable = selectable && isAvailable && !isBooked && canBookSlot(mentorId, availableSlots, occupiedSlots, slotId, durationMinutes);
+      const classes = [
+        "mentor-weekly-schedule-cell",
+        isAvailable ? "is-available" : "is-unavailable",
+        isBooked ? "is-booked" : "",
+        isSelected ? "is-selected" : "",
+        isSelectable ? "is-selectable" : ""
+      ].filter(Boolean).join(" ");
+
+      const attrs = [
+        "class=\"" + classes + "\"",
+        "data-slot-id=\"" + slotId + "\"",
+        "data-slot-label=\"" + getSlotRangeLabel(slotId, durationMinutes) + "\""
+      ];
+
+      if (isSelectable) {
+        attrs.push("role=\"button\"");
+        attrs.push("tabindex=\"0\"");
+      }
+
+      return "<div " + attrs.join(" ") + "></div>";
+    }).join("");
+
+    return "<div class=\"mentor-weekly-schedule-row\">" + hourCell + dayCells + "</div>";
+  }).join("");
+
+  return `
+    <div class="mentor-weekly-schedule" data-mentor-schedule="${mentorId}">
+      <div class="mentor-weekly-schedule-head">
+        <div class="mentor-weekly-schedule-head-cell is-time">Thời gian</div>
+        ${headerCells}
+      </div>
+      <div class="mentor-weekly-schedule-body">
+        ${bodyRows}
+      </div>
+    </div>
+  `;
+}
+
+function buildMentorAvailabilityEditor(selectedSlots, occupiedSlots) {
+  const headerCells = WEEKLY_SCHEDULE_DAYS.map(function (day) {
+    return "<div class=\"mentor-weekly-schedule-head-cell\">" + day.shortLabel + "</div>";
+  }).join("");
+
+  const bodyRows = WEEKLY_SCHEDULE_HOURS.map(function (hourLabel) {
+    const hourCell = "<div class=\"mentor-weekly-schedule-time-cell\">" + hourLabel + "</div>";
+    const dayCells = WEEKLY_SCHEDULE_DAYS.map(function (day) {
+      const slotId = createWeeklySlotId(day.key, hourLabel);
+      const isSelected = selectedSlots.includes(slotId);
+      const isBooked = occupiedSlots.includes(slotId);
+      const classes = [
+        "mentor-weekly-schedule-cell",
+        isSelected ? "is-available" : "is-unavailable",
+        isBooked ? "is-booked" : "",
+        !isBooked ? "is-toggleable" : ""
+      ].filter(Boolean).join(" ");
+
+      const attrs = [
+        "class=\"" + classes + "\"",
+        "data-slot-id=\"" + slotId + "\""
+      ];
+
+      if (!isBooked) {
+        attrs.push("role=\"checkbox\"");
+        attrs.push("aria-checked=\"" + (isSelected ? "true" : "false") + "\"");
+        attrs.push("tabindex=\"0\"");
+      }
+
+      return "<div " + attrs.join(" ") + "></div>";
+    }).join("");
+
+    return "<div class=\"mentor-weekly-schedule-row\">" + hourCell + dayCells + "</div>";
+  }).join("");
+
+  return `
+    <div class="mentor-weekly-schedule mentor-weekly-schedule-editor">
+      <div class="mentor-weekly-schedule-head">
+        <div class="mentor-weekly-schedule-head-cell is-time">Thời gian</div>
+        ${headerCells}
+      </div>
+      <div class="mentor-weekly-schedule-body">
+        ${bodyRows}
+      </div>
+    </div>
+  `;
+}
+
+function renderServicePackageBuilder(container, packages) {
+  if (!container) {
+    return;
+  }
+
+  const safePackages = (packages && packages.length ? packages : [createServicePackage("1-1", 1)]).slice(0, 6);
+
+  container.innerHTML = safePackages.map(function (item, index) {
+    return `
+      <div class="mentor-package-row" data-package-index="${index}">
+        <label class="auth-field">
+          <span>Dịch vụ</span>
+          <select data-package-field="serviceKey">
+            ${Object.keys(SERVICE_LABELS).map(function (key) {
+              return "<option value=\"" + key + "\" " + (item.serviceKey === key ? "selected" : "") + ">" + getServiceLabel(key) + "</option>";
+            }).join("")}
+          </select>
+        </label>
+        <label class="auth-field">
+          <span>Thời lượng 1 buổi</span>
+          <select data-package-field="durationMinutes">
+            ${[45, 60, 90, 120].map(function (duration) {
+              return "<option value=\"" + duration + "\" " + (Number(item.durationMinutes) === duration ? "selected" : "") + ">" + formatDurationLabel(duration) + "</option>";
+            }).join("")}
+          </select>
+        </label>
+        <label class="auth-field">
+          <span>Chi phí 1 buổi</span>
+          <input type="number" min="0" step="1000" data-package-field="priceValue" value="${Number(item.priceValue || 0)}" placeholder="Ví dụ: 250000">
+        </label>
+        <button type="button" class="mentor-package-remove" data-remove-package="${index}" ${safePackages.length === 1 ? "disabled" : ""}>Xóa</button>
+      </div>
+    `;
+  }).join("");
+}
+
+function collectServicePackagesFromContainer(container) {
+  if (!container) {
+    return [];
+  }
+
+  return Array.from(container.querySelectorAll(".mentor-package-row")).map(function (row, index) {
+    const serviceKey = row.querySelector("[data-package-field=\"serviceKey\"]").value || "1-1";
+    const durationMinutes = Number(row.querySelector("[data-package-field=\"durationMinutes\"]").value || 60);
+    const priceValue = Number(row.querySelector("[data-package-field=\"priceValue\"]").value || 0);
+    return createServicePackage(serviceKey, index + 1, {
+      durationMinutes: durationMinutes,
+      priceValue: priceValue
+    });
+  }).filter(function (item) {
+    return Boolean(item.serviceKey);
+  });
 }
 
 function buildMentorSearchableText(mentor) {
@@ -1050,10 +1505,23 @@ function getResolvedMentorById(mentorId) {
     })
     .concat(approvedProfile.reviews || experience.reviews || []);
 
-  return Object.assign({}, baseMentor, approvedProfile, {
+  const resolvedMentor = Object.assign({}, baseMentor, approvedProfile, {
     rating: Number(computedRating.toFixed(1)),
     studentsTaught: baseStudents + acceptedCount,
     reviews: mergedReviews
+  });
+
+  const availabilitySlots = getMentorAvailabilitySlots(resolvedMentor);
+  const servicePackages = getMentorServicePackages(resolvedMentor);
+
+  return Object.assign({}, resolvedMentor, {
+    availabilitySlots: availabilitySlots,
+    availabilityText: buildAvailabilitySummaryFromSlots(availabilitySlots),
+    servicePackages: servicePackages,
+    serviceText: buildMentorServiceText(servicePackages.map(function (item) {
+      return item.serviceKey;
+    })),
+    pricing: buildServicePackageSummary(servicePackages)
   });
 }
 
@@ -1197,7 +1665,14 @@ function initializeHomeMentorSection() {
   let currentPage = 0;
 
   function getMentorPages() {
-    const mentorsPerPage = window.matchMedia("(max-width: 768px)").matches ? 1 : 3;
+    let mentorsPerPage = 3;
+
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      mentorsPerPage = 1;
+    } else if (window.matchMedia("(max-width: 1180px)").matches) {
+      mentorsPerPage = 2;
+    }
+
     const pages = [];
 
     for (let i = 0; i < featuredMentors.length; i += mentorsPerPage) {
@@ -1387,8 +1862,8 @@ function renderMentorDetail() {
   document.getElementById("mentorDetailStudents").textContent = (mentor.studentsTaught || 0) + " học sinh";
   document.getElementById("mentorDetailWorkplace").textContent = mentor.workplace || "Đang cập nhật";
   document.getElementById("mentorDetailFocus").textContent = mentor.focus;
-  document.getElementById("mentorDetailAvailability").textContent = mentor.availabilityText;
-  document.getElementById("mentorDetailService").textContent = mentor.serviceText;
+  document.getElementById("mentorDetailAvailability").textContent = "Xem bảng lịch phía dưới";
+  document.getElementById("mentorDetailService").textContent = buildServicePackageSummary(mentor.servicePackages || []);
   document.getElementById("mentorDetailFit").textContent = mentor.fit;
 
   const bookingLink = document.getElementById("mentorBookingLink");
@@ -1427,6 +1902,21 @@ function renderMentorDetail() {
           </div>
         `;
   }
+
+  const scheduleContainer = document.getElementById("mentorDetailScheduleGrid");
+  const scheduleSummary = document.getElementById("mentorDetailScheduleSummary");
+  if (scheduleContainer) {
+    const availableSlots = getMentorAvailabilitySlots(mentor);
+    const occupiedSlots = getOccupiedSlotIdsForMentor(mentor.id);
+    scheduleContainer.innerHTML =
+      buildMentorScheduleLegendHtml() +
+      buildMentorScheduleTable(mentor.id, availableSlots, occupiedSlots, {
+        selectable: false
+      });
+    if (scheduleSummary) {
+      scheduleSummary.textContent = mentor.availabilityText;
+    }
+  }
 }
 
 function initializeBookingPage() {
@@ -1443,7 +1933,121 @@ function initializeBookingPage() {
   document.getElementById("bookingMentorName").textContent = mentor.name;
   document.getElementById("bookingMentorFocus").textContent = mentor.focus;
   document.getElementById("bookingMentorAvailability").textContent = mentor.availabilityText;
-  document.getElementById("bookingMentorService").textContent = mentor.serviceText;
+  document.getElementById("bookingMentorService").textContent = buildServicePackageSummary(mentor.servicePackages || []);
+
+  const serviceSelect = document.getElementById("bookingServicePackage");
+  const serviceSummary = document.getElementById("bookingServiceSummary");
+  const scheduleGrid = document.getElementById("bookingAvailabilityGrid");
+  const selectedSlotText = document.getElementById("bookingSelectedSlot");
+  const hiddenTimeInput = document.getElementById("bookingTime");
+  const availableSlots = getMentorAvailabilitySlots(mentor);
+  const occupiedSlots = getOccupiedSlotIdsForMentor(mentor.id);
+  const packages = getMentorServicePackages(mentor);
+  let selectedPackage = packages[0] || null;
+  let selectedSlotId = "";
+
+  function renderPackageOptions() {
+    if (!serviceSelect) {
+      return;
+    }
+
+    serviceSelect.innerHTML = [
+      '<option value="">Chọn dịch vụ và mức giá</option>'
+    ].concat(packages.map(function (item) {
+      return "<option value=\"" + item.id + "\">" + escapeHtml(item.title + " - " + formatDurationLabel(item.durationMinutes) + " - " + (item.priceText || "Admin duyệt sau")) + "</option>";
+    })).join("");
+  }
+
+  function renderSelectedPackage() {
+    if (!serviceSummary) {
+      return;
+    }
+
+    if (!selectedPackage) {
+      serviceSummary.innerHTML = "<strong>Chưa chọn dịch vụ.</strong> Mentor sẽ set sẵn thời lượng và chi phí cho từng lựa chọn.";
+      return;
+    }
+
+    serviceSummary.innerHTML = `
+      <strong>${escapeHtml(selectedPackage.title)}</strong>
+      <span>${escapeHtml(formatDurationLabel(selectedPackage.durationMinutes))}</span>
+      <span>${escapeHtml(selectedPackage.priceText || "Admin duyệt sau")}</span>
+    `;
+  }
+
+  function renderScheduleChooser() {
+    if (!scheduleGrid) {
+      return;
+    }
+
+    if (selectedSlotId && !canBookSlot(mentor.id, availableSlots, occupiedSlots, selectedSlotId, selectedPackage ? selectedPackage.durationMinutes : 60)) {
+      selectedSlotId = "";
+    }
+
+    scheduleGrid.innerHTML =
+      buildMentorScheduleLegendHtml() +
+      buildMentorScheduleTable(mentor.id, availableSlots, occupiedSlots, {
+        selectable: true,
+        selectedSlotId: selectedSlotId,
+        durationMinutes: selectedPackage ? selectedPackage.durationMinutes : 60
+      });
+
+    if (selectedSlotText) {
+      selectedSlotText.textContent = selectedSlotId && selectedPackage
+        ? getSlotRangeLabel(selectedSlotId, selectedPackage.durationMinutes)
+        : "Chưa chọn khung giờ";
+    }
+
+    if (hiddenTimeInput) {
+      hiddenTimeInput.value = selectedSlotId && selectedPackage
+        ? getSlotRangeLabel(selectedSlotId, selectedPackage.durationMinutes)
+        : "";
+    }
+  }
+
+  renderPackageOptions();
+  if (serviceSelect && selectedPackage) {
+    serviceSelect.value = selectedPackage.id;
+  }
+  renderSelectedPackage();
+  renderScheduleChooser();
+
+  if (serviceSelect && !serviceSelect.dataset.boundServicePicker) {
+    serviceSelect.addEventListener("change", function () {
+      selectedPackage = packages.find(function (item) {
+        return item.id === serviceSelect.value;
+      }) || null;
+      renderSelectedPackage();
+      renderScheduleChooser();
+    });
+    serviceSelect.dataset.boundServicePicker = "true";
+  }
+
+  if (scheduleGrid && !scheduleGrid.dataset.boundSchedulePicker) {
+    function handleScheduleSelection(target) {
+      const cell = target.closest(".mentor-weekly-schedule-cell.is-selectable");
+      if (!cell) {
+        return;
+      }
+
+      selectedSlotId = cell.getAttribute("data-slot-id") || "";
+      renderScheduleChooser();
+    }
+
+    scheduleGrid.addEventListener("click", function (event) {
+      handleScheduleSelection(event.target);
+    });
+
+    scheduleGrid.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      handleScheduleSelection(event.target);
+      event.preventDefault();
+    });
+
+    scheduleGrid.dataset.boundSchedulePicker = "true";
+  }
 
   if (currentUser) {
     const nameInput = document.getElementById("bookingName");
@@ -1466,6 +2070,18 @@ function initializeBookingPage() {
     const successBox = document.getElementById("bookingSuccessMessage");
     const createdAt = new Date().toISOString();
 
+    if (!selectedPackage) {
+      successBox.hidden = false;
+      successBox.textContent = "Hãy chọn dịch vụ phù hợp trước khi gửi yêu cầu.";
+      return;
+    }
+
+    if (!selectedSlotId || !time) {
+      successBox.hidden = false;
+      successBox.textContent = "Hãy chọn một khung giờ màu xanh trong bảng lịch.";
+      return;
+    }
+
     const bookingRequest = {
       id: "booking-" + Date.now(),
       mentorId: mentor.id,
@@ -1475,6 +2091,12 @@ function initializeBookingPage() {
       menteeUserId: currentUser && normalizeRole(currentUser.role) === "mentee" ? currentUser.id : "",
       menteeName: name,
       menteeEmail: email,
+      servicePackageId: selectedPackage.id,
+      serviceName: selectedPackage.title,
+      serviceDurationMinutes: selectedPackage.durationMinutes,
+      servicePriceText: selectedPackage.priceText,
+      slotId: selectedSlotId,
+      slotIds: getSlotIdsForBooking(selectedSlotId, selectedPackage.durationMinutes),
       goal: goal,
       preferredTime: time,
       note: note,
@@ -1489,6 +2111,7 @@ function initializeBookingPage() {
     successBox.innerHTML = `
       Yêu cầu đã được gửi tới <strong>${mentor.name}</strong>.<br>
       Người gửi: <strong>${name}</strong> (${email})<br>
+      Dịch vụ đã chọn: <strong>${selectedPackage.title}</strong> - <strong>${formatDurationLabel(selectedPackage.durationMinutes)}</strong> - <strong>${selectedPackage.priceText || "Admin duyệt sau"}</strong><br>
       Mục tiêu: <strong>${goal}</strong><br>
       Thời gian mong muốn: <strong>${time}</strong>${note ? `<br>Ghi chú: <strong>${note}</strong>` : ""}
       ${currentUser && normalizeRole(currentUser.role) === "mentee" ? '<br><a href="mentee-schedule.html">Xem lịch học của tôi</a>' : ""}
@@ -1500,6 +2123,13 @@ function initializeBookingPage() {
       document.getElementById("bookingEmail").value = currentUser.email || "";
       document.getElementById("bookingGoal").value = currentUser.goal || "";
     }
+    selectedSlotId = "";
+    if (serviceSelect) {
+      serviceSelect.value = "";
+    }
+    selectedPackage = null;
+    renderSelectedPackage();
+    renderScheduleChooser();
   });
 }
 
@@ -1959,6 +2589,9 @@ function buildAdminMentorProfileUpdateCard(request) {
   const safeStatus = escapeHtml(request.status);
   const safeAdminNote = escapeHtml(request.adminNote || "");
   const profile = request.profile || {};
+  const profilePackages = getMentorServicePackages(profile);
+  const profileSlots = getMentorAvailabilitySlots(profile);
+  const profileOccupiedSlots = getOccupiedSlotIdsForMentor(request.mentorId);
 
   return `
     <article class="admin-request-card" data-mentor-profile-update-id="${request.id}">
@@ -1981,7 +2614,7 @@ function buildAdminMentorProfileUpdateCard(request) {
       <div class="admin-request-body">
         <div class="admin-request-block">
           <span>Dịch vụ & giá</span>
-          <p>${escapeHtml((profile.serviceText || "Chưa cập nhật") + " | " + (profile.pricing || "Chưa cập nhật"))}</p>
+          <p>${escapeHtml(buildServicePackageSummary(profilePackages))}</p>
         </div>
         <div class="admin-request-block">
           <span>Đối tượng phù hợp</span>
@@ -1998,6 +2631,14 @@ function buildAdminMentorProfileUpdateCard(request) {
           <span>Thành tích nổi bật</span>
           <p>${escapeHtml(String(profile.achievements || "").split("\n").filter(Boolean).join(" | ") || "Chưa cập nhật")}</p>
         </div>
+      </div>
+
+      <div class="admin-request-block admin-request-block--full">
+        <span>Bảng lịch rảnh</span>
+        ${buildMentorScheduleLegendHtml()}
+        ${buildMentorScheduleTable(request.mentorId, profileSlots, profileOccupiedSlots, {
+          selectable: false
+        })}
       </div>
 
       <form class="admin-mentor-profile-update-form">
@@ -2493,6 +3134,8 @@ function initializeAdminConsultationPage() {
       const mentorId = buildUniqueMentorId(name);
       const finalService = service.length ? service : ["1-1"];
       const finalAvailability = availability.length ? availability : ["sang", "chieu", "toi"];
+      const availabilitySlots = buildAvailabilitySlotsFromLegacy(finalAvailability);
+      const servicePackages = buildServicePackagesFromLegacy(finalService, "Admin duyệt sau");
       const mentorProfile = {
         id: mentorId,
         name: name,
@@ -2504,9 +3147,12 @@ function initializeAdminConsultationPage() {
         focus: focus,
         field: field,
         availability: finalAvailability,
-        availabilityText: buildMentorAvailabilityText(finalAvailability),
+        availabilitySlots: availabilitySlots,
+        availabilityText: buildAvailabilitySummaryFromSlots(availabilitySlots),
         service: finalService,
+        servicePackages: servicePackages,
         serviceText: buildMentorServiceText(finalService),
+        pricing: buildServicePackageSummary(servicePackages),
         achievements: achievements,
         fit: fit || "Phù hợp với mentee đang cần mentor đồng hành theo mục tiêu học tập cụ thể.",
         searchableText: ""
@@ -2573,6 +3219,8 @@ function initializeMentorDashboardPage() {
     services: "",
     pricing: "",
     availability: "",
+    availabilitySlots: [],
+    servicePackages: [],
     intro: "",
     achievements: "",
     fit: "",
@@ -2591,9 +3239,13 @@ function initializeMentorDashboardPage() {
       headline: approvedMentor.role,
       workplace: approvedMentor.workplace || "",
       expertise: approvedMentor.focus,
-      services: approvedMentor.serviceText,
-      pricing: "",
+      services: buildMentorServiceText((approvedMentor.servicePackages || []).map(function (item) {
+        return item.serviceKey;
+      })),
+      pricing: buildServicePackageSummary(approvedMentor.servicePackages || []),
       availability: approvedMentor.availabilityText,
+      availabilitySlots: getMentorAvailabilitySlots(approvedMentor),
+      servicePackages: getMentorServicePackages(approvedMentor),
       intro: approvedMentor.bio || "",
       achievements: (approvedMentor.achievements || []).join("\n"),
       fit: approvedMentor.fit || "",
@@ -2619,6 +3271,9 @@ function initializeMentorDashboardPage() {
     rating: document.getElementById("mentorDashboardRating"),
     studentsTaught: document.getElementById("mentorDashboardStudents")
   };
+  const packageBuilder = document.getElementById("mentorDashboardPackageBuilder");
+  const addPackageButton = document.getElementById("mentorDashboardAddPackage");
+  const availabilityEditor = document.getElementById("mentorDashboardAvailabilityGrid");
 
   const previewElements = {
     avatar: document.getElementById("mentorDashboardPreviewAvatar"),
@@ -2629,6 +3284,8 @@ function initializeMentorDashboardPage() {
     services: document.getElementById("mentorDashboardPreviewServices"),
     pricing: document.getElementById("mentorDashboardPreviewPricing"),
     availability: document.getElementById("mentorDashboardPreviewAvailability"),
+    packageList: document.getElementById("mentorDashboardPreviewPackages"),
+    schedule: document.getElementById("mentorDashboardPreviewSchedule"),
     intro: document.getElementById("mentorDashboardPreviewIntro"),
     achievements: document.getElementById("mentorDashboardPreviewAchievements"),
     fit: document.getElementById("mentorDashboardPreviewFit"),
@@ -2649,6 +3306,15 @@ function initializeMentorDashboardPage() {
     fields.visibility.value = payload.visibility || "draft";
     if (fields.rating) fields.rating.value = payload.rating || "";
     if (fields.studentsTaught) fields.studentsTaught.value = payload.studentsTaught || "";
+    if (fields.services) fields.services.value = payload.services || "";
+    if (fields.pricing) fields.pricing.value = payload.pricing || "";
+    if (fields.availability) fields.availability.value = payload.availability || "";
+    renderServicePackageBuilder(packageBuilder, payload.servicePackages || []);
+    if (availabilityEditor) {
+      availabilityEditor.innerHTML =
+        buildMentorScheduleLegendHtml() +
+        buildMentorAvailabilityEditor(payload.availabilitySlots || [], getOccupiedSlotIdsForMentor(mentorContext.mentorId));
+    }
   }
 
   function renderPreview(payload) {
@@ -2660,6 +3326,20 @@ function initializeMentorDashboardPage() {
     previewElements.services.textContent = payload.services || "Chưa cập nhật";
     previewElements.pricing.textContent = payload.pricing || "Chưa cập nhật";
     previewElements.availability.textContent = payload.availability || "Chưa cập nhật";
+    if (previewElements.packageList) {
+      previewElements.packageList.innerHTML = (payload.servicePackages || []).length
+        ? payload.servicePackages.map(function (item) {
+            return "<li>" + escapeHtml(item.title + " - " + formatDurationLabel(item.durationMinutes) + " - " + (item.priceText || "Admin duyệt sau")) + "</li>";
+          }).join("")
+        : "<li>Chưa có gói dịch vụ nào.</li>";
+    }
+    if (previewElements.schedule) {
+      previewElements.schedule.innerHTML =
+        buildMentorScheduleLegendHtml() +
+        buildMentorScheduleTable(mentorContext.mentorId || "draft", payload.availabilitySlots || [], getOccupiedSlotIdsForMentor(mentorContext.mentorId), {
+          selectable: false
+        });
+    }
     previewElements.intro.textContent = payload.intro || "Phần giới thiệu mentor sẽ xuất hiện ở đây để bạn xem trước cách hiển thị.";
     previewElements.fit.textContent = payload.fit || "Mô tả nhóm mentee phù hợp sẽ hiển thị tại đây.";
     previewElements.statusBadge.textContent =
@@ -2682,14 +3362,30 @@ function initializeMentorDashboardPage() {
   }
 
   function syncFromForm() {
+    const selectedAvailabilitySlots = availabilityEditor
+      ? Array.from(availabilityEditor.querySelectorAll(".mentor-weekly-schedule-cell.is-available, .mentor-weekly-schedule-cell.is-booked"))
+          .map(function (cell) {
+            return cell.getAttribute("data-slot-id");
+          })
+          .filter(Boolean)
+      : [];
+    const servicePackages = collectServicePackagesFromContainer(packageBuilder);
+    const servicesSummary = buildMentorServiceText(servicePackages.map(function (item) {
+      return item.serviceKey;
+    }));
+    const pricingSummary = buildServicePackageSummary(servicePackages);
+    const availabilitySummary = buildAvailabilitySummaryFromSlots(selectedAvailabilitySlots);
+
     draftProfile = {
       displayName: normalizeWhitespace(fields.displayName.value),
       headline: normalizeWhitespace(fields.headline.value),
       workplace: normalizeWhitespace(fields.workplace.value),
       expertise: normalizeWhitespace(fields.expertise.value),
-      services: normalizeWhitespace(fields.services.value),
-      pricing: normalizeWhitespace(fields.pricing.value),
-      availability: normalizeWhitespace(fields.availability.value),
+      services: servicesSummary,
+      pricing: pricingSummary,
+      availability: availabilitySummary,
+      availabilitySlots: selectedAvailabilitySlots,
+      servicePackages: servicePackages,
       intro: normalizeWhitespace(fields.intro.value),
       achievements: fields.achievements.value.trim(),
       fit: normalizeWhitespace(fields.fit.value),
@@ -2698,6 +3394,10 @@ function initializeMentorDashboardPage() {
       studentsTaught: normalizeWhitespace(fields.studentsTaught && fields.studentsTaught.value),
       updatedAt: new Date().toISOString()
     };
+
+    if (fields.services) fields.services.value = servicesSummary;
+    if (fields.pricing) fields.pricing.value = pricingSummary;
+    if (fields.availability) fields.availability.value = availabilitySummary;
 
     renderPreview(draftProfile);
   }
@@ -2711,6 +3411,65 @@ function initializeMentorDashboardPage() {
     input.addEventListener("input", syncFromForm);
     input.addEventListener("change", syncFromForm);
   });
+
+  if (addPackageButton && !addPackageButton.dataset.boundAddPackage) {
+    addPackageButton.addEventListener("click", function () {
+      const nextPackages = collectServicePackagesFromContainer(packageBuilder);
+      nextPackages.push(createServicePackage("1-1", nextPackages.length + 1, {
+        durationMinutes: 60,
+        priceValue: 0
+      }));
+      renderServicePackageBuilder(packageBuilder, nextPackages);
+      syncFromForm();
+    });
+    addPackageButton.dataset.boundAddPackage = "true";
+  }
+
+  if (packageBuilder && !packageBuilder.dataset.boundPackageBuilder) {
+    packageBuilder.addEventListener("input", syncFromForm);
+    packageBuilder.addEventListener("change", syncFromForm);
+    packageBuilder.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-remove-package]");
+      if (!button) {
+        return;
+      }
+
+      const nextPackages = collectServicePackagesFromContainer(packageBuilder).filter(function (_, index) {
+        return String(index) !== String(button.getAttribute("data-remove-package"));
+      });
+      renderServicePackageBuilder(packageBuilder, nextPackages.length ? nextPackages : [createServicePackage("1-1", 1)]);
+      syncFromForm();
+    });
+    packageBuilder.dataset.boundPackageBuilder = "true";
+  }
+
+  if (availabilityEditor && !availabilityEditor.dataset.boundAvailabilityEditor) {
+    function toggleAvailabilityCell(target) {
+      const cell = target.closest(".mentor-weekly-schedule-cell.is-toggleable");
+      if (!cell) {
+        return;
+      }
+
+      cell.classList.toggle("is-available");
+      cell.classList.toggle("is-unavailable");
+      cell.setAttribute("aria-checked", cell.classList.contains("is-available") ? "true" : "false");
+      syncFromForm();
+    }
+
+    availabilityEditor.addEventListener("click", function (event) {
+      toggleAvailabilityCell(event.target);
+    });
+
+    availabilityEditor.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      toggleAvailabilityCell(event.target);
+      event.preventDefault();
+    });
+
+    availabilityEditor.dataset.boundAvailabilityEditor = "true";
+  }
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -2742,14 +3501,25 @@ function initializeMentorDashboardPage() {
         workplace: draftProfile.workplace,
         focus: draftProfile.expertise,
         serviceText: draftProfile.services,
+        servicePackages: draftProfile.servicePackages,
         pricing: draftProfile.pricing,
         availabilityText: draftProfile.availability,
+        availabilitySlots: draftProfile.availabilitySlots,
         bio: draftProfile.intro,
         achievements: String(draftProfile.achievements || "").split("\n").map(function (item) { return item.trim(); }).filter(Boolean),
         fit: draftProfile.fit,
         rating: Number(draftProfile.rating || (approvedMentor && approvedMentor.rating) || 4.8),
         studentsTaught: Number(draftProfile.studentsTaught || (approvedMentor && approvedMentor.studentsTaught) || 0),
-        reviews: approvedMentor ? approvedMentor.reviews : []
+        reviews: approvedMentor ? approvedMentor.reviews : [],
+        searchableText: buildMentorSearchableText({
+          name: draftProfile.displayName || currentUser.name,
+          tag: approvedMentor ? approvedMentor.tag : "",
+          role: draftProfile.headline,
+          bio: draftProfile.intro,
+          focus: draftProfile.expertise,
+          fit: draftProfile.fit,
+          workplace: draftProfile.workplace
+        })
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -3279,6 +4049,8 @@ function buildMenteeScheduleCard(request) {
       <div class="schedule-card-grid">
         <p><strong>Mục tiêu:</strong> ${escapeHtml(request.goal)}</p>
         <p><strong>Thời gian mong muốn:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Dịch vụ:</strong> ${escapeHtml(request.serviceName || "Chưa cập nhật")}</p>
+        <p><strong>Chi phí:</strong> ${escapeHtml(request.servicePriceText || "Chưa cập nhật")}</p>
         <p><strong>Gửi lúc:</strong> ${formatDate(request.createdAt)}</p>
         <p><strong>Lĩnh vực:</strong> ${escapeHtml(request.mentorFocus || "Chưa cập nhật")}</p>
       </div>
@@ -3305,6 +4077,7 @@ function buildMentorLeadCard(request) {
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
         <p><strong>Mentor được chọn:</strong> ${escapeHtml(request.mentorName)}</p>
         <p><strong>Thời gian mong muốn:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Dịch vụ:</strong> ${escapeHtml(request.serviceName || "Chưa cập nhật")}</p>
         <p><strong>Ngày gửi:</strong> ${formatDate(request.createdAt)}</p>
       </div>
       <div class="schedule-card-note">
@@ -3334,6 +4107,7 @@ function buildAdminBookingRequestCard(request) {
         <p><strong>Email mentee:</strong> ${escapeHtml(request.menteeEmail)}</p>
         <p><strong>Mentor:</strong> ${escapeHtml(request.mentorName)}</p>
         <p><strong>Khung giờ:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Dịch vụ:</strong> ${escapeHtml(request.serviceName || "Chưa cập nhật")}</p>
         <p><strong>Ngày gửi:</strong> ${formatDate(request.createdAt)}</p>
       </div>
 
@@ -3342,6 +4116,13 @@ function buildAdminBookingRequestCard(request) {
           <span>Mục tiêu học</span>
           <p>${escapeHtml(request.goal || "Chưa cập nhật")}</p>
         </div>
+        <div class="admin-request-block">
+          <span>Thời lượng & chi phí</span>
+          <p>${escapeHtml((request.serviceDurationMinutes ? formatDurationLabel(request.serviceDurationMinutes) : "Chưa cập nhật") + " | " + (request.servicePriceText || "Chưa cập nhật"))}</p>
+        </div>
+      </div>
+
+      <div class="admin-request-body">
         <div class="admin-request-block">
           <span>Ghi chú mentee</span>
           <p>${escapeHtml(request.note || "Không có ghi chú thêm.")}</p>
@@ -3384,6 +4165,7 @@ function buildAcceptedMenteeCard(request) {
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
         <p><strong>Mentor:</strong> ${escapeHtml(request.mentorName)}</p>
         <p><strong>Lịch dạy:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Dịch vụ:</strong> ${escapeHtml(request.serviceName || "Chưa cập nhật")}</p>
         <p><strong>Mục tiêu:</strong> ${escapeHtml(request.goal)}</p>
       </div>
       <div class="schedule-card-note">
@@ -3407,6 +4189,7 @@ function buildAcceptedMenteeDetailCard(request) {
       <div class="schedule-card-grid">
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
         <p><strong>Khung giờ:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Dịch vụ:</strong> ${escapeHtml(request.serviceName || "Chưa cập nhật")}</p>
         <p><strong>Mục tiêu:</strong> ${escapeHtml(request.goal)}</p>
         <p><strong>Mentor:</strong> ${escapeHtml(request.mentorName)}</p>
       </div>
@@ -4004,6 +4787,8 @@ function initializeMentorBookingDetailPage() {
       <div class="schedule-card-grid">
         <p><strong>Email:</strong> ${escapeHtml(request.menteeEmail)}</p>
         <p><strong>Khung giờ:</strong> ${escapeHtml(request.preferredTime)}</p>
+        <p><strong>Dịch vụ:</strong> ${escapeHtml(request.serviceName || "Chưa cập nhật")}</p>
+        <p><strong>Chi phí:</strong> ${escapeHtml(request.servicePriceText || "Chưa cập nhật")}</p>
         <p><strong>Trạng thái:</strong> ${escapeHtml(buildBookingStatusLabel(request.status))}</p>
         <p><strong>Ngày gửi:</strong> ${escapeHtml(formatDate(request.createdAt))}</p>
       </div>

@@ -69,18 +69,35 @@
 
           <label class="auth-field">
             <span>Dịch vụ cung cấp</span>
-            <input type="text" id="mentorDashboardServices" placeholder="Ví dụ: 1:1 mentoring, coaching nhóm nhỏ, roadmap">
+            <input type="text" id="mentorDashboardServices" placeholder="Tự động tổng hợp từ các gói bên dưới" readonly>
           </label>
 
           <label class="auth-field">
             <span>Mức giá tham khảo</span>
-            <input type="text" id="mentorDashboardPricing" placeholder="Ví dụ: 250.000 - 400.000 VNĐ / buổi">
+            <input type="text" id="mentorDashboardPricing" placeholder="Tự động tổng hợp từ các gói bên dưới" readonly>
           </label>
 
           <label class="auth-field">
             <span>Lịch rảnh</span>
-            <input type="text" id="mentorDashboardAvailability" placeholder="Ví dụ: Tối thứ 3, 5 và cuối tuần">
+            <input type="text" id="mentorDashboardAvailability" placeholder="Tự động tổng hợp từ bảng lịch bên dưới" readonly>
           </label>
+
+          <div class="mentor-dashboard-builder-block profile-full-width">
+            <div class="profile-section-header">
+              <h3>Thiết lập gói dịch vụ</h3>
+              <p>Mentor set sẵn từng gói để mentee chọn từ trình đơn thả xuống khi booking.</p>
+            </div>
+            <div id="mentorDashboardPackageBuilder" class="mentor-package-builder"></div>
+            <button type="button" id="mentorDashboardAddPackage" class="mentor-secondary-btn mentor-dashboard-inline-btn">Thêm gói dịch vụ</button>
+          </div>
+
+          <div class="mentor-dashboard-builder-block profile-full-width">
+            <div class="profile-section-header">
+              <h3>Bảng lịch rảnh theo tuần</h3>
+              <p>Tick các ô màu xanh lá để mở lịch. Ô xanh dương đậm là buổi đã có lịch dạy.</p>
+            </div>
+            <div id="mentorDashboardAvailabilityGrid"></div>
+          </div>
 
           <label class="auth-field">
             <span>Số sao hiển thị</span>
@@ -168,6 +185,18 @@
           <ul id="mentorDashboardPreviewAchievements">
             <li>Chưa có thành tích nổi bật.</li>
           </ul>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Gói dịch vụ mentee sẽ thấy</span>
+          <ul id="mentorDashboardPreviewPackages">
+            <li>Chưa có gói dịch vụ nào.</li>
+          </ul>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Lịch rảnh mentee sẽ thấy</span>
+          <div id="mentorDashboardPreviewSchedule"></div>
         </div>
 
         <div class="mentor-preview-section">

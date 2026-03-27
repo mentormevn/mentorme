@@ -5170,6 +5170,39 @@ body,
   }
 }
 
+@media (max-width:1180px){
+  .mentor{
+    padding-left:24px;
+    padding-right:24px;
+  }
+
+  .mentor-container{
+    width:min(920px, 100%);
+  }
+
+  .mentor-slide{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:22px;
+  }
+
+  .mentor-card{
+    min-width:0;
+  }
+
+  .mentor-card h3{
+    font-size:20px;
+    line-height:1.15;
+  }
+
+  .mentor-card-body{
+    padding:16px 6px 6px;
+  }
+
+  .mentor-card-achievements{
+    padding:14px 16px;
+  }
+}
+
 @media (max-width:768px){
   .navbar{
     flex-wrap:wrap;
@@ -6093,9 +6126,261 @@ body,
     padding:12px;
   }
 
-  .footer-bottom{
-    margin-top:22px;
-    padding-top:14px;
-    font-size:12px;
+.footer-bottom{
+  margin-top:22px;
+  padding-top:14px;
+  font-size:12px;
+}
+}
+
+.mentor-weekly-schedule{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  width:100%;
+  overflow-x:auto;
+  padding-bottom:6px;
+}
+
+.mentor-weekly-schedule-head,
+.mentor-weekly-schedule-row{
+  display:grid;
+  grid-template-columns:92px repeat(7, minmax(58px, 1fr));
+  gap:8px;
+  min-width:620px;
+}
+
+.mentor-weekly-schedule-head-cell,
+.mentor-weekly-schedule-time-cell,
+.mentor-weekly-schedule-cell{
+  border-radius:16px;
+}
+
+.mentor-weekly-schedule-head-cell{
+  background:rgba(27,79,163,0.12);
+  color:#1b4fa3;
+  font-weight:800;
+  text-align:center;
+  padding:12px 8px;
+}
+
+.mentor-weekly-schedule-head-cell.is-time,
+.mentor-weekly-schedule-time-cell{
+  text-align:left;
+  padding-left:14px;
+}
+
+.mentor-weekly-schedule-time-cell{
+  display:flex;
+  align-items:center;
+  font-weight:700;
+  color:#5170a5;
+  background:#edf5ff;
+  min-height:50px;
+}
+
+.mentor-weekly-schedule-cell{
+  min-height:50px;
+  border:1px solid rgba(27,79,163,0.1);
+  background:rgba(255,255,255,0.9);
+  transition:transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.mentor-weekly-schedule-cell.is-available{
+  background:#d9f7e6;
+  border-color:#8ddcb0;
+}
+
+.mentor-weekly-schedule-cell.is-booked{
+  background:#1b4fa3;
+  border-color:#1b4fa3;
+  box-shadow:0 10px 24px rgba(27,79,163,0.18);
+}
+
+.mentor-weekly-schedule-cell.is-selected{
+  background:#5fb0ff;
+  border-color:#2b79d0;
+  box-shadow:0 10px 24px rgba(43,121,208,0.2);
+}
+
+.mentor-weekly-schedule-cell.is-selectable,
+.mentor-weekly-schedule-cell.is-toggleable{
+  cursor:pointer;
+}
+
+.mentor-weekly-schedule-cell.is-selectable:hover,
+.mentor-weekly-schedule-cell.is-toggleable:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 20px rgba(27,79,163,0.12);
+}
+
+.mentor-schedule-legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 18px;
+  margin-bottom:14px;
+  color:#5b6f98;
+  font-size:14px;
+}
+
+.mentor-schedule-legend span{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+
+.mentor-schedule-legend i{
+  width:14px;
+  height:14px;
+  border-radius:999px;
+  display:inline-block;
+}
+
+.mentor-schedule-legend i.is-available{
+  background:#7ad39d;
+}
+
+.mentor-schedule-legend i.is-booked{
+  background:#1b4fa3;
+}
+
+.mentor-schedule-legend i.is-selected{
+  background:#5fb0ff;
+}
+
+.booking-service-summary,
+.booking-availability-card,
+.mentor-dashboard-builder-block{
+  grid-column:1 / -1;
+}
+
+.booking-service-summary{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 14px;
+  padding:16px 18px;
+  background:#eef6ff;
+  border:1px solid rgba(27,79,163,0.1);
+  border-radius:22px;
+  color:#355281;
+}
+
+.booking-service-summary strong{
+  width:100%;
+  color:#1b4fa3;
+  font-size:16px;
+}
+
+.booking-availability-card{
+  padding:22px;
+  border-radius:28px;
+  background:#f8fbff;
+  border:1px solid rgba(27,79,163,0.1);
+}
+
+.booking-availability-head h3,
+.mentor-dashboard-builder-block h3{
+  margin:0 0 6px;
+  font-size:22px;
+  color:#1b4fa3;
+}
+
+.booking-availability-head p,
+.mentor-dashboard-builder-block p,
+.mentor-detail-schedule-summary{
+  margin:0 0 14px;
+  color:#59729e;
+  line-height:1.7;
+}
+
+.booking-selected-slot{
+  margin-top:16px;
+  padding:14px 16px;
+  border-radius:18px;
+  background:#eef6ff;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  color:#476089;
+}
+
+.booking-selected-slot strong{
+  color:#1b4fa3;
+  font-size:18px;
+}
+
+.mentor-package-builder{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.mentor-package-row{
+  display:grid;
+  grid-template-columns:1.2fr 0.9fr 1fr auto;
+  gap:12px;
+  align-items:end;
+  padding:16px;
+  border-radius:24px;
+  background:#f8fbff;
+  border:1px solid rgba(27,79,163,0.1);
+}
+
+.mentor-package-remove{
+  border:none;
+  border-radius:16px;
+  background:#e9f1ff;
+  color:#1b4fa3;
+  padding:14px 16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.mentor-package-remove:disabled{
+  opacity:0.45;
+  cursor:not-allowed;
+}
+
+.mentor-dashboard-inline-btn{
+  margin-top:14px;
+}
+
+.admin-request-block--full{
+  margin-top:18px;
+  padding:18px;
+  border-radius:24px;
+  background:#f7fbff;
+  border:1px solid rgba(27,79,163,0.08);
+}
+
+@media (max-width: 980px){
+  .mentor-package-row{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media (max-width: 640px){
+  .mentor-weekly-schedule-head,
+  .mentor-weekly-schedule-row{
+    grid-template-columns:80px repeat(7, minmax(50px, 1fr));
+    min-width:560px;
+  }
+
+  .mentor-weekly-schedule-time-cell,
+  .mentor-weekly-schedule-head-cell.is-time{
+    padding-left:10px;
+  }
+
+  .mentor-package-row{
+    grid-template-columns:1fr;
+  }
+
+  .booking-availability-card{
+    padding:18px;
+    border-radius:24px;
+  }
+
+  .booking-selected-slot strong{
+    font-size:16px;
   }
 }
