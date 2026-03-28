@@ -1473,30 +1473,51 @@ app.post("/api/mentor-profile-updates", authMiddleware, async (req, res) => {
   }
 });
 
+app.get("/api/mentor-profile-updates/mine", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const userRole = normalizeRole(req.user && req.user.role);
+  if (!["mentor", "admin"].includes(userRole)) {
+    res.status(403).json({ message: "Chi tai khoan mentor hoac admin moi xem duoc trang thai ho so mentor." });
+    return;
+  }
+
+  try {
+    const requests = await restSelect("mentor_profile_updates", {
+      query: {
+        select: "*",
+        mentor_user_id: toEqualityFilter(req.authUser.id),
+        order: "updated_at.desc",
+        limit: 1
+      }
+    });
+
+    const latestRequest = Array.isArray(requests) ? requests[0] || null : null;
+    res.json({
+      request: latestRequest ? sanitizeMentorProfileUpdate(latestRequest) : null
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai trang thai ho so mentor.");
+  }
+});
+
 app.get("/api/mentor-profiles", async (req, res) => {
   if (!ensureSupabaseConfig(res)) {
     return;
   }
 
   try {
-    let profiles = await getMentorProfiles({
+    await repairPublishedMentorProfiles();
+
+    const profiles = await getMentorProfiles({
       query: {
         select: "*",
         visibility: toEqualityFilter("public"),
         order: "updated_at.desc"
       }
     });
-
-    if (!profiles.length) {
-      await repairPublishedMentorProfiles();
-      profiles = await getMentorProfiles({
-        query: {
-          select: "*",
-          visibility: toEqualityFilter("public"),
-          order: "updated_at.desc"
-        }
-      });
-    }
 
     res.json({
       profiles: profiles.map(sanitizeMentorProfile)
@@ -1518,11 +1539,8 @@ app.get("/api/mentor-profiles/:id", async (req, res) => {
   }
 
   try {
-    let profile = await getMentorProfileById(mentorId);
-    if (!profile) {
-      await repairPublishedMentorProfiles();
-      profile = await getMentorProfileById(mentorId);
-    }
+    await repairPublishedMentorProfiles();
+    const profile = await getMentorProfileById(mentorId);
     if (!profile || profile.visibility !== "public") {
       res.status(404).json({ message: "Khong tim thay mentor." });
       return;

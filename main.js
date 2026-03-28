@@ -2526,6 +2526,29 @@ async function updateAdminMentorProfileUpdate(adminKey, requestId, payload) {
   return data.request;
 }
 
+async function fetchCurrentMentorProfileUpdate() {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    throw new Error("Phiên đăng nhập mentor đã hết hạn. Hãy đăng nhập lại.");
+  }
+
+  const response = await fetch("/api/mentor-profile-updates/mine", {
+    headers: {
+      Authorization: "Bearer " + accessToken
+    }
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải trạng thái hồ sơ mentor.");
+  }
+
+  return data.request || null;
+}
+
 function normalizeRemoteMentorProfile(record) {
   if (!record) return null;
   const profile = record.profile || {};
@@ -3756,6 +3779,53 @@ function initializeMentorDashboardPage() {
     fit: document.getElementById("mentorDashboardPreviewFit"),
     statusBadge: document.getElementById("mentorDashboardStatusBadge")
   };
+  const reviewStatusElement = document.getElementById("mentorDashboardReviewStatus");
+
+  function renderReviewStatus(reviewRequest) {
+    if (!reviewStatusElement) {
+      return;
+    }
+
+    if (approvedMentor) {
+      reviewStatusElement.hidden = false;
+      reviewStatusElement.className = "auth-message success";
+      reviewStatusElement.textContent = "Hồ sơ công khai của bạn đã được duyệt và đang hiển thị trên trang tìm kiếm mentor.";
+      return;
+    }
+
+    if (!reviewRequest) {
+      reviewStatusElement.hidden = false;
+      reviewStatusElement.className = "auth-message";
+      reviewStatusElement.textContent = "Bạn chưa gửi hồ sơ công khai cho admin duyệt. Sau khi hoàn thiện thông tin bên dưới, hãy bấm lưu để đưa hồ sơ vào hàng chờ duyệt.";
+      return;
+    }
+
+    const normalizedStatus = normalizeWhitespace(reviewRequest.status).toLowerCase();
+    reviewStatusElement.hidden = false;
+
+    if (normalizedStatus === "pending") {
+      reviewStatusElement.className = "auth-message";
+      reviewStatusElement.textContent = "Hồ sơ công khai của bạn đang chờ admin duyệt. Trong lúc chờ, mentor sẽ chưa xuất hiện trên trang tìm kiếm.";
+      return;
+    }
+
+    if (normalizedStatus === "rejected") {
+      reviewStatusElement.className = "auth-message error";
+      reviewStatusElement.textContent = reviewRequest.adminNote
+        ? "Admin đã yêu cầu chỉnh sửa hồ sơ công khai: " + reviewRequest.adminNote
+        : "Admin đã yêu cầu bạn cập nhật lại hồ sơ công khai trước khi hiển thị lên tìm kiếm.";
+      return;
+    }
+
+    if (normalizedStatus === "approved") {
+      reviewStatusElement.className = "auth-message success";
+      reviewStatusElement.textContent = "Admin đã duyệt hồ sơ công khai. Nếu trang tìm kiếm chưa kịp cập nhật, hãy tải lại trang sau ít giây.";
+      return;
+    }
+
+    reviewStatusElement.className = "auth-message";
+    reviewStatusElement.textContent = "Trạng thái hồ sơ công khai hiện tại: " + normalizedStatus;
+  }
 
   function fillForm(payload) {
     fields.displayName.value = payload.displayName || "";
@@ -3871,6 +3941,17 @@ function initializeMentorDashboardPage() {
 
   fillForm(draftProfile);
   renderPreview(draftProfile);
+  renderReviewStatus(null);
+
+  if (!isDemoAccount(currentUser) && isSupabaseReady()) {
+    fetchCurrentMentorProfileUpdate()
+      .then(function (request) {
+        renderReviewStatus(request);
+      })
+      .catch(function () {
+        renderReviewStatus(null);
+      });
+  }
 
   Object.keys(fields).forEach(function (key) {
     const input = fields[key];
@@ -4007,6 +4088,10 @@ function initializeMentorDashboardPage() {
         await submitMentorProfileUpdate(updateRequest);
       }
 
+      renderReviewStatus({
+        status: "pending",
+        adminNote: ""
+      });
       showMessage("mentorDashboardMessage", "success", "Hồ sơ mentor đã được gửi tới admin để duyệt phần công khai. Sau khi admin duyệt ở khu hồ sơ công khai, trang tìm kiếm sẽ tự cập nhật.");
     } catch (error) {
       showMessage("mentorDashboardMessage", "error", error.message || "Không thể gửi hồ sơ mentor lúc này.");
