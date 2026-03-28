@@ -3349,7 +3349,7 @@ body,
 }
 
 .search-hero{
-  padding:88px 60px 40px;
+  padding:44px 60px 18px;
   background:
     radial-gradient(circle at top right, rgba(255,255,255,0.92), rgba(255,255,255,0) 32%),
     linear-gradient(180deg, #dceeff 0%, #eef6ff 100%);
@@ -3408,7 +3408,9 @@ body,
 }
 
 .filter-box{
-  margin-top:28px;
+  width:min(860px, calc(100% - 32px));
+  margin:18px auto 0;
+  padding:24px 28px;
   border-radius:32px;
   background:rgba(255,255,255,0.82);
   border:1px solid rgba(216,230,248,0.9);
@@ -3429,7 +3431,7 @@ body,
 
 .filter-box-text{
   margin-top:-8px;
-  margin-bottom:24px;
+  margin-bottom:18px;
   color:var(--text-muted);
   line-height:1.7;
 }
@@ -3440,13 +3442,13 @@ body,
 }
 
 .mentor-results{
-  padding:0 60px 72px;
+  padding:0 60px 48px;
   background:
     linear-gradient(180deg, #eef6ff 0%, #f8fbff 100%);
 }
 
 .mentor-results-header{
-  margin-bottom:36px;
+  margin-bottom:24px;
 }
 
 .mentor-results-header h2{
