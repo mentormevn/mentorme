@@ -698,6 +698,84 @@ async function upsertMentorProfileRecord(record) {
   return savedProfile || payload;
 }
 
+async function repairPublishedMentorProfiles() {
+  const approvedUpdates = await restSelect("mentor_profile_updates", {
+    query: {
+      select: "*",
+      status: toEqualityFilter("approved"),
+      order: "updated_at.desc"
+    }
+  });
+
+  if (!approvedUpdates.length) {
+    return [];
+  }
+
+  const repairedProfiles = [];
+
+  for (const update of approvedUpdates) {
+    const mentorId = String(update.mentor_id || "").trim();
+    if (!mentorId) {
+      continue;
+    }
+
+    const existingPublished = await getMentorProfileById(mentorId);
+    if (existingPublished && existingPublished.visibility === "public") {
+      repairedProfiles.push(existingPublished);
+      continue;
+    }
+
+    let email = existingPublished && existingPublished.email ? existingPublished.email : "";
+    if (!email && update.mentor_user_id) {
+      const authUser = await getAuthUserById(update.mentor_user_id).catch(function () {
+        return null;
+      });
+      email = normalizeEmail(authUser && authUser.email ? authUser.email : "");
+    }
+
+    const mergedProfile = Object.assign(
+      {},
+      existingPublished && existingPublished.profile ? existingPublished.profile : {},
+      update.profile || {},
+      {
+        id: mentorId,
+        name: update.mentor_name || (update.profile && update.profile.name) || ""
+      }
+    );
+
+    const repairedProfile = await upsertMentorProfileRecord({
+      id: mentorId,
+      owner_user_id: update.mentor_user_id || (existingPublished && existingPublished.owner_user_id) || null,
+      email: email,
+      name: update.mentor_name || (existingPublished && existingPublished.name) || "Mentor",
+      field: String((update.profile && update.profile.field) || (existingPublished && existingPublished.field) || "").trim(),
+      visibility: "public",
+      status: "approved",
+      profile: mergedProfile,
+      created_at: (existingPublished && existingPublished.created_at) || update.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+    if (update.mentor_user_id) {
+      const profileRecord = await getProfileById(update.mentor_user_id).catch(function () {
+        return null;
+      });
+      if (profileRecord) {
+        await upsertProfile(Object.assign({}, profileRecord, {
+          id: update.mentor_user_id,
+          role: "mentor",
+          mentor_id: mentorId,
+          updated_at: new Date().toISOString()
+        }));
+      }
+    }
+
+    repairedProfiles.push(repairedProfile);
+  }
+
+  return repairedProfiles;
+}
+
 async function createAuthUser(attributes) {
   const payload = await authRequest("admin/users", {
     method: "POST",
@@ -1349,13 +1427,24 @@ app.get("/api/mentor-profiles", async (req, res) => {
   }
 
   try {
-    const profiles = await getMentorProfiles({
+    let profiles = await getMentorProfiles({
       query: {
         select: "*",
         visibility: toEqualityFilter("public"),
         order: "updated_at.desc"
       }
     });
+
+    if (!profiles.length) {
+      await repairPublishedMentorProfiles();
+      profiles = await getMentorProfiles({
+        query: {
+          select: "*",
+          visibility: toEqualityFilter("public"),
+          order: "updated_at.desc"
+        }
+      });
+    }
 
     res.json({
       profiles: profiles.map(sanitizeMentorProfile)
@@ -1377,7 +1466,11 @@ app.get("/api/mentor-profiles/:id", async (req, res) => {
   }
 
   try {
-    const profile = await getMentorProfileById(mentorId);
+    let profile = await getMentorProfileById(mentorId);
+    if (!profile) {
+      await repairPublishedMentorProfiles();
+      profile = await getMentorProfileById(mentorId);
+    }
     if (!profile || profile.visibility !== "public") {
       res.status(404).json({ message: "Khong tim thay mentor." });
       return;
