@@ -1,10 +1,34 @@
-require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+try {
+  require("dotenv").config();
+} catch (error) {
+  const envPath = path.join(__dirname, ".env");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf8");
+    envContent.split(/\r?\n/).forEach(function (line) {
+      const trimmed = String(line || "").trim();
+      if (!trimmed || trimmed.startsWith("#")) {
+        return;
+      }
+
+      const separatorIndex = trimmed.indexOf("=");
+      if (separatorIndex < 0) {
+        return;
+      }
+
+      const key = trimmed.slice(0, separatorIndex).trim();
+      const value = trimmed.slice(separatorIndex + 1).trim();
+      if (key && process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    });
+  }
+}
 
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
-const fs = require("fs");
-const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -353,6 +377,62 @@ function sanitizeMentorApplication(application) {
   };
 }
 
+function sanitizeMentorProfileUpdate(request) {
+  return {
+    id: String(request.id || ""),
+    mentorId: request.mentor_id || "",
+    mentorUserId: request.mentor_user_id || "",
+    mentorName: request.mentor_name || "",
+    status: request.status || "pending",
+    adminNote: request.admin_note || "",
+    profile: request.profile || {},
+    createdAt: request.created_at,
+    updatedAt: request.updated_at
+  };
+}
+
+function sanitizeMentorProfile(record) {
+  return {
+    id: String(record.id || ""),
+    ownerUserId: record.owner_user_id || "",
+    email: record.email || "",
+    name: record.name || "",
+    field: record.field || "",
+    visibility: record.visibility || "draft",
+    status: record.status || "pending",
+    profile: record.profile || {},
+    createdAt: record.created_at,
+    updatedAt: record.updated_at
+  };
+}
+
+function sanitizeBookingRequest(request) {
+  return {
+    id: request.id,
+    mentorId: request.mentor_id || "",
+    mentorName: request.mentor_name || "",
+    mentorImage: request.mentor_image || "",
+    mentorFocus: request.mentor_focus || "",
+    menteeUserId: request.mentee_user_id || "",
+    menteeName: request.mentee_name || "",
+    menteeEmail: request.mentee_email || "",
+    servicePackageId: request.service_package_id || "",
+    serviceName: request.service_name || "",
+    serviceDurationMinutes: Number(request.service_duration_minutes || 0),
+    servicePriceText: request.service_price_text || "",
+    proposedOptions: Array.isArray(request.proposed_options) ? request.proposed_options : [],
+    slotId: request.slot_id || "",
+    slotIds: Array.isArray(request.slot_ids) ? request.slot_ids : [],
+    goal: request.goal || "",
+    preferredTime: request.preferred_time || "",
+    note: request.note || "",
+    status: request.status || "pending",
+    adminNote: request.admin_note || "",
+    createdAt: request.created_at,
+    updatedAt: request.updated_at
+  };
+}
+
 function toEqualityFilter(value) {
   return "eq." + String(value);
 }
@@ -360,6 +440,33 @@ function toEqualityFilter(value) {
 function parseNumericId(value) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function slugifyText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function canMentorManageBooking(user, bookingRequest) {
+  if (!user || !bookingRequest) {
+    return false;
+  }
+
+  if (normalizeRole(user.role) === "admin") {
+    return true;
+  }
+
+  const userSlug = slugifyText(user.name || "");
+  const bookingMentorSlug = slugifyText(bookingRequest.mentor_id || bookingRequest.mentor_name || "");
+  if (!userSlug || !bookingMentorSlug) {
+    return false;
+  }
+
+  return bookingMentorSlug === userSlug || bookingMentorSlug.includes(userSlug) || userSlug.includes(bookingMentorSlug);
 }
 
 async function getProfileById(userId) {
@@ -386,6 +493,7 @@ async function upsertProfile(profile) {
       goal: "",
       bio: "",
       role: "mentee",
+      mentor_id: "",
       avatar_url: "",
       updated_at: now
     },
@@ -490,6 +598,106 @@ async function updateAuthUserById(userId, attributes) {
   });
 }
 
+async function listAuthUsers(options = {}) {
+  const payload = await authRequest("admin/users", {
+    method: "GET",
+    query: {
+      page: options.page || 1,
+      per_page: options.perPage || 200
+    },
+    useServiceRole: true
+  });
+
+  return Array.isArray(payload && payload.users) ? payload.users : [];
+}
+
+async function findAuthUserByEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  let page = 1;
+  while (page <= 20) {
+    const users = await listAuthUsers({ page: page, perPage: 200 });
+    if (!users.length) {
+      return null;
+    }
+
+    const matchedUser = users.find(function (user) {
+      return normalizeEmail(user && user.email) === normalizedEmail;
+    });
+
+    if (matchedUser) {
+      return matchedUser;
+    }
+
+    if (users.length < 200) {
+      return null;
+    }
+
+    page += 1;
+  }
+
+  return null;
+}
+
+async function getMentorProfileById(mentorId) {
+  if (!mentorId) {
+    return null;
+  }
+
+  return restSelect("mentor_profiles", {
+    single: true,
+    query: {
+      select: "*",
+      id: toEqualityFilter(mentorId),
+      limit: 1
+    }
+  });
+}
+
+async function getMentorProfiles(options = {}) {
+  return restSelect("mentor_profiles", {
+    query: Object.assign(
+      {
+        select: "*",
+        order: "updated_at.desc"
+      },
+      options.query || {}
+    )
+  });
+}
+
+async function upsertMentorProfileRecord(record) {
+  const now = new Date().toISOString();
+  const payload = Object.assign(
+    {
+      id: "",
+      owner_user_id: null,
+      email: "",
+      name: "",
+      field: "",
+      visibility: "draft",
+      status: "pending",
+      profile: {},
+      updated_at: now
+    },
+    record
+  );
+
+  if (!payload.created_at) {
+    const existing = await getMentorProfileById(payload.id);
+    payload.created_at = (existing && existing.created_at) || now;
+  }
+
+  const [savedProfile] = await restUpsert("mentor_profiles", payload, {
+    onConflict: "id"
+  });
+
+  return savedProfile || payload;
+}
+
 async function createAuthUser(attributes) {
   const payload = await authRequest("admin/users", {
     method: "POST",
@@ -515,8 +723,39 @@ async function logoutAuthenticatedUser(accessToken) {
   });
 }
 
-function requireAdmin(req, res, next) {
+async function requireAdmin(req, res, next) {
+  const authorization = req.headers.authorization || "";
+  const token = authorization.startsWith("Bearer ")
+    ? authorization.slice(7)
+    : "";
   const adminKey = String(req.headers["x-admin-key"] || "");
+
+  if (token) {
+    try {
+      const authUser = await getAuthUserByToken(token);
+      if (!authUser) {
+        res.status(401).json({ message: "Phien dang nhap admin khong hop le hoac da het han." });
+        return;
+      }
+
+      const profile = await getProfileById(authUser.id);
+      const user = sanitizeUser(authUser, profile);
+      if (normalizeRole(user.role) !== "admin") {
+        res.status(403).json({ message: "Chi tai khoan admin moi co the truy cap khu vuc quan tri." });
+        return;
+      }
+
+      req.token = token;
+      req.authUser = authUser;
+      req.profile = profile;
+      req.user = user;
+      next();
+      return;
+    } catch (error) {
+      res.status(500).json({ message: "Khong the xac thuc tai khoan admin." });
+      return;
+    }
+  }
 
   if (!adminKey || adminKey !== ADMIN_DASHBOARD_PASSWORD) {
     res.status(401).json({ message: "Ban khong co quyen truy cap khu vuc quan tri." });
@@ -1032,6 +1271,306 @@ app.post("/api/mentor-applications", async (req, res) => {
   }
 });
 
+app.post("/api/mentor-profile-updates", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const userRole = normalizeRole(req.user && req.user.role);
+  const mentorId = String(req.body.mentorId || "").trim();
+  const mentorName = String(req.body.mentorName || "").trim();
+  const profile = req.body.profile && typeof req.body.profile === "object"
+    ? req.body.profile
+    : null;
+
+  if (!["mentor", "admin"].includes(userRole)) {
+    res.status(403).json({ message: "Chi tai khoan mentor hoac admin moi duoc gui cap nhat ho so mentor." });
+    return;
+  }
+
+  if (!mentorId) {
+    res.status(400).json({ message: "Ma mentor khong hop le." });
+    return;
+  }
+
+  if (!mentorName || mentorName.length < 2) {
+    res.status(400).json({ message: "Ten mentor can co it nhat 2 ky tu." });
+    return;
+  }
+
+  if (!profile || typeof profile !== "object") {
+    res.status(400).json({ message: "Du lieu ho so mentor khong hop le." });
+    return;
+  }
+
+  try {
+    const now = new Date().toISOString();
+    const payload = {
+      id: "mentor-profile-update-" + mentorId,
+      mentor_id: mentorId,
+      mentor_user_id: req.authUser.id,
+      mentor_name: mentorName,
+      status: "pending",
+      admin_note: "",
+      profile: profile,
+      created_at: now,
+      updated_at: now
+    };
+
+    const existingRequest = await restSelect("mentor_profile_updates", {
+      single: true,
+      query: {
+        select: "*",
+        id: toEqualityFilter(payload.id),
+        limit: 1
+      }
+    });
+
+    if (existingRequest) {
+      payload.created_at = existingRequest.created_at || now;
+    }
+
+    const [savedRequest] = await restUpsert("mentor_profile_updates", payload, {
+      onConflict: "id"
+    });
+
+    res.status(existingRequest ? 200 : 201).json({
+      message: "Da gui cap nhat ho so mentor ve admin.",
+      request: sanitizeMentorProfileUpdate(savedRequest || payload)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the gui cap nhat ho so mentor luc nay.");
+  }
+});
+
+app.get("/api/mentor-profiles", async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  try {
+    const profiles = await getMentorProfiles({
+      query: {
+        select: "*",
+        visibility: toEqualityFilter("public"),
+        order: "updated_at.desc"
+      }
+    });
+
+    res.json({
+      profiles: profiles.map(sanitizeMentorProfile)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai danh sach mentor luc nay.");
+  }
+});
+
+app.get("/api/mentor-profiles/:id", async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const mentorId = String(req.params.id || "").trim();
+  if (!mentorId) {
+    res.status(400).json({ message: "Ma mentor khong hop le." });
+    return;
+  }
+
+  try {
+    const profile = await getMentorProfileById(mentorId);
+    if (!profile || profile.visibility !== "public") {
+      res.status(404).json({ message: "Khong tim thay mentor." });
+      return;
+    }
+
+    res.json({
+      profile: sanitizeMentorProfile(profile)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai ho so mentor luc nay.");
+  }
+});
+
+app.get("/api/booking-requests/occupied", async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const mentorId = String(req.query.mentorId || "").trim();
+  if (!mentorId) {
+    res.status(400).json({ message: "Ma mentor khong hop le." });
+    return;
+  }
+
+  try {
+    const requests = await restSelect("booking_requests", {
+      query: {
+        select: "slot_ids,status",
+        mentor_id: toEqualityFilter(mentorId),
+        status: "in.(accepted,completed)"
+      }
+    });
+
+    const occupiedSlotIds = [];
+    requests.forEach(function (request) {
+      const slotIds = Array.isArray(request.slot_ids) ? request.slot_ids : [];
+      slotIds.forEach(function (slotId) {
+        if (slotId && !occupiedSlotIds.includes(slotId)) {
+          occupiedSlotIds.push(slotId);
+        }
+      });
+    });
+
+    res.json({
+      mentorId: mentorId,
+      occupiedSlotIds: occupiedSlotIds
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai lich ban cua mentor.");
+  }
+});
+
+app.post("/api/booking-requests", async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const mentorId = String(req.body.mentorId || "").trim();
+  const mentorName = String(req.body.mentorName || "").trim();
+  const mentorImage = String(req.body.mentorImage || "").trim();
+  const mentorFocus = String(req.body.mentorFocus || "").trim();
+  const menteeUserId = String(req.body.menteeUserId || "").trim();
+  const menteeName = String(req.body.menteeName || "").trim();
+  const menteeEmail = normalizeEmail(req.body.menteeEmail);
+  const servicePackageId = String(req.body.servicePackageId || "").trim();
+  const serviceName = String(req.body.serviceName || "").trim();
+  const serviceDurationMinutes = Number(req.body.serviceDurationMinutes || 0);
+  const servicePriceText = String(req.body.servicePriceText || "").trim();
+  const proposedOptions = Array.isArray(req.body.proposedOptions) ? req.body.proposedOptions : [];
+  const goal = String(req.body.goal || "").trim();
+  const preferredTime = String(req.body.preferredTime || "").trim();
+  const note = String(req.body.note || "").trim();
+
+  if (!mentorId || !mentorName) {
+    res.status(400).json({ message: "Thong tin mentor khong hop le." });
+    return;
+  }
+
+  if (menteeName.length < 2) {
+    res.status(400).json({ message: "Vui long nhap ten mentee hop le." });
+    return;
+  }
+
+  if (!menteeEmail.includes("@")) {
+    res.status(400).json({ message: "Email mentee chua dung dinh dang." });
+    return;
+  }
+
+  if (!serviceName) {
+    res.status(400).json({ message: "Vui long chon goi dich vu truoc khi gui booking." });
+    return;
+  }
+
+  if (!proposedOptions.length) {
+    res.status(400).json({ message: "Vui long chon it nhat mot khung gio de xuat." });
+    return;
+  }
+
+  try {
+    const now = new Date().toISOString();
+    const [createdRequest] = await restInsert("booking_requests", {
+      mentor_id: mentorId,
+      mentor_name: mentorName,
+      mentor_image: mentorImage,
+      mentor_focus: mentorFocus,
+      mentee_user_id: menteeUserId || null,
+      mentee_name: menteeName,
+      mentee_email: menteeEmail,
+      service_package_id: servicePackageId,
+      service_name: serviceName,
+      service_duration_minutes: Number.isFinite(serviceDurationMinutes) ? serviceDurationMinutes : 0,
+      service_price_text: servicePriceText,
+      proposed_options: proposedOptions,
+      slot_id: "",
+      slot_ids: [],
+      goal: goal,
+      preferred_time: preferredTime,
+      note: note,
+      status: "pending",
+      admin_note: "",
+      created_at: now,
+      updated_at: now
+    });
+
+    res.status(201).json({
+      message: "Yeu cau booking da duoc gui thanh cong.",
+      request: sanitizeBookingRequest(createdRequest)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the gui booking luc nay.");
+  }
+});
+
+app.get("/api/booking-requests/mine", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  try {
+    const requests = await restSelect("booking_requests", {
+      query: {
+        select: "*",
+        or: "(mentee_user_id.eq." + req.authUser.id + ",mentee_email.eq." + normalizeEmail(req.user.email) + ")",
+        order: "created_at.desc"
+      }
+    });
+
+    res.json({
+      requests: requests.map(sanitizeBookingRequest)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai danh sach booking cua ban.");
+  }
+});
+
+app.get("/api/mentor/booking-requests", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const role = normalizeRole(req.user && req.user.role);
+  if (!["mentor", "admin"].includes(role)) {
+    res.status(403).json({ message: "Chi mentor hoac admin moi xem duoc booking nay." });
+    return;
+  }
+
+  const mentorId = String(req.query.mentorId || "").trim();
+  if (!mentorId) {
+    res.status(400).json({ message: "Ma mentor khong hop le." });
+    return;
+  }
+
+  try {
+    const requests = await restSelect("booking_requests", {
+      query: {
+        select: "*",
+        mentor_id: toEqualityFilter(mentorId),
+        order: "created_at.desc"
+      }
+    });
+
+    res.json({
+      requests: requests
+        .filter(function (request) {
+          return role === "admin" || canMentorManageBooking(req.user, request);
+        })
+        .map(sanitizeBookingRequest)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai booking cua mentor.");
+  }
+});
+
 app.get("/api/admin/consultation-requests", requireAdmin, async (req, res) => {
   if (!ensureSupabaseConfig(res)) {
     return;
@@ -1050,6 +1589,154 @@ app.get("/api/admin/consultation-requests", requireAdmin, async (req, res) => {
     });
   } catch (error) {
     handleRouteError(res, error, "Khong the tai danh sach yeu cau tu van.");
+  }
+});
+
+app.get("/api/admin/booking-requests", requireAdmin, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  try {
+    const requests = await restSelect("booking_requests", {
+      query: {
+        select: "*",
+        order: "created_at.desc"
+      }
+    });
+
+    res.json({
+      requests: requests.map(sanitizeBookingRequest)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai danh sach booking mentor.");
+  }
+});
+
+app.get("/api/admin/mentor-profile-updates", requireAdmin, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  try {
+    const requests = await restSelect("mentor_profile_updates", {
+      query: {
+        select: "*",
+        order: "updated_at.desc"
+      }
+    });
+
+    res.json({
+      requests: requests.map(sanitizeMentorProfileUpdate)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai danh sach cap nhat ho so mentor.");
+  }
+});
+
+app.post("/api/admin/mentor-profiles", requireAdmin, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const name = String(req.body.name || "").trim();
+  const field = String(req.body.field || "").trim();
+  const email = normalizeEmail(req.body.email);
+  const password = String(req.body.password || "");
+  const profile = req.body.profile && typeof req.body.profile === "object"
+    ? req.body.profile
+    : null;
+
+  if (name.length < 2) {
+    res.status(400).json({ message: "Ten mentor can co it nhat 2 ky tu." });
+    return;
+  }
+
+  if (!field) {
+    res.status(400).json({ message: "Vui long chon nhom linh vuc cho mentor." });
+    return;
+  }
+
+  if (!profile) {
+    res.status(400).json({ message: "Du lieu ho so mentor khong hop le." });
+    return;
+  }
+
+  if (!email.includes("@")) {
+    res.status(400).json({ message: "Email dang nhap cua mentor chua dung dinh dang." });
+    return;
+  }
+
+  if (password.length < 8) {
+    res.status(400).json({ message: "Mat khau dang nhap cua mentor can toi thieu 8 ky tu." });
+    return;
+  }
+
+  try {
+    const now = new Date().toISOString();
+    const mentorId = String(req.body.mentorId || "").trim() || slugifyText(name) || ("mentor-" + Date.now());
+    const existingAuthUser = await findAuthUserByEmail(email);
+    let authUser = existingAuthUser;
+
+    if (authUser) {
+      await updateAuthUserById(authUser.id, {
+        password: password,
+        user_metadata: Object.assign({}, authUser.user_metadata || {}, {
+          full_name: name,
+          role: "mentor"
+        })
+      });
+    } else {
+      authUser = await createAuthUser({
+        email: email,
+        password: password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: name,
+          role: "mentor"
+        }
+      });
+    }
+
+    const savedProfile = await upsertProfile({
+      id: authUser.id,
+      full_name: name,
+      phone: normalizePhone(req.body.phone || profile.phone || ""),
+      goal: "",
+      bio: "",
+      role: "mentor",
+      mentor_id: mentorId,
+      avatar_url: String(profile.image || ""),
+      created_at: now,
+      updated_at: now
+    });
+
+    const mentorProfile = await upsertMentorProfileRecord({
+      id: mentorId,
+      owner_user_id: authUser.id,
+      email: email,
+      name: name,
+      field: field,
+      visibility: "public",
+      status: "approved",
+      profile: Object.assign({}, profile, {
+        id: mentorId,
+        name: name,
+        field: field
+      }),
+      updated_at: now,
+      created_at: now
+    });
+
+    res.status(existingAuthUser ? 200 : 201).json({
+      message: existingAuthUser
+        ? "Da cap nhat tai khoan va ho so mentor."
+        : "Da tao tai khoan va ho so mentor.",
+      user: sanitizeUser(authUser, savedProfile),
+      profile: sanitizeMentorProfile(mentorProfile)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tao mentor luc nay.");
   }
 });
 
@@ -1141,7 +1828,6 @@ app.put("/api/admin/mentor-applications/:id", requireAdmin, async (req, res) => 
   const applicationId = parseNumericId(req.params.id);
   const status = String(req.body.status || "").trim();
   const adminNote = String(req.body.adminNote || "").trim();
-  const shouldGenerateActivation = Boolean(req.body.generateActivation);
 
   if (!applicationId) {
     res.status(400).json({ message: "Ma ho so mentor khong hop le." });
@@ -1168,14 +1854,16 @@ app.put("/api/admin/mentor-applications/:id", requireAdmin, async (req, res) => 
       return;
     }
 
-    const activationCode =
-      shouldGenerateActivation && status === "approved"
-        ? crypto.randomBytes(4).toString("hex").toUpperCase()
-        : existingApplication.activation_code || "";
-    const invitedAt =
-      shouldGenerateActivation && status === "approved"
-        ? new Date().toISOString()
-        : existingApplication.invited_at || null;
+    const shouldGenerateActivation =
+      status === "approved" &&
+      existingApplication.status !== "activated" &&
+      !existingApplication.activation_code;
+    const activationCode = shouldGenerateActivation
+      ? crypto.randomBytes(4).toString("hex").toUpperCase()
+      : existingApplication.activation_code || "";
+    const invitedAt = shouldGenerateActivation
+      ? new Date().toISOString()
+      : existingApplication.invited_at || null;
 
     const [updatedApplication] = await restUpdate(
       "mentor_applications",
@@ -1199,6 +1887,223 @@ app.put("/api/admin/mentor-applications/:id", requireAdmin, async (req, res) => 
     });
   } catch (error) {
     handleRouteError(res, error, "Khong the cap nhat ho so mentor.");
+  }
+});
+
+app.put("/api/admin/mentor-profile-updates/:id", requireAdmin, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const requestId = String(req.params.id || "").trim();
+  const status = String(req.body.status || "").trim();
+  const adminNote = String(req.body.adminNote || "").trim();
+
+  if (!requestId) {
+    res.status(400).json({ message: "Ma yeu cau cap nhat mentor khong hop le." });
+    return;
+  }
+
+  if (!status) {
+    res.status(400).json({ message: "Vui long chon trang thai xu ly cho cap nhat mentor." });
+    return;
+  }
+
+  try {
+    const existingRequest = await restSelect("mentor_profile_updates", {
+      single: true,
+      query: {
+        select: "*",
+        id: toEqualityFilter(requestId),
+        limit: 1
+      }
+    });
+
+    if (!existingRequest) {
+      res.status(404).json({ message: "Khong tim thay yeu cau cap nhat mentor." });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const [updatedRequest] = await restUpdate(
+      "mentor_profile_updates",
+      {
+        status: status,
+        admin_note: adminNote,
+        updated_at: now
+      },
+      {
+        query: {
+          id: toEqualityFilter(requestId)
+        }
+      }
+    );
+
+    let publishedProfile = null;
+    if (status === "approved") {
+      const currentPublished = await getMentorProfileById(existingRequest.mentor_id);
+      publishedProfile = await upsertMentorProfileRecord({
+        id: existingRequest.mentor_id,
+        owner_user_id: existingRequest.mentor_user_id || (currentPublished && currentPublished.owner_user_id) || null,
+        email: (currentPublished && currentPublished.email) || "",
+        name: existingRequest.mentor_name,
+        field: String((existingRequest.profile && existingRequest.profile.field) || (currentPublished && currentPublished.field) || "").trim(),
+        visibility: "public",
+        status: "approved",
+        profile: Object.assign({}, currentPublished && currentPublished.profile ? currentPublished.profile : {}, existingRequest.profile || {}, {
+          id: existingRequest.mentor_id,
+          name: existingRequest.mentor_name
+        }),
+        updated_at: now,
+        created_at: (currentPublished && currentPublished.created_at) || existingRequest.created_at || now
+      });
+
+      if (existingRequest.mentor_user_id) {
+        const profileRecord = await getProfileById(existingRequest.mentor_user_id);
+        if (profileRecord) {
+          await upsertProfile(Object.assign({}, profileRecord, {
+            id: existingRequest.mentor_user_id,
+            role: "mentor",
+            mentor_id: existingRequest.mentor_id,
+            updated_at: now
+          }));
+        }
+      }
+    }
+
+    res.json({
+      message: "Da cap nhat yeu cau chinh sua ho so mentor.",
+      request: sanitizeMentorProfileUpdate(updatedRequest || existingRequest),
+      publishedProfile: publishedProfile ? sanitizeMentorProfile(publishedProfile) : null
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the cap nhat yeu cau ho so mentor.");
+  }
+});
+
+app.put("/api/admin/booking-requests/:id", requireAdmin, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const requestId = parseNumericId(req.params.id);
+  const status = String(req.body.status || "").trim();
+  const adminNote = String(req.body.adminNote || "").trim();
+
+  if (!requestId) {
+    res.status(400).json({ message: "Ma booking khong hop le." });
+    return;
+  }
+
+  if (!status) {
+    res.status(400).json({ message: "Vui long chon trang thai booking." });
+    return;
+  }
+
+  try {
+    const existingRequest = await restSelect("booking_requests", {
+      single: true,
+      query: {
+        select: "*",
+        id: toEqualityFilter(requestId),
+        limit: 1
+      }
+    });
+
+    if (!existingRequest) {
+      res.status(404).json({ message: "Khong tim thay booking." });
+      return;
+    }
+
+    const [updatedRequest] = await restUpdate("booking_requests", {
+      status: status,
+      admin_note: adminNote,
+      updated_at: new Date().toISOString()
+    }, {
+      query: {
+        id: toEqualityFilter(requestId)
+      }
+    });
+
+    res.json({
+      message: "Da cap nhat booking.",
+      request: sanitizeBookingRequest(updatedRequest || existingRequest)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the cap nhat booking.");
+  }
+});
+
+app.put("/api/mentor/booking-requests/:id", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const requestId = parseNumericId(req.params.id);
+  const role = normalizeRole(req.user && req.user.role);
+  const status = String(req.body.status || "").trim();
+  const slotId = String(req.body.slotId || "").trim();
+  const slotIds = Array.isArray(req.body.slotIds) ? req.body.slotIds : [];
+  const preferredTime = String(req.body.preferredTime || "").trim();
+
+  if (!requestId) {
+    res.status(400).json({ message: "Ma booking khong hop le." });
+    return;
+  }
+
+  if (!["mentor", "admin"].includes(role)) {
+    res.status(403).json({ message: "Chi mentor hoac admin moi duoc cap nhat booking nay." });
+    return;
+  }
+
+  try {
+    const existingRequest = await restSelect("booking_requests", {
+      single: true,
+      query: {
+        select: "*",
+        id: toEqualityFilter(requestId),
+        limit: 1
+      }
+    });
+
+    if (!existingRequest) {
+      res.status(404).json({ message: "Khong tim thay booking." });
+      return;
+    }
+
+    if (role !== "admin" && !canMentorManageBooking(req.user, existingRequest)) {
+      res.status(403).json({ message: "Booking nay khong thuoc mentor hien tai." });
+      return;
+    }
+
+    const patch = {
+      status: status || existingRequest.status || "pending",
+      updated_at: new Date().toISOString()
+    };
+
+    if (patch.status === "accepted") {
+      patch.slot_id = slotId || existingRequest.slot_id || "";
+      patch.slot_ids = slotIds.length ? slotIds : (Array.isArray(existingRequest.slot_ids) ? existingRequest.slot_ids : []);
+      patch.preferred_time = preferredTime || existingRequest.preferred_time || "";
+    }
+
+    if (patch.status === "rejected") {
+      patch.slot_id = "";
+      patch.slot_ids = [];
+    }
+
+    const [updatedRequest] = await restUpdate("booking_requests", patch, {
+      query: {
+        id: toEqualityFilter(requestId)
+      }
+    });
+
+    res.json({
+      message: "Da cap nhat booking cho mentor.",
+      request: sanitizeBookingRequest(updatedRequest || existingRequest)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the cap nhat booking cho mentor.");
   }
 });
 
@@ -1295,32 +2200,65 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
       return;
     }
 
-    const createdUser = await createAuthUser({
-      email: email,
-      password: password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName,
-        role: "mentor"
-      }
-    });
+    const now = new Date().toISOString();
+    const mentorId = slugifyText(fullName) || slugifyText(application.full_name) || ("mentor-" + application.id);
+    const existingAuthUser = await findAuthUserByEmail(email);
+    let createdUser = existingAuthUser;
+
+    if (existingAuthUser) {
+      await updateAuthUserById(existingAuthUser.id, {
+        password: password,
+        user_metadata: Object.assign({}, existingAuthUser.user_metadata || {}, {
+          full_name: fullName,
+          role: "mentor"
+        })
+      });
+    } else {
+      createdUser = await createAuthUser({
+        email: email,
+        password: password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName,
+          role: "mentor"
+        }
+      });
+    }
 
     if (!createdUser) {
       throw new SupabaseError(500, "Khong the tao tai khoan mentor luc nay.");
     }
 
     let savedProfile = null;
-    const now = new Date().toISOString();
     try {
+      const currentProfile = await getProfileById(createdUser.id);
       savedProfile = await upsertProfile({
         id: createdUser.id,
         full_name: fullName,
         phone: normalizePhone(application.phone),
-        goal: "",
-        bio: "",
+        goal: (currentProfile && currentProfile.goal) || "",
+        bio: (currentProfile && currentProfile.bio) || "",
         role: "mentor",
-        avatar_url: "",
-        created_at: createdUser.created_at || now,
+        mentor_id: mentorId,
+        avatar_url: (currentProfile && currentProfile.avatar_url) || "",
+        created_at: (currentProfile && currentProfile.created_at) || createdUser.created_at || now,
+        updated_at: now
+      });
+
+      const currentMentorProfile = await getMentorProfileById(mentorId);
+      await upsertMentorProfileRecord({
+        id: mentorId,
+        owner_user_id: createdUser.id,
+        email: email,
+        name: fullName,
+        field: String((currentMentorProfile && currentMentorProfile.field) || "").trim(),
+        visibility: currentMentorProfile ? currentMentorProfile.visibility : "draft",
+        status: currentMentorProfile ? currentMentorProfile.status : "approved",
+        profile: Object.assign({}, currentMentorProfile && currentMentorProfile.profile ? currentMentorProfile.profile : {}, {
+          id: mentorId,
+          name: fullName
+        }),
+        created_at: (currentMentorProfile && currentMentorProfile.created_at) || now,
         updated_at: now
       });
 
@@ -1359,11 +2297,6 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
       throw profileError;
     }
   } catch (error) {
-    if (error instanceof SupabaseError && /already registered|already been registered|already exists/i.test(error.message)) {
-      res.status(409).json({ message: "Email nay da duoc su dung cho mot tai khoan khac." });
-      return;
-    }
-
     handleRouteError(res, error, "Khong the hoan tat kich hoat tai khoan mentor luc nay.");
   }
 });

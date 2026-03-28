@@ -24,15 +24,8 @@ const navbar = document.querySelector(".navbar");
 let hamburger = document.querySelector(".hamburger");
 const menu = document.querySelector(".menu");
 const authArea = document.getElementById("authArea");
-const CURRENT_USER_STORAGE_KEY = "currentUser";
-const MENTOR_PROFILE_STORAGE_KEY = "mentorProfileDrafts";
-const BOOKING_REQUESTS_STORAGE_KEY = "mentorBookingRequests";
-const APPROVED_MENTOR_PROFILE_STORAGE_KEY = "approvedMentorProfiles";
-const PENDING_MENTOR_UPDATE_STORAGE_KEY = "pendingMentorProfileUpdates";
-const MENTOR_REVIEW_STORAGE_KEY = "mentorSubmittedReviews";
-const REVIEW_MIGRATION_STORAGE_KEY = "mentorReviewMigrationVersion";
 const DEMO_ADMIN_ACCESS_CODE = "ADMIN2026";
-const DEMO_MENTEE_EMAIL = "dothuytrang2k7@gmail.com";
+const DEMO_MENTEE_EMAIL = "";
 const DEMO_MENTEE_PASSWORD = "trang2007";
 const SEARCH_PAGE_SIZE = 12;
 const REAL_MENTOR_DATA_VERSION = "2026-03-26-real-v2";
@@ -57,6 +50,12 @@ const SERVICE_LABELS = {
   competition: "Luyện thi / cuộc thi"
 };
 let currentSearchPage = 1;
+let currentSessionUser = null;
+let mentorProfileDraftStore = {};
+let bookingRequestsCache = null;
+let bookingOccupiedSlotsCache = {};
+let mentorProfilesCache = {};
+let mentorSubmittedReviewsCache = [];
 const appConfig = browserWindow.MENTOR_ME_CONFIG || {};
 const SUPABASE_URL = appConfig.SUPABASE_URL || "";
 const SUPABASE_PUBLISHABLE_KEY = appConfig.SUPABASE_ANON_KEY || "";
@@ -439,6 +438,10 @@ function buildProposedTimeSummary(proposedOptions) {
 }
 
 function getOccupiedSlotIdsForMentor(mentorId) {
+  if (bookingOccupiedSlotsCache[mentorId] && bookingOccupiedSlotsCache[mentorId].length) {
+    return bookingOccupiedSlotsCache[mentorId].slice();
+  }
+
   const occupied = [];
 
   getBookingRequests().forEach(function (request) {
@@ -458,6 +461,7 @@ function getOccupiedSlotIdsForMentor(mentorId) {
     });
   });
 
+  bookingOccupiedSlotsCache[mentorId] = occupied.slice();
   return occupied;
 }
 
@@ -702,6 +706,14 @@ function getMentorContextForUser(user) {
     };
   }
 
+  if (user && user.mentorId) {
+    const mentorProfile = getResolvedMentorById(user.mentorId);
+    return {
+      mentorId: user.mentorId,
+      mentorName: (mentorProfile && mentorProfile.name) || user.name || "Mentor"
+    };
+  }
+
   const savedProfile = getMentorProfileByUserId(user.id) || {};
   const possibleNames = [
     savedProfile.displayName,
@@ -710,7 +722,7 @@ function getMentorContextForUser(user) {
     .map(slugifyText)
     .filter(Boolean);
 
-  const mentorEntry = Object.values(mentorData).find(function (mentor) {
+  const mentorEntry = getResolvedMentorList().find(function (mentor) {
     const mentorSlug = slugifyText(mentor.name);
     return possibleNames.some(function (nameSlug) {
       return mentorSlug === nameSlug || mentorSlug.includes(nameSlug) || nameSlug.includes(mentorSlug);
@@ -796,19 +808,11 @@ function createAvatarFallback(name) {
 }
 
 function getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem(CURRENT_USER_STORAGE_KEY));
-  } catch (error) {
-    return null;
-  }
+  return currentSessionUser;
 }
 
 function getMentorProfileStore() {
-  try {
-    return JSON.parse(localStorage.getItem(MENTOR_PROFILE_STORAGE_KEY)) || {};
-  } catch (error) {
-    return {};
-  }
+  return mentorProfileDraftStore || {};
 }
 
 function getMentorProfileByUserId(userId) {
@@ -819,33 +823,28 @@ function getMentorProfileByUserId(userId) {
 
 function saveMentorProfileByUserId(userId, payload) {
   if (!userId) return;
-  const store = getMentorProfileStore();
+  const store = Object.assign({}, getMentorProfileStore());
   store[userId] = payload;
-  localStorage.setItem(MENTOR_PROFILE_STORAGE_KEY, JSON.stringify(store));
+  mentorProfileDraftStore = store;
 }
 
 function getBookingRequests() {
-  try {
-    return JSON.parse(localStorage.getItem(BOOKING_REQUESTS_STORAGE_KEY)) || [];
-  } catch (error) {
-    return [];
+  if (Array.isArray(bookingRequestsCache)) {
+    return bookingRequestsCache;
   }
+  return [];
 }
 
 function saveBookingRequests(requests) {
-  localStorage.setItem(BOOKING_REQUESTS_STORAGE_KEY, JSON.stringify(requests));
+  bookingRequestsCache = Array.isArray(requests) ? requests : [];
 }
 
 function getMentorSubmittedReviews() {
-  try {
-    return JSON.parse(localStorage.getItem(MENTOR_REVIEW_STORAGE_KEY)) || [];
-  } catch (error) {
-    return [];
-  }
+  return Array.isArray(mentorSubmittedReviewsCache) ? mentorSubmittedReviewsCache : [];
 }
 
 function saveMentorSubmittedReviews(reviews) {
-  localStorage.setItem(MENTOR_REVIEW_STORAGE_KEY, JSON.stringify(reviews));
+  mentorSubmittedReviewsCache = Array.isArray(reviews) ? reviews : [];
 }
 
 function getSubmittedReviewByBookingId(bookingId) {
@@ -864,17 +863,10 @@ function saveSubmittedReview(review) {
 }
 
 function syncSubmittedReviewsWithCurrentData() {
-  const savedVersion = localStorage.getItem(REVIEW_MIGRATION_STORAGE_KEY);
-  if (savedVersion === REVIEW_CLEANUP_VERSION) {
-    return;
-  }
-
   const cleanedReviews = getMentorSubmittedReviews().filter(function (review) {
     return !["tra-my", "thuy-trang"].includes(review.mentorId);
   });
-
   saveMentorSubmittedReviews(cleanedReviews);
-  localStorage.setItem(REVIEW_MIGRATION_STORAGE_KEY, REVIEW_CLEANUP_VERSION);
 }
 
 function addBookingRequest(request) {
@@ -902,15 +894,11 @@ function updateBookingRequest(requestId, updates) {
 }
 
 function getApprovedMentorProfiles() {
-  try {
-    return JSON.parse(localStorage.getItem(APPROVED_MENTOR_PROFILE_STORAGE_KEY)) || {};
-  } catch (error) {
-    return {};
-  }
+  return mentorProfilesCache || {};
 }
 
 function saveApprovedMentorProfiles(store) {
-  localStorage.setItem(APPROVED_MENTOR_PROFILE_STORAGE_KEY, JSON.stringify(store));
+  mentorProfilesCache = Object.assign({}, store || {});
 }
 
 function syncApprovedMentorProfilesWithRealData() {
@@ -943,15 +931,11 @@ function syncApprovedMentorProfilesWithRealData() {
 }
 
 function getPendingMentorProfileUpdates() {
-  try {
-    return JSON.parse(localStorage.getItem(PENDING_MENTOR_UPDATE_STORAGE_KEY)) || [];
-  } catch (error) {
-    return [];
-  }
+  return [];
 }
 
 function savePendingMentorProfileUpdates(requests) {
-  localStorage.setItem(PENDING_MENTOR_UPDATE_STORAGE_KEY, JSON.stringify(requests));
+  void requests;
 }
 
 function upsertPendingMentorProfileUpdate(request) {
@@ -984,7 +968,7 @@ function updatePendingMentorProfileUpdate(requestId, updates) {
 }
 
 function saveCurrentUser(user) {
-  localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(sanitizeSessionUser(user)));
+  currentSessionUser = sanitizeSessionUser(user);
 }
 
 function saveAuthSession(user) {
@@ -993,7 +977,7 @@ function saveAuthSession(user) {
 }
 
 function clearAuthSession() {
-  localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+  currentSessionUser = null;
   renderAuthArea(null);
 }
 
@@ -1060,6 +1044,11 @@ async function getSupabaseSession() {
   return data.session || null;
 }
 
+async function getAccessToken() {
+  const session = await getSupabaseSession();
+  return session && session.access_token ? session.access_token : "";
+}
+
 async function getSupabaseAuthUser() {
   if (!isSupabaseReady()) return null;
 
@@ -1108,6 +1097,7 @@ function buildSessionUser(authUser, profile) {
     goal: profileData.goal || "",
     bio: profileData.bio || "",
     role: role,
+    mentorId: profileData.mentor_id || "",
     avatar: profileData.avatar_url || createAvatarFallback(profileData.full_name || authUser.email || "MM"),
     createdAt: profileData.created_at || authUser.created_at || new Date().toISOString()
   };
@@ -1436,7 +1426,7 @@ function getAcceptedStudentCountForMentor(mentorId) {
 function getResolvedMentorById(mentorId) {
   const approvedStore = getApprovedMentorProfiles();
   const approvedProfile = approvedStore[mentorId] || {};
-  const baseMentor = mentorData[mentorId] || (approvedProfile._origin === "admin" ? approvedProfile : null);
+  const baseMentor = approvedProfile.id ? approvedProfile : (mentorData[mentorId] || null);
   if (!baseMentor) return null;
   const experience = mentorExperienceData[mentorId] || {};
   const acceptedCount = getAcceptedStudentCountForMentor(mentorId);
@@ -1498,7 +1488,7 @@ function getResolvedMentorList() {
   const approvedStore = getApprovedMentorProfiles();
   const baseIds = Object.keys(mentorData);
   const extraIds = Object.keys(approvedStore).filter(function (mentorId) {
-    return !mentorData[mentorId] && approvedStore[mentorId] && approvedStore[mentorId]._origin === "admin";
+    return !mentorData[mentorId] && approvedStore[mentorId];
   });
   return baseIds.concat(extraIds)
     .map(function (mentorId) {
@@ -1887,7 +1877,7 @@ function renderMentorDetail() {
   }
 }
 
-function initializeBookingPage() {
+async function initializeBookingPage() {
   const bookingForm = document.getElementById("bookingForm");
   if (!bookingForm) return;
 
@@ -1909,7 +1899,7 @@ function initializeBookingPage() {
   const selectedSlotText = document.getElementById("bookingSelectedSlot");
   const hiddenTimeInput = document.getElementById("bookingTime");
   const availableSlots = getMentorAvailabilitySlots(mentor);
-  const occupiedSlots = getOccupiedSlotIdsForMentor(mentor.id);
+  let occupiedSlots = getOccupiedSlotIdsForMentor(mentor.id);
   const packages = getMentorServicePackages(mentor);
   let selectedPackage = packages[0] || null;
   let selectedSlotIds = [];
@@ -1988,6 +1978,17 @@ function initializeBookingPage() {
   renderSelectedPackage();
   renderScheduleChooser();
 
+  if (!isDemoAccount(currentUser || null) && isSupabaseReady()) {
+    fetchOccupiedSlotIdsForMentor(mentor.id)
+      .then(function (slotIds) {
+        occupiedSlots = Array.isArray(slotIds) ? slotIds : [];
+        renderScheduleChooser();
+      })
+      .catch(function () {
+        // Keep local fallback if remote occupancy cannot be loaded.
+      });
+  }
+
   if (serviceSelect && !serviceSelect.dataset.boundServicePicker) {
     serviceSelect.addEventListener("change", function () {
       selectedPackage = packages.find(function (item) {
@@ -2046,7 +2047,7 @@ function initializeBookingPage() {
     if (goalInput) goalInput.value = currentUser.goal || "";
   }
 
-  bookingForm.addEventListener("submit", function (e) {
+  bookingForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const name = document.getElementById("bookingName").value.trim();
@@ -2100,7 +2101,17 @@ function initializeBookingPage() {
       updatedAt: createdAt
     };
 
-    addBookingRequest(bookingRequest);
+    try {
+      if (isDemoAccount(currentUser || null) || !isSupabaseReady()) {
+        addBookingRequest(bookingRequest);
+      } else {
+        await submitBookingRequest(bookingRequest);
+      }
+    } catch (error) {
+      successBox.hidden = false;
+      successBox.textContent = error.message || "Không thể gửi yêu cầu booking lúc này.";
+      return;
+    }
 
     successBox.hidden = false;
     successBox.innerHTML = `
@@ -2295,10 +2306,16 @@ function initializeConsultationRequestForm() {
 }
 
 async function fetchAdminConsultationRequests(adminKey) {
+  const accessToken = await getAccessToken();
+  const headers = {};
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
   const response = await fetch("/api/admin/consultation-requests", {
-    headers: {
-      "X-Admin-Key": adminKey
-    }
+    headers: headers
   });
 
   const data = await response.json().catch(function () {
@@ -2313,10 +2330,16 @@ async function fetchAdminConsultationRequests(adminKey) {
 }
 
 async function fetchAdminMentorApplications(adminKey) {
+  const accessToken = await getAccessToken();
+  const headers = {};
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
   const response = await fetch("/api/admin/mentor-applications", {
-    headers: {
-      "X-Admin-Key": adminKey
-    }
+    headers: headers
   });
 
   const data = await response.json().catch(function () {
@@ -2331,12 +2354,19 @@ async function fetchAdminMentorApplications(adminKey) {
 }
 
 async function updateAdminConsultationRequest(adminKey, requestId, payload) {
+  const accessToken = await getAccessToken();
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
   const response = await fetch("/api/admin/consultation-requests/" + requestId, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Admin-Key": adminKey
-    },
+    headers: headers,
     body: JSON.stringify(payload)
   });
 
@@ -2352,12 +2382,19 @@ async function updateAdminConsultationRequest(adminKey, requestId, payload) {
 }
 
 async function updateAdminMentorApplication(adminKey, applicationId, payload) {
+  const accessToken = await getAccessToken();
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
   const response = await fetch("/api/admin/mentor-applications/" + applicationId, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Admin-Key": adminKey
-    },
+    headers: headers,
     body: JSON.stringify(payload)
   });
 
@@ -2370,6 +2407,334 @@ async function updateAdminMentorApplication(adminKey, applicationId, payload) {
   }
 
   return data.application;
+}
+
+async function submitMentorProfileUpdate(payload) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    throw new Error("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại rồi thử gửi hồ sơ mentor.");
+  }
+
+  const response = await fetch("/api/mentor-profile-updates", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + accessToken
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể gửi cập nhật hồ sơ mentor.");
+  }
+
+  return data.request;
+}
+
+async function fetchAdminMentorProfileUpdates(adminKey) {
+  const accessToken = await getAccessToken();
+  const headers = {};
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
+  const response = await fetch("/api/admin/mentor-profile-updates", {
+    headers: headers
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải danh sách cập nhật hồ sơ mentor.");
+  }
+
+  return data.requests || [];
+}
+
+async function updateAdminMentorProfileUpdate(adminKey, requestId, payload) {
+  const accessToken = await getAccessToken();
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
+  const response = await fetch("/api/admin/mentor-profile-updates/" + encodeURIComponent(requestId), {
+    method: "PUT",
+    headers: headers,
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể cập nhật yêu cầu chỉnh sửa hồ sơ mentor.");
+  }
+
+  return data.request;
+}
+
+function normalizeRemoteMentorProfile(record) {
+  if (!record) return null;
+  const profile = record.profile || {};
+  const mentorId = String(record.id || profile.id || "").trim();
+  if (!mentorId) return null;
+
+  const normalizedProfile = Object.assign({}, profile, {
+    id: mentorId,
+    name: profile.name || record.name || "Mentor",
+    field: profile.field || record.field || "",
+    _origin: "supabase"
+  });
+  normalizedProfile.searchableText = buildMentorSearchableText(normalizedProfile);
+  return normalizedProfile;
+}
+
+async function fetchPublicMentorProfiles() {
+  const response = await fetch("/api/mentor-profiles");
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải danh sách mentor.");
+  }
+
+  const nextStore = {};
+  (data.profiles || []).forEach(function (record) {
+    const normalized = normalizeRemoteMentorProfile(record);
+    if (normalized) {
+      nextStore[normalized.id] = normalized;
+    }
+  });
+  mentorProfilesCache = nextStore;
+  return nextStore;
+}
+
+async function createAdminMentorProfile(adminKey, payload) {
+  const accessToken = await getAccessToken();
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
+  const response = await fetch("/api/admin/mentor-profiles", {
+    method: "POST",
+    headers: headers,
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tạo tài khoản mentor.");
+  }
+
+  if (data.profile) {
+    const normalized = normalizeRemoteMentorProfile(data.profile);
+    if (normalized) {
+      mentorProfilesCache = Object.assign({}, mentorProfilesCache, {
+        [normalized.id]: normalized
+      });
+    }
+  }
+
+  return data;
+}
+
+async function submitBookingRequest(payload) {
+  const response = await fetch("/api/booking-requests", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể gửi yêu cầu booking lúc này.");
+  }
+
+  const createdRequest = data.request || null;
+  if (createdRequest) {
+    bookingRequestsCache = [createdRequest].concat(getBookingRequests().filter(function (item) {
+      return item.id !== createdRequest.id;
+    }));
+  }
+  return createdRequest;
+}
+
+async function fetchOccupiedSlotIdsForMentor(mentorId) {
+  const response = await fetch("/api/booking-requests/occupied?mentorId=" + encodeURIComponent(mentorId));
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải lịch bận của mentor.");
+  }
+
+  bookingOccupiedSlotsCache[mentorId] = Array.isArray(data.occupiedSlotIds) ? data.occupiedSlotIds : [];
+  return bookingOccupiedSlotsCache[mentorId];
+}
+
+async function fetchBookingRequestsForCurrentMentee() {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    return getBookingRequests();
+  }
+
+  const response = await fetch("/api/booking-requests/mine", {
+    headers: {
+      Authorization: "Bearer " + accessToken
+    }
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải booking của bạn.");
+  }
+
+  bookingRequestsCache = data.requests || [];
+  return bookingRequestsCache;
+}
+
+async function fetchBookingRequestsForCurrentMentor(mentorId) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    return getBookingRequests();
+  }
+
+  const response = await fetch("/api/mentor/booking-requests?mentorId=" + encodeURIComponent(mentorId), {
+    headers: {
+      Authorization: "Bearer " + accessToken
+    }
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải booking của mentor.");
+  }
+
+  bookingRequestsCache = data.requests || [];
+  return bookingRequestsCache;
+}
+
+async function fetchAdminBookingRequests(adminKey) {
+  const accessToken = await getAccessToken();
+  const headers = {};
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
+  const response = await fetch("/api/admin/booking-requests", {
+    headers: headers
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải danh sách booking mentor.");
+  }
+
+  bookingRequestsCache = data.requests || [];
+  return bookingRequestsCache;
+}
+
+async function updateAdminBookingRequest(adminKey, requestId, payload) {
+  const accessToken = await getAccessToken();
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
+  const response = await fetch("/api/admin/booking-requests/" + encodeURIComponent(requestId), {
+    method: "PUT",
+    headers: headers,
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể cập nhật booking của admin.");
+  }
+
+  const updatedRequest = data.request || null;
+  if (updatedRequest) {
+    bookingRequestsCache = getBookingRequests().map(function (item) {
+      return item.id === updatedRequest.id ? updatedRequest : item;
+    });
+  }
+  return updatedRequest;
+}
+
+async function updateMentorBookingRequest(requestId, payload) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    throw new Error("Phiên đăng nhập mentor đã hết hạn. Hãy đăng nhập lại.");
+  }
+
+  const response = await fetch("/api/mentor/booking-requests/" + encodeURIComponent(requestId), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + accessToken
+    },
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể cập nhật booking của mentor.");
+  }
+
+  const updatedRequest = data.request || null;
+  if (updatedRequest) {
+    bookingRequestsCache = getBookingRequests().map(function (item) {
+      return item.id === updatedRequest.id ? updatedRequest : item;
+    });
+    if (["accepted", "completed"].includes(updatedRequest.status)) {
+      bookingOccupiedSlotsCache[updatedRequest.mentorId] = getOccupiedSlotIdsForMentor(updatedRequest.mentorId);
+    }
+  }
+  return updatedRequest;
 }
 
 function buildAdminConsultationCard(request) {
@@ -2537,14 +2902,6 @@ function buildAdminMentorApplicationCard(application) {
             <option value="approved" ${application.status === "approved" ? "selected" : ""}>approved</option>
             <option value="rejected" ${application.status === "rejected" ? "selected" : ""}>rejected</option>
             <option value="activated" ${application.status === "activated" ? "selected" : ""}>activated</option>
-          </select>
-        </label>
-
-        <label class="auth-field">
-          <span>Cấp mã kích hoạt</span>
-          <select name="generateActivation">
-            <option value="no">Không</option>
-            <option value="yes">Có, tạo mã mới</option>
           </select>
         </label>
 
@@ -2841,14 +3198,14 @@ function initializeAdminConsultationPage() {
     return;
   }
 
-  let currentAdminKey = sessionStorage.getItem("mentorMeAdminKey") || "";
+  const isRealAdmin = !isDemoAccount(currentUser);
+  let currentAdminKey = "";
   if (!currentAdminKey && isDemoAccount(currentUser) && normalizeRole(currentUser.role) === "admin") {
     currentAdminKey = DEMO_ADMIN_ACCESS_CODE;
-    sessionStorage.setItem("mentorMeAdminKey", currentAdminKey);
   }
 
   async function loadRequests() {
-    if (!currentAdminKey) return;
+    if (!isRealAdmin && !currentAdminKey) return;
 
     try {
       clearMessage("adminConsultationMessage");
@@ -2873,7 +3230,7 @@ function initializeAdminConsultationPage() {
   }
 
   async function loadMentorApplications() {
-    if (!currentAdminKey || !mentorDashboard || !mentorListElement) return;
+    if ((!currentAdminKey && !isRealAdmin) || !mentorDashboard || !mentorListElement) return;
 
     try {
       clearMessage("adminConsultationMessage");
@@ -2900,63 +3257,88 @@ function initializeAdminConsultationPage() {
     }
   }
 
-  function loadBookingRequestsForAdmin() {
+  async function loadBookingRequestsForAdmin() {
     if (!bookingDashboard || !bookingListElement) return;
 
-    const requests = getBookingRequests();
-    bookingDashboard.hidden = false;
+    try {
+      const requests = (!isRealAdmin && !currentAdminKey)
+        ? getBookingRequests()
+        : await fetchAdminBookingRequests(currentAdminKey);
+      bookingDashboard.hidden = false;
 
-    if (!requests.length) {
-      bookingListElement.innerHTML = `
-        <div class="admin-empty-state">
-          <h3>Chưa có đăng ký học nào với mentor</h3>
-          <p>Khi mentee gửi yêu cầu đặt lịch, admin sẽ thấy toàn bộ luồng tại đây để tiện theo dõi.</p>
-        </div>
-      `;
-      return;
+      if (!requests.length) {
+        bookingListElement.innerHTML = `
+          <div class="admin-empty-state">
+            <h3>Chưa có đăng ký học nào với mentor</h3>
+            <p>Khi mentee gửi yêu cầu đặt lịch, admin sẽ thấy toàn bộ luồng tại đây để tiện theo dõi.</p>
+          </div>
+        `;
+        return;
+      }
+
+      bookingListElement.innerHTML = requests.map(buildAdminBookingRequestCard).join("");
+    } catch (error) {
+      bookingDashboard.hidden = true;
+      showMessage("adminConsultationMessage", "error", error.message);
     }
-
-    bookingListElement.innerHTML = requests.map(buildAdminBookingRequestCard).join("");
   }
 
-  function loadMentorProfileUpdates() {
-    if (!mentorProfileUpdateDashboard || !mentorProfileUpdateList) return;
+  async function loadMentorProfileUpdates() {
+    if ((!currentAdminKey && !isRealAdmin) || !mentorProfileUpdateDashboard || !mentorProfileUpdateList) return;
 
-    const requests = getPendingMentorProfileUpdates();
-    mentorProfileUpdateDashboard.hidden = false;
+    try {
+      clearMessage("adminConsultationMessage");
+      const requests = await fetchAdminMentorProfileUpdates(currentAdminKey);
+      mentorProfileUpdateDashboard.hidden = false;
 
-    if (!requests.length) {
-      mentorProfileUpdateList.innerHTML = `
-        <div class="admin-empty-state">
-          <h3>Chưa có yêu cầu cập nhật hồ sơ mentor</h3>
-          <p>Khi mentor bấm lưu hồ sơ, yêu cầu sẽ được chuyển tới admin để duyệt trước khi cập nhật ra trang tìm kiếm.</p>
-        </div>
-      `;
-      return;
+      if (!requests.length) {
+        mentorProfileUpdateList.innerHTML = `
+          <div class="admin-empty-state">
+            <h3>Chưa có yêu cầu cập nhật hồ sơ mentor</h3>
+            <p>Khi mentor bấm lưu hồ sơ, yêu cầu sẽ được chuyển tới admin để duyệt trước khi cập nhật ra trang tìm kiếm.</p>
+          </div>
+        `;
+        return;
+      }
+
+      mentorProfileUpdateList.innerHTML = requests.map(buildAdminMentorProfileUpdateCard).join("");
+    } catch (error) {
+      mentorProfileUpdateDashboard.hidden = true;
+      showMessage("adminConsultationMessage", "error", error.message);
     }
-
-    mentorProfileUpdateList.innerHTML = requests.map(buildAdminMentorProfileUpdateCard).join("");
   }
 
-  accessForm.addEventListener("submit", async function (e) {
-    e.preventDefault();
-    clearMessage("adminConsultationMessage");
-
-    currentAdminKey = normalizeWhitespace(document.getElementById("adminAccessKey").value);
-    if (!currentAdminKey) {
-      showMessage("adminConsultationMessage", "error", "Vui lòng nhập mật khẩu quản trị.");
-      return;
-    }
-
-    sessionStorage.setItem("mentorMeAdminKey", currentAdminKey);
-    await loadRequests();
-    await loadMentorApplications();
+  if (isRealAdmin) {
+    accessForm.hidden = true;
+    loadRequests();
+    loadMentorApplications();
     loadBookingRequestsForAdmin();
     loadMentorProfileUpdates();
+    startAdminAutoRefresh();
     if (mentorCreateDashboard) {
       mentorCreateDashboard.hidden = false;
     }
-  });
+  } else {
+    accessForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      clearMessage("adminConsultationMessage");
+
+      currentAdminKey = normalizeWhitespace(document.getElementById("adminAccessKey").value);
+      if (!currentAdminKey) {
+        showMessage("adminConsultationMessage", "error", "Vui lòng nhập mật khẩu quản trị.");
+        return;
+      }
+
+      await loadRequests();
+      await loadMentorApplications();
+      loadBookingRequestsForAdmin();
+      await loadMentorProfileUpdates();
+      startAdminAutoRefresh();
+      if (mentorCreateDashboard) {
+        mentorCreateDashboard.hidden = false;
+      }
+    });
+  }
 
   if (refreshButton) {
     refreshButton.addEventListener("click", loadRequests);
@@ -3016,8 +3398,7 @@ function initializeAdminConsultationPage() {
       try {
         const updatedApplication = await updateAdminMentorApplication(currentAdminKey, applicationId, {
           status: normalizeWhitespace(formData.get("status")),
-          adminNote: normalizeWhitespace(formData.get("adminNote")),
-          generateActivation: formData.get("generateActivation") === "yes"
+          adminNote: normalizeWhitespace(formData.get("adminNote"))
         });
 
         card.outerHTML = buildAdminMentorApplicationCard(updatedApplication);
@@ -3029,7 +3410,7 @@ function initializeAdminConsultationPage() {
   }
 
   if (mentorProfileUpdateList) {
-    mentorProfileUpdateList.addEventListener("submit", function (e) {
+    mentorProfileUpdateList.addEventListener("submit", async function (e) {
       const form = e.target.closest(".admin-mentor-profile-update-form");
       if (!form) return;
 
@@ -3042,24 +3423,27 @@ function initializeAdminConsultationPage() {
       const formData = new FormData(form);
       const status = normalizeWhitespace(formData.get("status"));
       const adminNote = normalizeWhitespace(formData.get("adminNote"));
-      const request = updatePendingMentorProfileUpdate(requestId, {
-        status: status,
-        adminNote: adminNote
-      });
 
-      if (request && status === "approved") {
-        const approvedStore = getApprovedMentorProfiles();
-        approvedStore[request.mentorId] = Object.assign({}, approvedStore[request.mentorId] || {}, request.profile || {});
-        saveApprovedMentorProfiles(approvedStore);
+      try {
+        const request = await updateAdminMentorProfileUpdate(currentAdminKey, requestId, {
+          status: status,
+          adminNote: adminNote
+        });
+
+        if (request && status === "approved") {
+          await fetchPublicMentorProfiles();
+        }
+
+        await loadMentorProfileUpdates();
+        showMessage("adminConsultationMessage", "success", "Đã cập nhật yêu cầu chỉnh sửa hồ sơ mentor.");
+      } catch (error) {
+        showMessage("adminConsultationMessage", "error", error.message);
       }
-
-      loadMentorProfileUpdates();
-      showMessage("adminConsultationMessage", "success", "Đã cập nhật yêu cầu chỉnh sửa hồ sơ mentor.");
     });
   }
 
   if (bookingListElement) {
-    bookingListElement.addEventListener("submit", function (e) {
+    bookingListElement.addEventListener("submit", async function (e) {
       const form = e.target.closest(".admin-booking-request-form");
       if (!form) return;
 
@@ -3070,21 +3454,34 @@ function initializeAdminConsultationPage() {
 
       const requestId = card.getAttribute("data-admin-booking-id");
       const formData = new FormData(form);
-      updateBookingRequest(requestId, {
-        status: normalizeWhitespace(formData.get("status")),
-        adminNote: normalizeWhitespace(formData.get("adminNote"))
-      });
-      loadBookingRequestsForAdmin();
-      showMessage("adminConsultationMessage", "success", "Đã cập nhật đăng ký học với mentor.");
+      try {
+        if (isRealAdmin && isSupabaseReady()) {
+          await updateAdminBookingRequest(currentAdminKey, requestId, {
+            status: normalizeWhitespace(formData.get("status")),
+            adminNote: normalizeWhitespace(formData.get("adminNote"))
+          });
+        } else {
+          updateBookingRequest(requestId, {
+            status: normalizeWhitespace(formData.get("status")),
+            adminNote: normalizeWhitespace(formData.get("adminNote"))
+          });
+        }
+        await loadBookingRequestsForAdmin();
+        showMessage("adminConsultationMessage", "success", "Đã cập nhật đăng ký học với mentor.");
+      } catch (error) {
+        showMessage("adminConsultationMessage", "error", error.message);
+      }
     });
   }
 
   if (mentorCreateForm) {
-    mentorCreateForm.addEventListener("submit", function (e) {
+    mentorCreateForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       clearMessage("adminConsultationMessage");
 
       const name = normalizeWhitespace(document.getElementById("adminMentorCreateName").value);
+      const email = normalizeEmail(document.getElementById("adminMentorCreateEmail").value);
+      const password = document.getElementById("adminMentorCreatePassword").value;
       const role = normalizeWhitespace(document.getElementById("adminMentorCreateRole").value);
       const workplace = normalizeWhitespace(document.getElementById("adminMentorCreateWorkplace").value);
       const focus = normalizeWhitespace(document.getElementById("adminMentorCreateFocus").value);
@@ -3111,6 +3508,16 @@ function initializeAdminConsultationPage() {
 
       if (!field) {
         showMessage("adminConsultationMessage", "error", "Vui lòng chọn nhóm lĩnh vực.");
+        return;
+      }
+
+      if (!email.includes("@")) {
+        showMessage("adminConsultationMessage", "error", "Email đăng nhập của mentor chưa đúng định dạng.");
+        return;
+      }
+
+      if (password.length < 8) {
+        showMessage("adminConsultationMessage", "error", "Mật khẩu mentor cần tối thiểu 8 ký tự.");
         return;
       }
 
@@ -3154,19 +3561,28 @@ function initializeAdminConsultationPage() {
       }
 
       mentorProfile.searchableText = buildMentorSearchableText(mentorProfile);
-      mentorProfile._origin = "admin";
       mentorProfile._createdAt = new Date().toISOString();
 
-      const approvedStore = getApprovedMentorProfiles();
-      approvedStore[mentorId] = mentorProfile;
-      saveApprovedMentorProfiles(approvedStore);
-
-      mentorCreateForm.reset();
-      showMessage("adminConsultationMessage", "success", "Đã thêm mentor mới. Hãy mở trang tìm kiếm để xem hiển thị.");
+      try {
+        await createAdminMentorProfile(currentAdminKey, {
+          mentorId: mentorId,
+          email: email,
+          password: password,
+          phone: "",
+          name: name,
+          field: field,
+          profile: mentorProfile
+        });
+        await fetchPublicMentorProfiles();
+        mentorCreateForm.reset();
+        showMessage("adminConsultationMessage", "success", "Đã tạo tài khoản và hồ sơ mentor. Mentor có thể đăng nhập bằng email và mật khẩu vừa cấp.");
+      } catch (error) {
+        showMessage("adminConsultationMessage", "error", error.message);
+      }
     });
   }
 
-  if (currentAdminKey) {
+  if (currentAdminKey && !isRealAdmin) {
     const accessInput = document.getElementById("adminAccessKey");
     if (accessInput) {
       accessInput.value = currentAdminKey;
@@ -3178,7 +3594,24 @@ function initializeAdminConsultationPage() {
     if (mentorCreateDashboard) {
       mentorCreateDashboard.hidden = false;
     }
+    startAdminAutoRefresh();
   }
+
+  let adminAutoRefreshTimer = 0;
+  function startAdminAutoRefresh() {
+    if ((!currentAdminKey && !isRealAdmin) || adminAutoRefreshTimer) {
+      return;
+    }
+
+    adminAutoRefreshTimer = window.setInterval(function () {
+      loadRequests();
+      loadMentorApplications();
+      loadBookingRequestsForAdmin();
+      loadMentorProfileUpdates();
+    }, 15000);
+  }
+
+  startAdminAutoRefresh();
 }
 
 function initializeMentorDashboardPage() {
@@ -3458,7 +3891,7 @@ function initializeMentorDashboardPage() {
     availabilityEditor.dataset.boundAvailabilityEditor = "true";
   }
 
-  form.addEventListener("submit", function (e) {
+  form.addEventListener("submit", async function (e) {
     e.preventDefault();
     clearMessage("mentorDashboardMessage");
     syncFromForm();
@@ -3473,13 +3906,9 @@ function initializeMentorDashboardPage() {
       return;
     }
 
-    saveMentorProfileByUserId(currentUser.id, draftProfile);
-    upsertPendingMentorProfileUpdate({
-      id: "mentor-profile-update-" + (mentorContext.mentorId || slugifyText(draftProfile.displayName || currentUser.name)),
+    const updateRequest = {
       mentorId: mentorContext.mentorId || slugifyText(draftProfile.displayName || currentUser.name),
       mentorName: draftProfile.displayName || currentUser.name,
-      status: "pending",
-      adminNote: "",
       profile: {
         displayName: draftProfile.displayName || currentUser.name,
         name: draftProfile.displayName || currentUser.name,
@@ -3507,11 +3936,28 @@ function initializeMentorDashboardPage() {
           fit: draftProfile.fit,
           workplace: draftProfile.workplace
         })
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    });
-    showMessage("mentorDashboardMessage", "success", "Hồ sơ mentor đã được gửi về admin để duyệt. Sau khi approved, trang tìm kiếm mentor sẽ tự cập nhật.");
+      }
+    };
+
+    saveMentorProfileByUserId(currentUser.id, draftProfile);
+
+    try {
+      if (isDemoAccount(currentUser) || !isSupabaseReady()) {
+        upsertPendingMentorProfileUpdate(Object.assign({
+          id: "mentor-profile-update-" + updateRequest.mentorId,
+          status: "pending",
+          adminNote: "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, updateRequest));
+      } else {
+        await submitMentorProfileUpdate(updateRequest);
+      }
+
+      showMessage("mentorDashboardMessage", "success", "Hồ sơ mentor đã được gửi về admin để duyệt. Sau khi approved, trang tìm kiếm mentor sẽ tự cập nhật.");
+    } catch (error) {
+      showMessage("mentorDashboardMessage", "error", error.message || "Không thể gửi hồ sơ mentor lúc này.");
+    }
   });
 }
 
@@ -3637,10 +4083,6 @@ function initializeLoginPage() {
     const isDemoMentee = demoUser && normalizeRole(demoUser.role) === "mentee" && normalizeEmail(identifier) === DEMO_MENTEE_EMAIL && password === DEMO_MENTEE_PASSWORD;
 
     if (demoUser && (isDemoAdminOnly || isDemoMentee)) {
-      if (demoUser.role === "admin") {
-        sessionStorage.setItem("mentorMeAdminKey", DEMO_ADMIN_ACCESS_CODE);
-      }
-
       saveAuthSession(demoUser);
       showMessage("loginMessage", "success", "Đăng nhập tài khoản test thành công. Đang chuyển đến trang phù hợp...");
       window.setTimeout(function () {
@@ -4376,7 +4818,7 @@ function renderMenteeScheduleSummary(summaryElement, requests) {
   `;
 }
 
-function initializeMenteeSchedulePage() {
+async function initializeMenteeSchedulePage() {
   const scheduleList = document.getElementById("menteeScheduleList");
   const summary = document.getElementById("menteeScheduleSummary");
   const calendarGrid = document.getElementById("menteeScheduleCalendarGrid");
@@ -4389,6 +4831,20 @@ function initializeMenteeSchedulePage() {
   if (!currentUser) {
     window.location.href = "login.html?redirect=mentee-schedule.html";
     return;
+  }
+
+  if (!isDemoAccount(currentUser) && isSupabaseReady()) {
+    try {
+      await fetchBookingRequestsForCurrentMentee();
+    } catch (error) {
+      scheduleList.innerHTML = `
+        <div class="admin-empty-state">
+          <h3>Không tải được lịch học</h3>
+          <p>${escapeHtml(error.message || "Hãy thử tải lại trang.")}</p>
+        </div>
+      `;
+      return;
+    }
   }
 
   const requests = getRequestsForCurrentMentee(currentUser);
@@ -4468,7 +4924,7 @@ function initializeMenteeSchedulePage() {
   }
 }
 
-function initializeMenteeCalendarPage() {
+async function initializeMenteeCalendarPage() {
   const summary = document.getElementById("menteeCalendarSummary");
   const calendarGrid = document.getElementById("menteeCalendarOnlyGrid");
   const monthLabel = document.getElementById("menteeCalendarOnlyMonthLabel");
@@ -4480,6 +4936,18 @@ function initializeMenteeCalendarPage() {
   if (!currentUser) {
     window.location.href = "login.html?redirect=mentee-calendar.html";
     return;
+  }
+
+  if (!isDemoAccount(currentUser) && isSupabaseReady()) {
+    try {
+      await fetchBookingRequestsForCurrentMentee();
+    } catch (error) {
+      renderMenteeScheduleSummary(summary, []);
+      renderCalendarGrid(calendarGrid, monthLabel, [], function () {
+        return "search.html";
+      }, error.message || "Không thể tải calendar booking.", new Date());
+      return;
+    }
   }
 
   const requests = getRequestsForCurrentMentee(currentUser);
@@ -4500,7 +4968,7 @@ function initializeMenteeCalendarPage() {
   });
 }
 
-function initializeMentorRequestsPage() {
+async function initializeMentorRequestsPage() {
   const listElement = document.getElementById("mentorRequestList");
   const summary = document.getElementById("mentorRequestSummary");
   const note = document.getElementById("mentorRequestScopeNote");
@@ -4517,10 +4985,24 @@ function initializeMentorRequestsPage() {
     return;
   }
 
+  const mentorContext = getMentorContextForUser(currentUser);
+  if (!isDemoAccount(currentUser) && isSupabaseReady() && mentorContext.mentorId) {
+    try {
+      await fetchBookingRequestsForCurrentMentor(mentorContext.mentorId);
+    } catch (error) {
+      listElement.innerHTML = `
+        <div class="admin-empty-state">
+          <h3>Không tải được yêu cầu đăng ký</h3>
+          <p>${escapeHtml(error.message || "Hãy thử tải lại trang.")}</p>
+        </div>
+      `;
+      return;
+    }
+  }
+
   let currentScopedRequests = [];
 
   function render() {
-    const mentorContext = getMentorContextForUser(currentUser);
     currentScopedRequests = filterRequestsForCurrentMentor(getBookingRequests(), currentUser);
     const pendingRequests = currentScopedRequests.filter(function (request) {
       return request.status === "pending";
@@ -4558,7 +5040,7 @@ function initializeMentorRequestsPage() {
     listElement.innerHTML = pendingRequests.map(buildMentorLeadCard).join("");
   }
 
-  listElement.addEventListener("click", function (event) {
+  listElement.addEventListener("click", async function (event) {
     const button = event.target.closest("[data-booking-action]");
     if (!button) return;
 
@@ -4587,14 +5069,22 @@ function initializeMentorRequestsPage() {
       }
     }
 
-    updateBookingRequest(bookingId, updates);
-    render();
+    try {
+      if (isDemoAccount(currentUser) || !isSupabaseReady()) {
+        updateBookingRequest(bookingId, updates);
+      } else {
+        await updateMentorBookingRequest(bookingId, updates);
+      }
+      render();
+    } catch (error) {
+      showMessage("mentorDashboardMessage", "error", error.message);
+    }
   });
 
   render();
 }
 
-function initializeMentorMenteesPage() {
+async function initializeMentorMenteesPage() {
   const acceptedPreview = document.getElementById("mentorAcceptedCountPreview");
   const teachingPreview = document.getElementById("mentorTeachingCountPreview");
   const summary = document.getElementById("mentorTeachingSummary");
@@ -4613,6 +5103,15 @@ function initializeMentorMenteesPage() {
   }
 
   const mentorContext = getMentorContextForUser(currentUser);
+  if (!isDemoAccount(currentUser) && isSupabaseReady() && mentorContext.mentorId) {
+    try {
+      await fetchBookingRequestsForCurrentMentor(mentorContext.mentorId);
+    } catch (error) {
+      summary.innerHTML = "";
+      note.textContent = error.message || "Không thể tải dữ liệu mentee.";
+      return;
+    }
+  }
   const acceptedRequests = getAcceptedRequestsForCurrentMentor(currentUser);
 
   note.textContent = mentorContext.mentorId
@@ -4637,7 +5136,7 @@ function initializeMentorMenteesPage() {
   teachingPreview.textContent = acceptedRequests.length + " buổi";
 }
 
-function initializeMentorAcceptedPage() {
+async function initializeMentorAcceptedPage() {
   const listElement = document.getElementById("mentorAcceptedDetailList");
   const summary = document.getElementById("mentorAcceptedSummary");
   const note = document.getElementById("mentorAcceptedScopeNote");
@@ -4655,6 +5154,19 @@ function initializeMentorAcceptedPage() {
   }
 
   const mentorContext = getMentorContextForUser(currentUser);
+  if (!isDemoAccount(currentUser) && isSupabaseReady() && mentorContext.mentorId) {
+    try {
+      await fetchBookingRequestsForCurrentMentor(mentorContext.mentorId);
+    } catch (error) {
+      listElement.innerHTML = `
+        <div class="admin-empty-state">
+          <h3>Không tải được mentee đã nhận</h3>
+          <p>${escapeHtml(error.message || "Hãy thử tải lại trang.")}</p>
+        </div>
+      `;
+      return;
+    }
+  }
   const acceptedRequests = getAcceptedRequestsForCurrentMentor(currentUser);
 
   note.textContent = mentorContext.mentorId
@@ -4689,7 +5201,7 @@ function initializeMentorAcceptedPage() {
   listElement.innerHTML = acceptedRequests.map(buildAcceptedMenteeDetailCard).join("");
 }
 
-function initializeMentorTeachingCalendarPage() {
+async function initializeMentorTeachingCalendarPage() {
   const calendarGrid = document.getElementById("mentorTeachingCalendarGrid");
   const summary = document.getElementById("mentorCalendarSummary");
   const note = document.getElementById("mentorCalendarScopeNote");
@@ -4710,6 +5222,14 @@ function initializeMentorTeachingCalendarPage() {
   }
 
   const mentorContext = getMentorContextForUser(currentUser);
+  if (!isDemoAccount(currentUser) && isSupabaseReady() && mentorContext.mentorId) {
+    try {
+      await fetchBookingRequestsForCurrentMentor(mentorContext.mentorId);
+    } catch (error) {
+      note.textContent = error.message || "Không thể tải lịch dạy.";
+      return;
+    }
+  }
   const acceptedRequests = getAcceptedRequestsForCurrentMentor(currentUser);
 
   note.textContent = mentorContext.mentorId
@@ -4757,7 +5277,7 @@ function initializeMentorTeachingCalendarPage() {
   });
 }
 
-function initializeMentorBookingDetailPage() {
+async function initializeMentorBookingDetailPage() {
   const content = document.getElementById("mentorBookingDetailContent");
   const note = document.getElementById("mentorBookingDetailScopeNote");
   if (!content || !note) return;
@@ -4771,6 +5291,21 @@ function initializeMentorBookingDetailPage() {
   if (!["mentor", "admin"].includes(normalizeRole(currentUser.role))) {
     window.location.href = "profile.html";
     return;
+  }
+
+  const mentorContext = getMentorContextForUser(currentUser);
+  if (!isDemoAccount(currentUser) && isSupabaseReady() && mentorContext.mentorId) {
+    try {
+      await fetchBookingRequestsForCurrentMentor(mentorContext.mentorId);
+    } catch (error) {
+      content.innerHTML = `
+        <div class="admin-empty-state">
+          <h3>Không tải được chi tiết buổi dạy</h3>
+          <p>${escapeHtml(error.message || "Hãy thử tải lại trang.")}</p>
+        </div>
+      `;
+      return;
+    }
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -4915,9 +5450,15 @@ function initializeResetPasswordPage() {
 
 async function bootstrapApp() {
   initializePasswordToggles();
-  syncApprovedMentorProfilesWithRealData();
   syncSubmittedReviewsWithCurrentData();
   ensureDemoBookingRequests();
+  if (isSupabaseReady()) {
+    try {
+      await fetchPublicMentorProfiles();
+    } catch (error) {
+      mentorProfilesCache = {};
+    }
+  }
   if (isSupabaseReady()) {
     await loadCurrentUserFromSupabase();
   }
