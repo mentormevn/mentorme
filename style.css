@@ -3234,9 +3234,7 @@ body,
 .profile-page,
 .admin-page,
 .mentor-dashboard-page{
-  background:
-    radial-gradient(circle at top right, rgba(255,255,255,0.65), rgba(255,255,255,0) 26%),
-    linear-gradient(180deg, #e9f3ff 0%, #dcecff 100%) !important;
+  background:#dceeff !important;
 }
 
 .mentor-card h3{
