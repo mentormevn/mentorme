@@ -44,10 +44,11 @@ const WEEKLY_SCHEDULE_HOURS = Array.from({ length: 15 }, function (_, index) {
   return String(hour).padStart(2, "0") + ":00";
 });
 const SERVICE_LABELS = {
-  "1-1": "Mentor 1 kèm 1",
-  group: "Mentor theo nhóm",
-  roadmap: "Tư vấn lộ trình",
-  competition: "Luyện thi / cuộc thi"
+  "1-1": "Mentoring 1-1",
+  course: "Mini Course/ Course/ Class",
+  coaching: "Career Package/ Coaching",
+  "quick-service": "Quick service (Sua bai luan, Review CV,...)",
+  "qa-chat": "Hoi dap nhanh (Q&A/ Chat)"
 };
 const FIELD_CATEGORY_ALIASES = {
   toan: "hoc-tap",
@@ -230,15 +231,16 @@ function buildMentorAvailabilityText(availability) {
 
 function buildMentorServiceText(services) {
   const labels = {
-    "1-1": "Mentor 1 kèm 1",
-    group: "mentor theo nhóm",
-    roadmap: "tư vấn lộ trình",
-    competition: "luyện thi/cuộc thi"
+    "1-1": "mentoring 1-1",
+    course: "mini course/ course/ class",
+    coaching: "career package/ coaching",
+    "quick-service": "quick service",
+    "qa-chat": "hoi dap nhanh"
   };
   const list = (services || []).map(function (item) {
     return labels[item];
   }).filter(Boolean);
-  return list.length ? list.join(", ") : "Mentor 1 kèm 1";
+  return list.length ? list.join(", ") : "Mentoring 1-1";
 }
 
 function getServiceLabel(serviceKey) {
@@ -1337,8 +1339,8 @@ const mentorData = {
     field: "hoc-tap",
     availability: ["sang", "chieu", "toi", "cuoi-tuan"],
     availabilityText: "Linh hoạt theo lịch hẹn",
-    service: ["1-1", "group", "roadmap", "competition"],
-    serviceText: "Mentor 1 kèm 1, mentor theo nhóm, tư vấn định hướng, đồng hành hoạt động và cuộc thi",
+    service: ["1-1", "course", "coaching", "quick-service"],
+    serviceText: "Mentoring 1-1, mini course/ course/ class, career package/ coaching, quick service",
     achievements: [
       "Học sinh giỏi Tỉnh môn Ngữ văn cấp THPT năm học 2023 - 2024 và 2024 - 2025, cùng danh hiệu Học sinh giỏi Thành phố môn Ngữ văn cấp THCS năm học 2021 - 2022.",
       "Giải Nhất thuyết trình Ngày hội Văn hóa Đọc năm học 2024 - 2025.",
@@ -1362,9 +1364,9 @@ const querySynonyms = [
   { phrases: ["em yeu speaking", "yeu speaking", "ngai noi", "so noi tieng anh"], tags: ["speaking", "giao tiep", "tieng anh", "ielts"] },
   { phrases: ["muon tang band", "tang band", "can len band"], tags: ["ielts", "writing", "speaking", "luyen thi"] },
   { phrases: ["mentor nhe nhang", "nhe nhang", "de tam su"], tags: ["mentor nhe nhang", "theo sat", "coaching"] },
-  { phrases: ["can nguoi theo sat", "theo sat", "kem sat"], tags: ["theo sat", "1 kem 1", "roadmap"] },
+  { phrases: ["can nguoi theo sat", "theo sat", "kem sat"], tags: ["theo sat", "1 kem 1", "coaching"] },
   { phrases: ["mat goc", "moi bat dau", "nguoi moi"], tags: ["mat goc", "co ban", "giai thich ky"] },
-  { phrases: ["luyen thi", "on thi", "thi cu"], tags: ["luyen thi", "competition"] },
+  { phrases: ["luyen thi", "on thi", "thi cu"], tags: ["luyen thi", "course"] },
   { phrases: ["lap trinh web", "hoc code", "coding"], tags: ["lap trinh", "web", "project"] }
 ];
 
