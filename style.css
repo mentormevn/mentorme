@@ -2,6 +2,23 @@ body{
   font-family: 'Montserrat', sans-serif;
 }
 
+body > main > .hero{
+  background:#dceeff !important;
+}
+
+body > main > .about-scale,
+body > main > .about-scale .about{
+  background:#ffffff !important;
+}
+
+body > main > .mentor{
+  background:#dceeff !important;
+}
+
+body > main > .mentee{
+  background:#ffffff !important;
+}
+
 input, textarea, button {
   font-family: 'Montserrat', sans-serif;
 }
