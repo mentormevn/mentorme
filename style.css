@@ -3143,6 +3143,11 @@ body{
   box-shadow:var(--shadow-lg);
 }
 
+.about{
+  box-shadow:none !important;
+  background:transparent !important;
+}
+
 .mentor{
   position:relative;
   padding:88px 10%;
