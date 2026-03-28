@@ -397,7 +397,7 @@ function sanitizeMentorProfile(record) {
     ownerUserId: record.owner_user_id || "",
     email: record.email || "",
     name: record.name || "",
-    field: record.field || "",
+    field: normalizeFieldCategory(record.field || ""),
     visibility: record.visibility || "draft",
     status: record.status || "pending",
     profile: record.profile || {},
@@ -449,6 +449,44 @@ function slugifyText(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function normalizeFieldCategory(field) {
+  const normalized = slugifyText(field);
+  const aliases = {
+    toan: "hoc-tap",
+    van: "hoc-tap",
+    ly: "hoc-tap",
+    hoa: "hoc-tap",
+    sinh: "hoc-tap",
+    su: "hoc-tap",
+    dia: "hoc-tap",
+    "hoc-tap": "hoc-tap",
+    anh: "ngoai-ngu",
+    ielts: "ngoai-ngu",
+    trung: "ngoai-ngu",
+    nhat: "ngoai-ngu",
+    han: "ngoai-ngu",
+    "ngoai-ngu": "ngoai-ngu",
+    "ngoai-khoa": "ngoai-khoa",
+    "hoat-dong-ngoai-khoa": "ngoai-khoa",
+    competition: "cuoc-thi-nghien-cuu",
+    "cuoc-thi": "cuoc-thi-nghien-cuu",
+    "nghien-cuu": "cuoc-thi-nghien-cuu",
+    "cuoc-thi-nghien-cuu": "cuoc-thi-nghien-cuu",
+    "dinh-huong": "dinh-huong-ky-nang",
+    "ky-nang": "dinh-huong-ky-nang",
+    "nghe-nghiep": "dinh-huong-ky-nang",
+    "dinh-huong-ky-nang": "dinh-huong-ky-nang",
+    "kinh-doanh": "kinh-doanh-khoi-nghiep",
+    "khoi-nghiep": "kinh-doanh-khoi-nghiep",
+    "kinh-doanh-khoi-nghiep": "kinh-doanh-khoi-nghiep",
+    "lap-trinh": "cong-nghe",
+    "cong-nghe": "cong-nghe",
+    "phat-trien-ban-than": "phat-trien-ban-than"
+  };
+
+  return aliases[normalized] || normalized;
 }
 
 function canMentorManageBooking(user, bookingRequest) {
@@ -671,6 +709,8 @@ async function getMentorProfiles(options = {}) {
 
 async function upsertMentorProfileRecord(record) {
   const now = new Date().toISOString();
+  const profile = record && typeof record.profile === "object" ? Object.assign({}, record.profile) : {};
+  const normalizedField = normalizeFieldCategory(record.field || profile.field || "");
   const payload = Object.assign(
     {
       id: "",
@@ -683,7 +723,11 @@ async function upsertMentorProfileRecord(record) {
       profile: {},
       updated_at: now
     },
-    record
+    record,
+    {
+      field: normalizedField,
+      profile: Object.assign({}, profile, normalizedField ? { field: normalizedField } : {})
+    }
   );
 
   if (!payload.created_at) {
@@ -1381,6 +1425,12 @@ app.post("/api/mentor-profile-updates", authMiddleware, async (req, res) => {
     return;
   }
 
+  const normalizedField = normalizeFieldCategory(profile.field || "");
+  if (!normalizedField) {
+    res.status(400).json({ message: "Vui long chon nhom linh vuc cho ho so mentor." });
+    return;
+  }
+
   try {
     const now = new Date().toISOString();
     const payload = {
@@ -1390,7 +1440,9 @@ app.post("/api/mentor-profile-updates", authMiddleware, async (req, res) => {
       mentor_name: mentorName,
       status: "pending",
       admin_note: "",
-      profile: profile,
+      profile: Object.assign({}, profile, {
+        field: normalizedField
+      }),
       created_at: now,
       updated_at: now
     };
@@ -1755,6 +1807,12 @@ app.post("/api/admin/mentor-profiles", requireAdmin, async (req, res) => {
     return;
   }
 
+  const normalizedField = normalizeFieldCategory(field || profile.field || "");
+  if (!normalizedField) {
+    res.status(400).json({ message: "Vui long chon nhom linh vuc cho mentor." });
+    return;
+  }
+
   if (!email.includes("@")) {
     res.status(400).json({ message: "Email dang nhap cua mentor chua dung dinh dang." });
     return;
@@ -1809,13 +1867,13 @@ app.post("/api/admin/mentor-profiles", requireAdmin, async (req, res) => {
       owner_user_id: authUser.id,
       email: email,
       name: name,
-      field: field,
+      field: normalizedField,
       visibility: "public",
       status: "approved",
       profile: Object.assign({}, profile, {
         id: mentorId,
         name: name,
-        field: field
+        field: normalizedField
       }),
       updated_at: now,
       created_at: now

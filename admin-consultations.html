@@ -26,10 +26,10 @@
 
   <main class="admin-shell">
     <section class="admin-header-card">
-      <h1>Admin xử lý lead tư vấn và hồ sơ ứng tuyển mentor</h1>
+      <h1>Admin xử lý lead tư vấn, tuyển chọn mentor và duyệt hồ sơ công khai</h1>
       <p>
         Dùng trang này để xem lead mới, cập nhật trạng thái, thêm ghi chú nội bộ,
-        đồng thời duyệt ứng tuyển mentor và cấp mã kích hoạt cho người đã được chọn lọc.
+        đồng thời tách rõ 2 bước: duyệt ứng tuyển để cấp mã kích hoạt và duyệt hồ sơ mentor để hiển thị lên tìm kiếm.
       </p>
     </section>
 
@@ -54,7 +54,7 @@
 
     <section id="adminMentorApplicationDashboard" class="admin-dashboard" hidden>
       <div class="admin-dashboard-bar">
-        <h2>Ứng tuyển mentor</h2>
+        <h2>Duyệt ứng tuyển mentor và cấp mã kích hoạt</h2>
         <button type="button" id="adminRefreshMentorApplications" class="mentor-secondary-btn">Tải lại</button>
       </div>
       <div id="adminMentorApplicationSummary"></div>
@@ -71,7 +71,7 @@
 
     <section id="adminMentorProfileUpdateDashboard" class="admin-dashboard" hidden>
       <div class="admin-dashboard-bar">
-        <h2>Yêu cầu cập nhật hồ sơ mentor</h2>
+        <h2>Duyệt hồ sơ mentor để hiển thị lên tìm kiếm</h2>
         <button type="button" id="adminRefreshMentorProfileUpdates" class="mentor-secondary-btn">Tải lại</button>
       </div>
       <div id="adminMentorProfileUpdateList" class="admin-consultation-list"></div>
@@ -126,13 +126,14 @@
               <span>Nhóm lĩnh vực</span>
               <select id="adminMentorCreateField" required>
                 <option value="">Chọn lĩnh vực</option>
-                <option value="toan">Toán</option>
-                <option value="van">Ngữ văn</option>
-                <option value="anh">Tiếng Anh</option>
-                <option value="lap-trinh">Lập trình</option>
-                <option value="ielts">IELTS</option>
-                <option value="trung">Tiếng Trung</option>
-                <option value="ky-nang">Kỹ năng học tập</option>
+                <option value="hoc-tap">Học tập (Toán, Văn,..)</option>
+                <option value="ngoai-ngu">Ngoại ngữ và chứng chỉ</option>
+                <option value="ngoai-khoa">Hoạt động ngoại khóa</option>
+                <option value="cuoc-thi-nghien-cuu">Cuộc thi học thuật, nghiên cứu khoa học</option>
+                <option value="dinh-huong-ky-nang">Định hướng nghề nghiệp & kỹ năng</option>
+                <option value="kinh-doanh-khoi-nghiep">Kinh doanh & khởi nghiệp</option>
+                <option value="cong-nghe">Công nghệ</option>
+                <option value="phat-trien-ban-than">Phát triển bản thân</option>
               </select>
             </label>
 

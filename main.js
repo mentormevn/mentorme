@@ -49,6 +49,38 @@ const SERVICE_LABELS = {
   roadmap: "Tư vấn lộ trình",
   competition: "Luyện thi / cuộc thi"
 };
+const FIELD_CATEGORY_ALIASES = {
+  toan: "hoc-tap",
+  van: "hoc-tap",
+  ly: "hoc-tap",
+  hoa: "hoc-tap",
+  sinh: "hoc-tap",
+  su: "hoc-tap",
+  dia: "hoc-tap",
+  "hoc-tap": "hoc-tap",
+  anh: "ngoai-ngu",
+  ielts: "ngoai-ngu",
+  trung: "ngoai-ngu",
+  nhat: "ngoai-ngu",
+  han: "ngoai-ngu",
+  "ngoai-ngu": "ngoai-ngu",
+  "ngoai-khoa": "ngoai-khoa",
+  "hoat-dong-ngoai-khoa": "ngoai-khoa",
+  competition: "cuoc-thi-nghien-cuu",
+  "cuoc-thi": "cuoc-thi-nghien-cuu",
+  "nghien-cuu": "cuoc-thi-nghien-cuu",
+  "cuoc-thi-nghien-cuu": "cuoc-thi-nghien-cuu",
+  "dinh-huong": "dinh-huong-ky-nang",
+  "ky-nang": "dinh-huong-ky-nang",
+  "nghe-nghiep": "dinh-huong-ky-nang",
+  "dinh-huong-ky-nang": "dinh-huong-ky-nang",
+  "kinh-doanh": "kinh-doanh-khoi-nghiep",
+  "khoi-nghiep": "kinh-doanh-khoi-nghiep",
+  "kinh-doanh-khoi-nghiep": "kinh-doanh-khoi-nghiep",
+  "lap-trinh": "cong-nghe",
+  "cong-nghe": "cong-nghe",
+  "phat-trien-ban-than": "phat-trien-ban-than"
+};
 let currentSearchPage = 1;
 let currentSessionUser = null;
 let mentorProfileDraftStore = {};
@@ -109,6 +141,11 @@ function normalizeRole(role) {
   const normalized = String(role || "").trim().toLowerCase();
   if (normalized === "mentor" || normalized === "admin") return normalized;
   return "mentee";
+}
+
+function normalizeFieldCategory(field) {
+  const normalized = slugifyText(field);
+  return FIELD_CATEGORY_ALIASES[normalized] || normalized;
 }
 
 function formatRoleLabel(role) {
@@ -1297,7 +1334,7 @@ const mentorData = {
     role: "Mentor Ngữ văn, truyền thông, thuyết trình và hoạt động ngoại khóa",
     bio: "Nguyễn Tiến Dũng hiện theo học chuyên ngành Truyền thông chính sách tại Học viện Báo chí và Tuyên truyền, có nền tảng học thuật mạnh ở môn Ngữ văn và nhiều trải nghiệm thực tế trong truyền thông, tổ chức hoạt động học sinh.",
     focus: "Ngữ văn, truyền thông, thuyết trình, hoạt động ngoại khóa",
-    field: "van",
+    field: "hoc-tap",
     availability: ["sang", "chieu", "toi", "cuoi-tuan"],
     availabilityText: "Linh hoạt theo lịch hẹn",
     service: ["1-1", "group", "roadmap", "competition"],
@@ -1736,7 +1773,7 @@ function filterMentors() {
     .filter(function (entry) {
       const mentor = entry.mentor;
       const matchesKeyword = !keyword || entry.score > 0;
-      const matchesField = !selectedField || mentor.field === selectedField;
+      const matchesField = !selectedField || normalizeFieldCategory(mentor.field) === selectedField;
       const matchesAvailability =
         !selectedAvailability || mentor.availability.includes(selectedAvailability);
       const matchesService = !selectedService || mentor.service.includes(selectedService);
@@ -2496,7 +2533,7 @@ function normalizeRemoteMentorProfile(record) {
   const normalizedProfile = Object.assign({}, profile, {
     id: mentorId,
     name: profile.name || record.name || "Mentor",
-    field: profile.field || record.field || "",
+    field: normalizeFieldCategory(profile.field || record.field || ""),
     _origin: "supabase"
   });
   normalizedProfile.searchableText = buildMentorSearchableText(normalizedProfile);
@@ -2840,7 +2877,7 @@ function buildAdminMentorApplicationCard(application) {
     ? `
         <div class="admin-request-inline-note">
           Gửi mentor link <a href="mentor-activate.html" target="_blank" rel="noreferrer">mentor-activate.html</a>
-          cùng email ứng tuyển và mã kích hoạt này để họ tự tạo mật khẩu đăng nhập.
+          cùng email ứng tuyển và mã kích hoạt này để họ tự tạo mật khẩu đăng nhập. Bước này chưa làm hồ sơ xuất hiện trên trang tìm kiếm.
         </div>
       `
     : "";
@@ -2895,7 +2932,7 @@ function buildAdminMentorApplicationCard(application) {
 
       <form class="admin-mentor-application-form">
         <label class="auth-field">
-          <span>Trạng thái</span>
+          <span>Trạng thái tuyển chọn / kích hoạt</span>
           <select name="status">
             <option value="pending" ${application.status === "pending" ? "selected" : ""}>pending</option>
             <option value="interviewing" ${application.status === "interviewing" ? "selected" : ""}>interviewing</option>
@@ -2907,10 +2944,10 @@ function buildAdminMentorApplicationCard(application) {
 
         <label class="auth-field">
           <span>Ghi chú admin</span>
-          <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã phỏng vấn ổn, gửi mã kích hoạt qua email.">${safeAdminNote}</textarea>
+          <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã phỏng vấn ổn, gửi mã kích hoạt qua email. Sau khi mentor kích hoạt và gửi hồ sơ, tiếp tục duyệt ở khu hồ sơ công khai.">${safeAdminNote}</textarea>
         </label>
 
-        <button type="submit" class="mentor-primary-btn">Lưu hồ sơ mentor</button>
+        <button type="submit" class="mentor-primary-btn">Lưu trạng thái ứng tuyển</button>
       </form>
     </article>
   `;
@@ -2949,9 +2986,9 @@ function buildAdminMentorApplicationSummary(applications) {
         <p>Ứng viên đang ở vòng trao đổi, đánh giá và chọn lọc.</p>
       </article>
       <article class="admin-summary-card">
-        <span>Đã cấp quyền</span>
+        <span>Đã cấp mã / đã kích hoạt</span>
         <strong>${counts.approved + counts.activated}</strong>
-        <p>Mentor đã được duyệt hoặc đã kích hoạt tài khoản thành công.</p>
+        <p>Đây mới là bước cấp tài khoản. Mentor vẫn cần gửi hồ sơ để admin duyệt công khai lên tìm kiếm.</p>
       </article>
     </div>
   `;
@@ -2970,7 +3007,7 @@ function buildAdminMentorProfileUpdateCard(request) {
     <article class="admin-request-card" data-mentor-profile-update-id="${request.id}">
       <div class="admin-request-head">
         <div>
-          <span class="admin-request-label">Mentor Update</span>
+          <span class="admin-request-label">Public Profile Review</span>
           <h3>${safeMentorName}</h3>
         </div>
         <span class="admin-request-status status-${safeStatus}">${safeStatus}</span>
@@ -2979,6 +3016,7 @@ function buildAdminMentorProfileUpdateCard(request) {
       <div class="admin-request-grid">
         <p><strong>Mentor ID:</strong> ${escapeHtml(request.mentorId)}</p>
         <p><strong>Gửi lúc:</strong> ${formatDate(request.createdAt)}</p>
+        <p><strong>Nhóm lĩnh vực:</strong> ${escapeHtml(profile.field || "Chưa cập nhật")}</p>
         <p><strong>Headline:</strong> ${escapeHtml(profile.role || "Chưa cập nhật")}</p>
         <p><strong>Nơi làm việc / học tập:</strong> ${escapeHtml(profile.workplace || "Chưa cập nhật")}</p>
         <p><strong>Lịch rảnh:</strong> ${escapeHtml(profile.availabilityText || "Chưa cập nhật")}</p>
@@ -3016,7 +3054,7 @@ function buildAdminMentorProfileUpdateCard(request) {
 
       <form class="admin-mentor-profile-update-form">
         <label class="auth-field">
-          <span>Trạng thái</span>
+          <span>Trạng thái hồ sơ công khai</span>
           <select name="status">
             <option value="pending" ${request.status === "pending" ? "selected" : ""}>pending</option>
             <option value="approved" ${request.status === "approved" ? "selected" : ""}>approved</option>
@@ -3026,10 +3064,10 @@ function buildAdminMentorProfileUpdateCard(request) {
 
         <label class="auth-field">
           <span>Ghi chú admin</span>
-          <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã duyệt, có thể cập nhật ra trang tìm kiếm mentor.">${safeAdminNote}</textarea>
+          <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã duyệt hồ sơ công khai, có thể hiển thị ra trang tìm kiếm mentor.">${safeAdminNote}</textarea>
         </label>
 
-        <button type="submit" class="mentor-primary-btn">Duyệt cập nhật</button>
+        <button type="submit" class="mentor-primary-btn">Lưu duyệt hồ sơ công khai</button>
       </form>
     </article>
   `;
@@ -3295,7 +3333,7 @@ function initializeAdminConsultationPage() {
         mentorProfileUpdateList.innerHTML = `
           <div class="admin-empty-state">
             <h3>Chưa có yêu cầu cập nhật hồ sơ mentor</h3>
-            <p>Khi mentor bấm lưu hồ sơ, yêu cầu sẽ được chuyển tới admin để duyệt trước khi cập nhật ra trang tìm kiếm.</p>
+            <p>Khi mentor bấm lưu hồ sơ, yêu cầu sẽ được chuyển tới đây để admin duyệt phần công khai trước khi hiển thị ra trang tìm kiếm.</p>
           </div>
         `;
         return;
@@ -3402,7 +3440,7 @@ function initializeAdminConsultationPage() {
         });
 
         card.outerHTML = buildAdminMentorApplicationCard(updatedApplication);
-        showMessage("adminConsultationMessage", "success", "Đã cập nhật hồ sơ ứng tuyển mentor.");
+        showMessage("adminConsultationMessage", "success", "Đã cập nhật trạng thái ứng tuyển mentor. Nếu mentor đã kích hoạt và gửi hồ sơ, tiếp tục duyệt ở khu hồ sơ công khai.");
       } catch (error) {
         showMessage("adminConsultationMessage", "error", error.message);
       }
@@ -3435,7 +3473,9 @@ function initializeAdminConsultationPage() {
         }
 
         await loadMentorProfileUpdates();
-        showMessage("adminConsultationMessage", "success", "Đã cập nhật yêu cầu chỉnh sửa hồ sơ mentor.");
+        showMessage("adminConsultationMessage", "success", status === "approved"
+          ? "Đã duyệt hồ sơ công khai. Mentor đã sẵn sàng hiển thị trên trang tìm kiếm."
+          : "Đã cập nhật trạng thái duyệt hồ sơ công khai của mentor.");
       } catch (error) {
         showMessage("adminConsultationMessage", "error", error.message);
       }
@@ -3485,7 +3525,7 @@ function initializeAdminConsultationPage() {
       const role = normalizeWhitespace(document.getElementById("adminMentorCreateRole").value);
       const workplace = normalizeWhitespace(document.getElementById("adminMentorCreateWorkplace").value);
       const focus = normalizeWhitespace(document.getElementById("adminMentorCreateFocus").value);
-      const field = normalizeWhitespace(document.getElementById("adminMentorCreateField").value);
+      const field = normalizeFieldCategory(document.getElementById("adminMentorCreateField").value);
       const image = normalizeWhitespace(document.getElementById("adminMentorCreateImage").value);
       const tag = normalizeWhitespace(document.getElementById("adminMentorCreateTag").value);
       const bio = normalizeWhitespace(document.getElementById("adminMentorCreateBio").value);
@@ -3636,6 +3676,7 @@ function initializeMentorDashboardPage() {
     headline: "",
     workplace: "",
     expertise: "",
+    field: "",
     services: "",
     pricing: "",
     availability: "",
@@ -3659,6 +3700,7 @@ function initializeMentorDashboardPage() {
       headline: approvedMentor.role,
       workplace: approvedMentor.workplace || "",
       expertise: approvedMentor.focus,
+      field: normalizeFieldCategory(approvedMentor.field),
       services: buildMentorServiceText((approvedMentor.servicePackages || []).map(function (item) {
         return item.serviceKey;
       })),
@@ -3681,6 +3723,7 @@ function initializeMentorDashboardPage() {
     headline: document.getElementById("mentorDashboardHeadline"),
     workplace: document.getElementById("mentorDashboardWorkplace"),
     expertise: document.getElementById("mentorDashboardExpertise"),
+    field: document.getElementById("mentorDashboardField"),
     services: document.getElementById("mentorDashboardServices"),
     pricing: document.getElementById("mentorDashboardPricing"),
     availability: document.getElementById("mentorDashboardAvailability"),
@@ -3717,6 +3760,7 @@ function initializeMentorDashboardPage() {
     fields.headline.value = payload.headline || "";
     fields.workplace.value = payload.workplace || "";
     fields.expertise.value = payload.expertise || "";
+    fields.field.value = normalizeFieldCategory(payload.field || "");
     fields.services.value = payload.services || "";
     fields.pricing.value = payload.pricing || "";
     fields.availability.value = payload.availability || "";
@@ -3763,7 +3807,7 @@ function initializeMentorDashboardPage() {
     previewElements.intro.textContent = payload.intro || "Phần giới thiệu mentor sẽ xuất hiện ở đây để bạn xem trước cách hiển thị.";
     previewElements.fit.textContent = payload.fit || "Mô tả nhóm mentee phù hợp sẽ hiển thị tại đây.";
     previewElements.statusBadge.textContent =
-      payload.visibility === "public" ? "Sẵn sàng công khai" : "Lưu nháp nội bộ";
+      payload.visibility === "public" ? "Sẵn sàng gửi duyệt công khai" : "Lưu nháp nội bộ";
     previewElements.statusBadge.className =
       "mentor-preview-status " + (payload.visibility === "public" ? "is-public" : "is-draft");
 
@@ -3801,6 +3845,7 @@ function initializeMentorDashboardPage() {
       headline: normalizeWhitespace(fields.headline.value),
       workplace: normalizeWhitespace(fields.workplace.value),
       expertise: normalizeWhitespace(fields.expertise.value),
+      field: normalizeFieldCategory(fields.field && fields.field.value),
       services: servicesSummary,
       pricing: pricingSummary,
       availability: availabilitySummary,
@@ -3906,6 +3951,11 @@ function initializeMentorDashboardPage() {
       return;
     }
 
+    if (!draftProfile.field) {
+      showMessage("mentorDashboardMessage", "error", "Hãy chọn nhóm lĩnh vực để hồ sơ có thể hiển thị đúng trong phần tìm kiếm.");
+      return;
+    }
+
     const updateRequest = {
       mentorId: mentorContext.mentorId || slugifyText(draftProfile.displayName || currentUser.name),
       mentorName: draftProfile.displayName || currentUser.name,
@@ -3916,6 +3966,7 @@ function initializeMentorDashboardPage() {
         role: draftProfile.headline,
         workplace: draftProfile.workplace,
         focus: draftProfile.expertise,
+        field: draftProfile.field,
         serviceText: draftProfile.services,
         servicePackages: draftProfile.servicePackages,
         pricing: draftProfile.pricing,
@@ -3954,7 +4005,7 @@ function initializeMentorDashboardPage() {
         await submitMentorProfileUpdate(updateRequest);
       }
 
-      showMessage("mentorDashboardMessage", "success", "Hồ sơ mentor đã được gửi về admin để duyệt. Sau khi approved, trang tìm kiếm mentor sẽ tự cập nhật.");
+      showMessage("mentorDashboardMessage", "success", "Hồ sơ mentor đã được gửi tới admin để duyệt phần công khai. Sau khi admin duyệt ở khu hồ sơ công khai, trang tìm kiếm sẽ tự cập nhật.");
     } catch (error) {
       showMessage("mentorDashboardMessage", "error", error.message || "Không thể gửi hồ sơ mentor lúc này.");
     }
@@ -4322,6 +4373,7 @@ function initializeProfilePage() {
         goal: updatedGoal,
         bio: updatedBio,
         role: updatedRole,
+        mentor_id: currentProfileUser.mentorId || "",
         avatar_url: draftAvatar || createAvatarFallback(updatedName),
         created_at: currentProfileUser.createdAt,
         updated_at: new Date().toISOString()

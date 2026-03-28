@@ -32,7 +32,7 @@
         <h1>Hoàn thiện hồ sơ chuyên nghiệp!</h1>
         <p>
           Cập nhật nơi làm việc hoặc học tập, chuyên môn, dịch vụ, mức giá và lịch rảnh.
-          Mỗi lần lưu, hồ sơ sẽ được gửi tới đội ngũ Mentor Me để kiểm tra trước khi cập nhật ra trang tìm kiếm mentor.
+          Mỗi lần lưu, hồ sơ sẽ được gửi tới admin để duyệt phần công khai. Chỉ sau khi admin duyệt hồ sơ này, mentor mới xuất hiện trên trang tìm kiếm.
         </p>
       </div>
     </section>
@@ -65,6 +65,21 @@
           <label class="auth-field">
             <span>Lĩnh vực chính</span>
             <input type="text" id="mentorDashboardExpertise" placeholder="Ví dụ: IELTS, Tiếng Anh giao tiếp, kỹ năng học tập">
+          </label>
+
+          <label class="auth-field">
+            <span>Nhóm lĩnh vực</span>
+            <select id="mentorDashboardField" required>
+              <option value="">Chọn nhóm lĩnh vực</option>
+              <option value="hoc-tap">Học tập (Toán, Văn,..)</option>
+              <option value="ngoai-ngu">Ngoại ngữ và chứng chỉ</option>
+              <option value="ngoai-khoa">Hoạt động ngoại khóa</option>
+              <option value="cuoc-thi-nghien-cuu">Cuộc thi học thuật, nghiên cứu khoa học</option>
+              <option value="dinh-huong-ky-nang">Định hướng nghề nghiệp & kỹ năng</option>
+              <option value="kinh-doanh-khoi-nghiep">Kinh doanh & khởi nghiệp</option>
+              <option value="cong-nghe">Công nghệ</option>
+              <option value="phat-trien-ban-than">Phát triển bản thân</option>
+            </select>
           </label>
 
           <label class="auth-field">
@@ -125,10 +140,10 @@
           </label>
 
           <label class="auth-field">
-            <span>Trạng thái hồ sơ</span>
+            <span>Trạng thái bản nháp gửi admin</span>
             <select id="mentorDashboardVisibility">
               <option value="draft">Lưu nháp nội bộ</option>
-              <option value="public">Sẵn sàng công khai</option>
+              <option value="public">Sẵn sàng gửi duyệt công khai</option>
             </select>
           </label>
 
