@@ -3222,21 +3222,29 @@ body{
 }
 
 body,
-.hero,
-.about-scale,
-.mentor,
-.mentee,
-.search-hero,
-.mentor-results,
 .mentor-detail-page,
 .booking-page,
 .services-page,
 .profile-page,
 .admin-page,
 .mentor-dashboard-page{
-  background:
-    radial-gradient(circle at top right, rgba(255,255,255,0.65), rgba(255,255,255,0) 26%),
-    linear-gradient(180deg, #dceeff 0%, #ffffff 50%, #dceeff 100%) !important;
+  background:#dceeff !important;
+}
+
+.hero,
+.mentor{
+  background:#dceeff !important;
+}
+
+.about,
+.mentee,
+.mentor-results{
+  background:#ffffff !important;
+}
+
+.about-scale,
+.search-hero{
+  background:#dceeff !important;
 }
 
 .mentor-card h3{
