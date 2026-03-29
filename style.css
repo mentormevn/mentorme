@@ -9453,6 +9453,39 @@ main{
   padding:0 !important;
 }
 
+/* Final cleanup for nav + text labels */
+.navbar .menu a,
+.navbar .menu li.active a{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  line-height:1.15 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  padding:0 !important;
+}
+
+.navbar .menu li.active a{
+  color:#0048a8 !important;
+  font-weight:800 !important;
+}
+
+.section-eyebrow,
+.hero-kicker,
+.services-panel-label,
+.service-type,
+.home-service-type,
+.partner-pill-row span{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  padding:0 !important;
+  color:#0048a8 !important;
+}
+
 .home-journey-head h2,
 .home-fields-copy h2,
 .home-results-head h2,
