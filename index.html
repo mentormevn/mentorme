@@ -165,6 +165,100 @@
         <button class="mentee-next" type="button" aria-label="Mentee tiếp theo">❯</button>
       </div>
     </section>
+
+    <section class="home-services">
+      <div class="home-services-head">
+        <div>
+          <span class="section-eyebrow">Dịch vụ</span>
+          <h2>Hệ sinh thái dịch vụ đồng hành từ nhanh đến chuyên sâu</h2>
+          <p>Chọn đúng hình thức sử dụng theo mục tiêu, thời gian và ngân sách của bạn.</p>
+        </div>
+        <a href="services.html" class="mentor-secondary-btn">Xem tất cả dịch vụ</a>
+      </div>
+
+      <div class="home-services-slider">
+        <button type="button" class="home-services-nav home-services-prev" aria-label="Dịch vụ trước">❮</button>
+        <div class="home-services-track" id="homeServicesTrack">
+          <article class="home-service-card">
+            <span class="home-service-index">01</span>
+            <span class="home-service-type">Mentoring 1–1</span>
+            <h3>Đồng hành 1 mentor - 1 mentee theo vấn đề cụ thể.</h3>
+            <p>Giải quyết CV, học tập, định hướng và xây lộ trình cá nhân hóa theo từng buổi online.</p>
+            <div class="home-service-meta">
+              <strong>Online video call</strong>
+              <span>100.000 – 300.000 VNĐ/buổi</span>
+            </div>
+          </article>
+
+          <article class="home-service-card">
+            <span class="home-service-index">02</span>
+            <span class="home-service-type">Courses & Classes</span>
+            <h3>Khóa học theo chủ đề với lộ trình rõ ràng.</h3>
+            <p>Học qua video hoặc lớp online trực tiếp, có thể học lại và theo dõi tiến độ cá nhân.</p>
+            <div class="home-service-meta">
+              <strong>Video / lớp online</strong>
+              <span>49.000 – 299.000 VNĐ/khóa</span>
+            </div>
+          </article>
+
+          <article class="home-service-card">
+            <span class="home-service-index">03</span>
+            <span class="home-service-type">Hỏi đáp nhanh</span>
+            <h3>Nhận phản hồi ngắn trong 12–24 giờ.</h3>
+            <p>Phù hợp khi bạn có câu hỏi nhỏ, cần mentor giải đáp nhanh mà không phải đặt lịch trước.</p>
+            <div class="home-service-meta">
+              <strong>Chat / tin nhắn</strong>
+              <span>10.000 – 30.000 VNĐ/câu hỏi</span>
+            </div>
+          </article>
+
+          <article class="home-service-card">
+            <span class="home-service-index">04</span>
+            <span class="home-service-type">Review & Feedback</span>
+            <h3>Nhận xét và chỉnh sửa tài liệu có chiều sâu.</h3>
+            <p>Review CV, bài luận, portfolio và góp ý chi tiết mà không cần gặp trực tiếp.</p>
+            <div class="home-service-meta">
+              <strong>Không cần gặp trực tiếp</strong>
+              <span>30.000 – 100.000 VNĐ/lần</span>
+            </div>
+          </article>
+
+          <article class="home-service-card">
+            <span class="home-service-index">05</span>
+            <span class="home-service-type">Career Mentoring</span>
+            <h3>Tư vấn định hướng nghề nghiệp và khởi nghiệp.</h3>
+            <p>Phân tích điểm mạnh, điểm yếu và đề xuất lộ trình phát triển phù hợp theo giai đoạn.</p>
+            <div class="home-service-meta">
+              <strong>1–1 hoặc nhóm nhỏ</strong>
+              <span>150.000 – 500.000 VNĐ/buổi</span>
+            </div>
+          </article>
+
+          <article class="home-service-card">
+            <span class="home-service-index">06</span>
+            <span class="home-service-type">Matching Mentor</span>
+            <h3>Đề xuất mentor phù hợp dựa trên mục tiêu và ngân sách.</h3>
+            <p>Hệ thống gợi ý danh sách mentor theo lĩnh vực quan tâm để tiết kiệm thời gian tìm kiếm.</p>
+            <div class="home-service-meta">
+              <strong>Tự động trên nền tảng</strong>
+              <span>Miễn phí</span>
+            </div>
+          </article>
+
+          <article class="home-service-card home-service-card-featured">
+            <span class="home-service-index">07</span>
+            <span class="home-service-type">Premium Membership</span>
+            <h3>Gói dài hạn cho người dùng cần mentor thường xuyên.</h3>
+            <p>Giảm chi phí, tặng lượt hỏi đáp miễn phí và ưu tiên kết nối với mentor chất lượng cao.</p>
+            <div class="home-service-meta">
+              <strong>Gói thuê bao năm</strong>
+              <span>100.000 VNĐ/năm</span>
+            </div>
+          </article>
+        </div>
+        <button type="button" class="home-services-nav home-services-next" aria-label="Dịch vụ tiếp theo">❯</button>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
@@ -228,6 +322,24 @@
         track2.style.transform = `translateX(-${index2 * 100}%)`;
       }
     };
+
+    const homeServicesTrack = document.getElementById("homeServicesTrack");
+    const homeServicesPrev = document.querySelector(".home-services-prev");
+    const homeServicesNext = document.querySelector(".home-services-next");
+
+    if (homeServicesTrack && homeServicesPrev && homeServicesNext) {
+      const scrollHomeServices = (direction) => {
+        const card = homeServicesTrack.querySelector(".home-service-card");
+        const step = card ? card.getBoundingClientRect().width + 18 : 320;
+        homeServicesTrack.scrollBy({
+          left: direction * step,
+          behavior: "smooth"
+        });
+      };
+
+      homeServicesPrev.addEventListener("click", () => scrollHomeServices(-1));
+      homeServicesNext.addEventListener("click", () => scrollHomeServices(1));
+    }
   </script>
 
   <script src="public-config.js"></script>
