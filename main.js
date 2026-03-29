@@ -211,6 +211,36 @@ function hasProfileDetails(details) {
   });
 }
 
+function splitMultilineItems(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map(function (item) {
+        return normalizeWhitespace(item);
+      })
+      .filter(Boolean);
+  }
+
+  return String(value || "")
+    .split("\n")
+    .map(function (item) {
+      return normalizeWhitespace(item);
+    })
+    .filter(Boolean);
+}
+
+function normalizeMultilineText(value) {
+  return splitMultilineItems(value).join("\n");
+}
+
+function renderMultilineListHtml(value, emptyText) {
+  const items = splitMultilineItems(value);
+  return items.length
+    ? items.map(function (item) {
+        return "<li>" + escapeHtml(item) + "</li>";
+      }).join("")
+    : "<li>" + escapeHtml(emptyText) + "</li>";
+}
+
 function getRoleHomePath(role) {
   const normalizedRole = normalizeRole(role);
   if (normalizedRole === "admin") return "admin-consultations.html";
@@ -1754,7 +1784,7 @@ function renderReviewStars(rating) {
 
 function createMentorCard(mentor) {
   const safeMentor = getResolvedMentorById(mentor.id) || mentor;
-  const achievementItems = safeMentor.achievements
+  const achievementItems = splitMultilineItems(safeMentor.featuredAchievements || safeMentor.achievements)
     .slice(0, 2)
     .map(function (achievement) {
       return "<li>" + achievement + "</li>";
@@ -2069,28 +2099,21 @@ function renderMentorDetail() {
   const introElement = document.getElementById("mentorDetailIntro");
   if (introElement) introElement.textContent = mentor.intro || mentor.bio || "Mentor chưa cập nhật phần giới thiệu bản thân.";
   const experienceElement = document.getElementById("mentorDetailExperience");
-  if (experienceElement) experienceElement.textContent = mentor.experience || "Mentor chưa cập nhật kinh nghiệm làm việc.";
+  if (experienceElement) experienceElement.innerHTML = renderMultilineListHtml(mentor.experience, "Mentor chưa cập nhật kinh nghiệm làm việc.");
   const educationElement = document.getElementById("mentorDetailEducation");
-  if (educationElement) educationElement.textContent = mentor.education || "Mentor chưa cập nhật quá trình học tập.";
+  if (educationElement) educationElement.innerHTML = renderMultilineListHtml(mentor.education, "Mentor chưa cập nhật quá trình học tập.");
   const activitiesElement = document.getElementById("mentorDetailActivities");
-  if (activitiesElement) activitiesElement.textContent = mentor.activities || "Mentor chưa cập nhật hoạt động ngoại khóa.";
+  if (activitiesElement) activitiesElement.innerHTML = renderMultilineListHtml(mentor.activities, "Mentor chưa cập nhật hoạt động ngoại khóa.");
   const awardsElement = document.getElementById("mentorDetailAwards");
-  if (awardsElement) awardsElement.textContent = mentor.awards || "Mentor chưa cập nhật giải thưởng.";
+  if (awardsElement) awardsElement.innerHTML = renderMultilineListHtml(mentor.awards, "Mentor chưa cập nhật giải thưởng.");
   const skillsElement = document.getElementById("mentorDetailSkills");
-  if (skillsElement) skillsElement.textContent = mentor.skills || "Mentor chưa cập nhật kỹ năng và chứng chỉ.";
+  if (skillsElement) skillsElement.innerHTML = renderMultilineListHtml(mentor.skills, "Mentor chưa cập nhật kỹ năng và chứng chỉ.");
   document.getElementById("mentorDetailFit").textContent = mentor.fit;
 
   const bookingLink = document.getElementById("mentorBookingLink");
   if (bookingLink) {
     bookingLink.href = "booking.html?id=" + mentor.id;
   }
-
-  const achievementsElement = document.getElementById("mentorDetailAchievements");
-  achievementsElement.innerHTML = mentor.achievements
-    .map(function (achievement) {
-      return "<li>" + achievement + "</li>";
-    })
-    .join("");
 
   const reviewsElement = document.getElementById("mentorDetailReviews");
   if (reviewsElement) {
@@ -4267,6 +4290,7 @@ function initializeMentorDashboardPage() {
     activities: "",
     awards: "",
     skills: "",
+    featuredAchievements: "",
     achievements: "",
     fit: "",
     visibility: "draft",
@@ -4300,6 +4324,7 @@ function initializeMentorDashboardPage() {
       activities: approvedMentor.activities || "",
       awards: approvedMentor.awards || "",
       skills: approvedMentor.skills || "",
+      featuredAchievements: (approvedMentor.featuredAchievements || approvedMentor.achievements || []).slice(0, 2).join("\n"),
       achievements: (approvedMentor.achievements || []).join("\n"),
       fit: approvedMentor.fit || "",
       visibility: "public",
@@ -4324,6 +4349,7 @@ function initializeMentorDashboardPage() {
     activities: document.getElementById("mentorDashboardActivities"),
     awards: document.getElementById("mentorDashboardAwards"),
     skills: document.getElementById("mentorDashboardSkills"),
+    featuredAchievements: document.getElementById("mentorDashboardAchievements"),
     achievements: document.getElementById("mentorDashboardAchievements"),
     fit: document.getElementById("mentorDashboardFit"),
     visibility: document.getElementById("mentorDashboardVisibility"),
@@ -4353,6 +4379,7 @@ function initializeMentorDashboardPage() {
     activities: document.getElementById("mentorDashboardPreviewActivities"),
     awards: document.getElementById("mentorDashboardPreviewAwards"),
     skills: document.getElementById("mentorDashboardPreviewSkills"),
+    featuredAchievements: document.getElementById("mentorDashboardPreviewAchievements"),
     achievements: document.getElementById("mentorDashboardPreviewAchievements"),
     fit: document.getElementById("mentorDashboardPreviewFit"),
     statusBadge: document.getElementById("mentorDashboardStatusBadge")
@@ -4441,7 +4468,7 @@ function initializeMentorDashboardPage() {
     if (fields.activities) fields.activities.value = payload.activities || "";
     if (fields.awards) fields.awards.value = payload.awards || "";
     if (fields.skills) fields.skills.value = payload.skills || "";
-    fields.achievements.value = payload.achievements || "";
+    if (fields.featuredAchievements) fields.featuredAchievements.value = payload.featuredAchievements || payload.achievements || "";
     fields.fit.value = payload.fit || "";
     fields.visibility.value = payload.visibility || "draft";
     if (fields.rating) fields.rating.value = payload.rating || "";
@@ -4494,6 +4521,9 @@ function initializeMentorDashboardPage() {
       activities: payload.activities || draftProfile.activities,
       awards: payload.awards || draftProfile.awards,
       skills: payload.skills || draftProfile.skills,
+      featuredAchievements: Array.isArray(payload.featuredAchievements || payload.achievements)
+        ? (payload.featuredAchievements || payload.achievements).slice(0, 2).join("\n")
+        : (payload.featuredAchievements || payload.achievements || draftProfile.featuredAchievements),
       achievements: Array.isArray(payload.achievements) ? payload.achievements.join("\n") : (payload.achievements || draftProfile.achievements),
       fit: payload.fit || draftProfile.fit,
       rating: payload.rating || draftProfile.rating,
@@ -4533,29 +4563,24 @@ function initializeMentorDashboardPage() {
         });
     }
     previewElements.intro.textContent = payload.intro || "Phần giới thiệu mentor sẽ xuất hiện ở đây để bạn xem trước cách hiển thị.";
-    if (previewElements.experience) previewElements.experience.textContent = payload.experience || "Chưa cập nhật kinh nghiệm làm việc.";
-    if (previewElements.education) previewElements.education.textContent = payload.education || "Chưa cập nhật quá trình học tập.";
-    if (previewElements.activities) previewElements.activities.textContent = payload.activities || "Chưa cập nhật hoạt động ngoại khóa.";
-    if (previewElements.awards) previewElements.awards.textContent = payload.awards || "Chưa cập nhật giải thưởng.";
-    if (previewElements.skills) previewElements.skills.textContent = payload.skills || "Chưa cập nhật kỹ năng và chứng chỉ.";
+    if (previewElements.experience) previewElements.experience.innerHTML = renderMultilineListHtml(payload.experience, "Chưa cập nhật kinh nghiệm làm việc.");
+    if (previewElements.education) previewElements.education.innerHTML = renderMultilineListHtml(payload.education, "Chưa cập nhật quá trình học tập.");
+    if (previewElements.activities) previewElements.activities.innerHTML = renderMultilineListHtml(payload.activities, "Chưa cập nhật hoạt động ngoại khóa.");
+    if (previewElements.awards) previewElements.awards.innerHTML = renderMultilineListHtml(payload.awards, "Chưa cập nhật giải thưởng.");
+    if (previewElements.skills) previewElements.skills.innerHTML = renderMultilineListHtml(payload.skills, "Chưa cập nhật kỹ năng và chứng chỉ.");
     previewElements.fit.textContent = payload.fit || "Mô tả nhóm mentee phù hợp sẽ hiển thị tại đây.";
     previewElements.statusBadge.textContent =
       payload.visibility === "public" ? "Sẵn sàng gửi duyệt công khai" : "Lưu nháp nội bộ";
     previewElements.statusBadge.className =
       "mentor-preview-status " + (payload.visibility === "public" ? "is-public" : "is-draft");
 
-    const achievements = String(payload.achievements || "")
-      .split("\n")
-      .map(function (item) {
-        return item.trim();
-      })
-      .filter(Boolean);
-
-    previewElements.achievements.innerHTML = achievements.length
-      ? achievements.map(function (item) {
-          return "<li>" + escapeHtml(item) + "</li>";
-        }).join("")
-      : "<li>Chưa có thành tích nổi bật.</li>";
+    previewElements.achievements.innerHTML = renderMultilineListHtml(
+      String(payload.featuredAchievements || payload.achievements || "")
+        .split("\n")
+        .slice(0, 2)
+        .join("\n"),
+      "Chưa có thành tích nổi bật."
+    );
   }
 
   function syncFromForm() {
@@ -4588,12 +4613,13 @@ function initializeMentorDashboardPage() {
       availabilitySlots: selectedAvailabilitySlots,
       servicePackages: servicePackages,
       intro: normalizeWhitespace(fields.intro.value),
-      experience: normalizeWhitespace(fields.experience && fields.experience.value),
-      education: normalizeWhitespace(fields.education && fields.education.value),
-      activities: normalizeWhitespace(fields.activities && fields.activities.value),
-      awards: normalizeWhitespace(fields.awards && fields.awards.value),
-      skills: normalizeWhitespace(fields.skills && fields.skills.value),
-      achievements: fields.achievements.value.trim(),
+      experience: normalizeMultilineText(fields.experience && fields.experience.value),
+      education: normalizeMultilineText(fields.education && fields.education.value),
+      activities: normalizeMultilineText(fields.activities && fields.activities.value),
+      awards: normalizeMultilineText(fields.awards && fields.awards.value),
+      skills: normalizeMultilineText(fields.skills && fields.skills.value),
+      featuredAchievements: splitMultilineItems(fields.featuredAchievements && fields.featuredAchievements.value).slice(0, 2).join("\n"),
+      achievements: splitMultilineItems(fields.featuredAchievements && fields.featuredAchievements.value).slice(0, 2).join("\n"),
       fit: normalizeWhitespace(fields.fit.value),
       visibility: fields.visibility.value === "public" ? "public" : "draft",
       rating: normalizeWhitespace(fields.rating && fields.rating.value),
@@ -4756,6 +4782,7 @@ function initializeMentorDashboardPage() {
         activities: draftProfile.activities,
         awards: draftProfile.awards,
         skills: draftProfile.skills,
+        featuredAchievements: splitMultilineItems(draftProfile.featuredAchievements || draftProfile.achievements).slice(0, 2),
         achievements: String(draftProfile.achievements || "").split("\n").map(function (item) { return item.trim(); }).filter(Boolean),
         fit: draftProfile.fit,
         rating: Number(draftProfile.rating || (approvedMentor && approvedMentor.rating) || 4.8),
@@ -5298,7 +5325,7 @@ function renderProfileDetailsSections(details, options) {
             return `
               <div class="profile-detail-block">
                 <strong>${escapeHtml(section.label)}</strong>
-                <p>${escapeHtml(section.value || "Chưa cập nhật")}</p>
+                <ul>${renderMultilineListHtml(section.value, "Chưa cập nhật")}</ul>
               </div>
             `;
           }).join("")
