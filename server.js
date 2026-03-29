@@ -539,6 +539,32 @@ function normalizeFieldCategory(field) {
   return aliases[normalized] || normalized;
 }
 
+function normalizeFieldCategoryList(values) {
+  const list = Array.isArray(values) ? values : [values];
+  return list
+    .map(function (value) {
+      return normalizeFieldCategory(value);
+    })
+    .filter(Boolean)
+    .filter(function (value, index, array) {
+      return array.indexOf(value) === index;
+    });
+}
+
+function stableSerialize(value) {
+  if (Array.isArray(value)) {
+    return "[" + value.map(stableSerialize).join(",") + "]";
+  }
+
+  if (value && typeof value === "object") {
+    return "{" + Object.keys(value).sort().map(function (key) {
+      return JSON.stringify(key) + ":" + stableSerialize(value[key]);
+    }).join(",") + "}";
+  }
+
+  return JSON.stringify(value);
+}
+
 const VALID_MENTOR_FIELD_CATEGORIES = new Set([
   "hoc-tap",
   "ngoai-ngu",
@@ -1742,7 +1768,8 @@ app.post("/api/mentor-profile-updates", authMiddleware, async (req, res) => {
     return;
   }
 
-  const normalizedField = normalizeFieldCategory(profile.field || "");
+  const normalizedFields = normalizeFieldCategoryList(profile.fields || profile.field || []);
+  const normalizedField = normalizedFields[0] || normalizeFieldCategory(profile.field || "");
   if (!normalizedField) {
     res.status(400).json({ message: "Vui long chon nhom linh vuc cho ho so mentor." });
     return;
@@ -1750,6 +1777,10 @@ app.post("/api/mentor-profile-updates", authMiddleware, async (req, res) => {
 
   try {
     const now = new Date().toISOString();
+    const nextProfile = Object.assign({}, profile, {
+      field: normalizedField,
+      fields: normalizedFields
+    });
     const payload = {
       id: "mentor-profile-update-" + mentorId,
       mentor_id: mentorId,
@@ -1757,9 +1788,7 @@ app.post("/api/mentor-profile-updates", authMiddleware, async (req, res) => {
       mentor_name: mentorName,
       status: "pending",
       admin_note: "",
-      profile: Object.assign({}, profile, {
-        field: normalizedField
-      }),
+      profile: nextProfile,
       created_at: now,
       updated_at: now
     };
@@ -1775,6 +1804,12 @@ app.post("/api/mentor-profile-updates", authMiddleware, async (req, res) => {
 
     if (existingRequest) {
       payload.created_at = existingRequest.created_at || now;
+      const previousComparableProfile = stableSerialize(existingRequest.profile || {});
+      const nextComparableProfile = stableSerialize(nextProfile);
+      if (previousComparableProfile === nextComparableProfile) {
+        payload.status = existingRequest.status || "pending";
+        payload.admin_note = existingRequest.admin_note || "";
+      }
     }
 
     const [savedRequest] = await restUpsert("mentor_profile_updates", payload, {

@@ -969,6 +969,57 @@ function readFileAsDataUrl(file) {
   });
 }
 
+function readOptimizedImageAsDataUrl(file, options) {
+  const settings = Object.assign({
+    maxWidth: 1200,
+    maxHeight: 1200,
+    quality: 0.84,
+    outputType: "image/jpeg"
+  }, options || {});
+
+  if (!file || !String(file.type || "").startsWith("image/") || file.type === "image/svg+xml") {
+    return readFileAsDataUrl(file);
+  }
+
+  return readFileAsDataUrl(file).then(function (sourceDataUrl) {
+    return new Promise(function (resolve, reject) {
+      const image = new Image();
+      image.onload = function () {
+        const width = image.naturalWidth || image.width;
+        const height = image.naturalHeight || image.height;
+        if (!width || !height) {
+          resolve(sourceDataUrl);
+          return;
+        }
+
+        const ratio = Math.min(
+          1,
+          settings.maxWidth / width,
+          settings.maxHeight / height
+        );
+        const targetWidth = Math.max(1, Math.round(width * ratio));
+        const targetHeight = Math.max(1, Math.round(height * ratio));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          resolve(sourceDataUrl);
+          return;
+        }
+
+        context.drawImage(image, 0, 0, targetWidth, targetHeight);
+        resolve(canvas.toDataURL(settings.outputType, settings.quality));
+      };
+      image.onerror = function () {
+        reject(new Error("Không thể xử lý ảnh đã chọn."));
+      };
+      image.src = sourceDataUrl;
+    });
+  });
+}
+
 function getCurrentUser() {
   return currentSessionUser;
 }
@@ -4127,7 +4178,7 @@ function initializeAdminConsultationPage() {
     mentorCreateImageUpload.addEventListener("change", function () {
       const file = mentorCreateImageUpload.files && mentorCreateImageUpload.files[0];
       if (!file) return;
-      readFileAsDataUrl(file)
+      readOptimizedImageAsDataUrl(file)
         .then(function (dataUrl) {
           if (mentorCreateImageInput) mentorCreateImageInput.value = dataUrl;
           if (mentorCreateImagePreview) mentorCreateImagePreview.src = dataUrl;
@@ -4589,7 +4640,7 @@ function initializeMentorDashboardPage() {
     imageUploadInput.addEventListener("change", function () {
       const file = imageUploadInput.files && imageUploadInput.files[0];
       if (!file) return;
-      readFileAsDataUrl(file)
+      readOptimizedImageAsDataUrl(file)
         .then(function (dataUrl) {
           draftProfile = Object.assign({}, draftProfile, {
             image: dataUrl,
@@ -5064,12 +5115,18 @@ function initializeProfilePage() {
     const file = profileAvatarUpload.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      draftAvatar = event.target.result;
-      profileAvatar.src = draftAvatar;
-    };
-    reader.readAsDataURL(file);
+    readOptimizedImageAsDataUrl(file, {
+      maxWidth: 800,
+      maxHeight: 800,
+      quality: 0.86
+    })
+      .then(function (dataUrl) {
+        draftAvatar = dataUrl;
+        profileAvatar.src = draftAvatar;
+      })
+      .catch(function (error) {
+        showMessage("profileMessage", "error", error.message);
+      });
   });
 
   profileForm.addEventListener("submit", async function (e) {
