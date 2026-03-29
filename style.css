@@ -4672,6 +4672,32 @@ body,
   font-weight:700;
 }
 
+.admin-request-link--code{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.admin-request-link--code strong{
+  display:inline-flex;
+  align-items:center;
+  min-height:48px;
+  padding:0 16px;
+  border-radius:14px;
+  background:#fff;
+  border:1px solid rgba(27,79,163,0.18);
+  color:var(--brand);
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:0.08em;
+}
+
+.admin-request-online--activation{
+  background:rgba(255,255,255,0.92);
+  border:1px solid rgba(27,79,163,0.1);
+}
+
 .admin-request-form{
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
@@ -4715,6 +4741,17 @@ body,
 
 .admin-mentor-profile-update-form button{
   width:fit-content;
+}
+
+.admin-request-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.admin-request-actions--inline{
+  margin-top:12px;
 }
 
 .admin-request-inline-note{

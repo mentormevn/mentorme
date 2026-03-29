@@ -3268,6 +3268,13 @@ function buildAdminMentorApplicationCard(application) {
   const activationHtml = application.activationCode
     ? `<strong>${escapeHtml(application.activationCode)}</strong>`
     : "<span>Chưa cấp mã kích hoạt</span>";
+  const activationActionHtml = application.activationCode
+    ? `
+        <div class="admin-request-actions admin-request-actions--inline">
+          <a href="mentor-activate.html" target="_blank" rel="noreferrer" class="mentor-secondary-btn">Mở trang kích hoạt</a>
+        </div>
+      `
+    : "";
   const activationGuideHtml = application.activationCode
     ? `
         <div class="admin-request-inline-note">
@@ -3318,9 +3325,10 @@ function buildAdminMentorApplicationCard(application) {
           <span>Portfolio/ LinkedIn</span>
           <div class="admin-request-link">${portfolioHtml}</div>
         </div>
-        <div class="admin-request-online">
-          <span>Mã kích hoạt</span>
-          <div class="admin-request-link">${activationHtml}</div>
+        <div class="admin-request-online admin-request-online--activation">
+          <span>Mã kích hoạt mentor</span>
+          <div class="admin-request-link admin-request-link--code">${activationHtml}</div>
+          ${activationActionHtml}
           ${activationGuideHtml}
         </div>
       </div>
@@ -3462,7 +3470,12 @@ function buildAdminMentorProfileUpdateCard(request) {
           <textarea name="adminNote" rows="4" placeholder="Ví dụ: Đã duyệt hồ sơ công khai, có thể hiển thị ra trang tìm kiếm mentor.">${safeAdminNote}</textarea>
         </label>
 
-        <button type="submit" class="mentor-primary-btn">Lưu duyệt hồ sơ công khai</button>
+        <div class="admin-request-actions">
+          <button type="submit" class="mentor-primary-btn">Lưu duyệt hồ sơ công khai</button>
+          ${request.status !== "approved"
+            ? '<button type="submit" class="mentor-secondary-btn" name="quickAction" value="publish">Đăng mentor lên search</button>'
+            : ""}
+        </div>
       </form>
     </article>
   `;
@@ -3992,7 +4005,7 @@ function initializeAdminConsultationPage() {
         }
         await fetchPublicMentorProfiles();
         showMessage("adminConsultationMessage", "success", updatedApplication && updatedApplication.status === "approved"
-          ? "Đã duyệt hồ sơ ứng tuyển mentor và tạo hồ sơ nháp để mentor tiếp tục hoàn thiện ở dashboard."
+          ? "Đã duyệt hồ sơ ứng tuyển mentor và cấp mã kích hoạt để mentor tiếp tục hoàn thiện hồ sơ ở dashboard."
           : "Đã cập nhật trạng thái ứng tuyển mentor.");
       } catch (error) {
         showMessage("adminConsultationMessage", "error", error.message);
@@ -4012,7 +4025,11 @@ function initializeAdminConsultationPage() {
 
       const requestId = card.getAttribute("data-mentor-profile-update-id");
       const formData = new FormData(form);
-      const status = normalizeWhitespace(formData.get("status"));
+      const submitter = e.submitter || null;
+      const quickAction = submitter ? normalizeWhitespace(submitter.value || "") : "";
+      const status = quickAction === "publish"
+        ? "approved"
+        : normalizeWhitespace(formData.get("status"));
       const adminNote = normalizeWhitespace(formData.get("adminNote"));
 
       try {
@@ -4025,7 +4042,7 @@ function initializeAdminConsultationPage() {
 
         await loadMentorProfileUpdates();
         showMessage("adminConsultationMessage", "success", status === "approved"
-          ? "Đã duyệt hồ sơ công khai. Mentor đã sẵn sàng hiển thị trên trang tìm kiếm."
+          ? "Đã đăng mentor lên search. Hồ sơ công khai đã sẵn sàng hiển thị trên trang tìm kiếm."
           : "Đã cập nhật trạng thái duyệt hồ sơ công khai của mentor.");
       } catch (error) {
         showMessage("adminConsultationMessage", "error", error.message);
@@ -4868,6 +4885,12 @@ function redirectIfAuthenticated() {
 function initializeRegisterPage() {
   const registerForm = document.getElementById("registerForm");
   if (!registerForm) return;
+
+  if (window.location.protocol === "file:") {
+    showMessage("registerMessage", "error", "Trang đăng ký không hoạt động khi mở bằng file local. Hãy dùng website đã deploy hoặc chạy server local để gửi yêu cầu tạo tài khoản.");
+    return;
+  }
+
   if (!ensureSupabaseReady("registerMessage")) return;
 
   registerForm.addEventListener("submit", async function (e) {
