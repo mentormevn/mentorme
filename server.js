@@ -33,18 +33,34 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_DASHBOARD_PASSWORD = process.env.ADMIN_DASHBOARD_PASSWORD || "ADMIN2026";
-const SUPABASE_URL =
-  process.env.SUPABASE_URL || "https://gmyrnqupbqwbyaamixgv.supabase.co";
-const SUPABASE_ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdteXJucXVwYnF3YnlhYW1peGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MTgzOTYsImV4cCI6MjA4OTk5NDM5Nn0.Q8EN6VzW6NG6hsMyOki5GjZsiWPfS0msjBesu6_gy6U";
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "";
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_SERVICE_KEY ||
   "";
+const PUBLIC_CONFIG_PATH = path.join(__dirname, "public-config.js");
+
+function getPublicClientConfig() {
+  return {
+    SUPABASE_URL: SUPABASE_URL,
+    SUPABASE_ANON_KEY: SUPABASE_ANON_KEY
+  };
+}
+
+function writePublicConfigFile() {
+  const fileContent = "window.MENTOR_ME_CONFIG = " + JSON.stringify(getPublicClientConfig(), null, 2) + ";\n";
+  fs.writeFileSync(PUBLIC_CONFIG_PATH, fileContent, "utf8");
+}
+
+writePublicConfigFile();
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
+app.get("/public-config.js", function (req, res) {
+  res.type("application/javascript");
+  res.send("window.MENTOR_ME_CONFIG = " + JSON.stringify(getPublicClientConfig(), null, 2) + ";\n");
+});
 app.use(express.static(__dirname));
 
 class SupabaseError extends Error {
