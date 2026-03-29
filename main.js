@@ -4039,8 +4039,9 @@ function initializeAdminConsultationPage() {
         });
 
         await fetchPublicMentorProfiles();
-
-        await loadMentorProfileUpdates();
+        if (request) {
+          card.outerHTML = buildAdminMentorProfileUpdateCard(request);
+        }
         showMessage("adminConsultationMessage", "success", status === "approved"
           ? "Đã đăng mentor lên search. Hồ sơ công khai đã sẵn sàng hiển thị trên trang tìm kiếm."
           : "Đã cập nhật trạng thái duyệt hồ sơ công khai của mentor.");
@@ -4064,17 +4065,25 @@ function initializeAdminConsultationPage() {
       const formData = new FormData(form);
       try {
         if (isRealAdmin && isSupabaseReady()) {
-          await updateAdminBookingRequest(currentAdminKey, requestId, {
+          const updatedRequest = await updateAdminBookingRequest(currentAdminKey, requestId, {
             status: normalizeWhitespace(formData.get("status")),
             adminNote: normalizeWhitespace(formData.get("adminNote"))
           });
+          if (updatedRequest) {
+            card.outerHTML = buildAdminBookingRequestCard(updatedRequest);
+          }
         } else {
           updateBookingRequest(requestId, {
             status: normalizeWhitespace(formData.get("status")),
             adminNote: normalizeWhitespace(formData.get("adminNote"))
           });
+          const updatedRequest = getBookingRequests().find(function (item) {
+            return String(item.id) === String(requestId);
+          });
+          if (updatedRequest) {
+            card.outerHTML = buildAdminBookingRequestCard(updatedRequest);
+          }
         }
-        await loadBookingRequestsForAdmin();
         showMessage("adminConsultationMessage", "success", "Đã cập nhật đăng ký học với mentor.");
       } catch (error) {
         showMessage("adminConsultationMessage", "error", error.message);
