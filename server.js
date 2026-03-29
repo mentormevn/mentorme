@@ -377,6 +377,26 @@ function sanitizeMentorApplication(application) {
   };
 }
 
+function buildMentorApplicationConflictMessage(application) {
+  const status = String(application && application.status ? application.status : "pending").trim().toLowerCase();
+
+  if (status === "approved") {
+    return application.activation_code
+      ? "Email nay da duoc duyet mentor va da co ma kich hoat. Hay vao trang mentor-activate.html de kich hoat tai khoan."
+      : "Email nay da duoc duyet mentor. Admin can cap ma kich hoat truoc khi ban tao tai khoan.";
+  }
+
+  if (status === "activated") {
+    return "Email nay da kich hoat tai khoan mentor. Hay dang nhap de su dung hoac dat lai mat khau neu can.";
+  }
+
+  if (status === "interviewing") {
+    return "Email nay da co ho so mentor va dang o buoc phong van/chon loc. Vui long cho admin lien he tiep.";
+  }
+
+  return "Email nay da co ho so ung tuyen mentor dang duoc xu ly.";
+}
+
 function sanitizeMentorProfileUpdate(request) {
   return {
     id: String(request.id || ""),
@@ -487,6 +507,110 @@ function normalizeFieldCategory(field) {
   };
 
   return aliases[normalized] || normalized;
+}
+
+const VALID_MENTOR_FIELD_CATEGORIES = new Set([
+  "hoc-tap",
+  "ngoai-ngu",
+  "ngoai-khoa",
+  "cuoc-thi-nghien-cuu",
+  "dinh-huong-ky-nang",
+  "kinh-doanh-khoi-nghiep",
+  "cong-nghe",
+  "phat-trien-ban-than"
+]);
+
+function inferMentorFieldCategory(value) {
+  const rawValue = String(value || "").trim().toLowerCase();
+  const normalizedValue = normalizeFieldCategory(rawValue);
+  if (VALID_MENTOR_FIELD_CATEGORIES.has(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  const keywordMappings = [
+    { field: "ngoai-ngu", keywords: ["ielts", "toeic", "toefl", "english", "tieng anh", "ngoai ngu", "language"] },
+    { field: "cong-nghe", keywords: ["lap trinh", "coding", "code", "developer", "software", "data", "ai", "cong nghe"] },
+    { field: "kinh-doanh-khoi-nghiep", keywords: ["startup", "khoi nghiep", "kinh doanh", "marketing", "sales", "business"] },
+    { field: "cuoc-thi-nghien-cuu", keywords: ["nghien cuu", "research", "competition", "cuoc thi", "hoc thuat"] },
+    { field: "ngoai-khoa", keywords: ["ngoai khoa", "clb", "club", "leadership", "volunteer", "su kien"] },
+    { field: "hoc-tap", keywords: ["toan", "van", "ly", "hoa", "sinh", "su", "dia", "on thi", "hoc tap"] },
+    { field: "phat-trien-ban-than", keywords: ["phat trien ban than", "mindset", "self", "habit", "productivity"] }
+  ];
+
+  const matched = keywordMappings.find(function (item) {
+    return item.keywords.some(function (keyword) {
+      return rawValue.includes(keyword);
+    });
+  });
+
+  return matched ? matched.field : "dinh-huong-ky-nang";
+}
+
+function buildMentorIdFromApplication(application, existingProfile) {
+  if (existingProfile && existingProfile.id) {
+    return String(existingProfile.id);
+  }
+
+  const baseId = slugifyText(application && application.full_name ? application.full_name : "");
+  return baseId || ("mentor-application-" + application.id);
+}
+
+function buildPublishedMentorProfileFromApplication(application, existingProfile) {
+  const experience = String(application && application.experience ? application.experience : "").trim();
+  const expertise = String(application && application.expertise ? application.expertise : "").trim();
+  const motivation = String(application && application.motivation ? application.motivation : "").trim();
+  const portfolioLink = String(application && application.portfolio_link ? application.portfolio_link : "").trim();
+  const field = inferMentorFieldCategory(expertise || experience || motivation);
+  const mentorId = buildMentorIdFromApplication(application, existingProfile);
+  const previousProfile = existingProfile && typeof existingProfile.profile === "object" ? existingProfile.profile : {};
+  const achievements = []
+    .concat(Array.isArray(previousProfile.achievements) ? previousProfile.achievements : [])
+    .concat(portfolioLink ? ["Portfolio: " + portfolioLink] : [])
+    .filter(Boolean);
+  const uniqueAchievements = Array.from(new Set(achievements));
+  const profile = Object.assign({}, previousProfile, {
+    id: mentorId,
+    name: application.full_name,
+    displayName: previousProfile.displayName || application.full_name,
+    image: previousProfile.image || "robot.png",
+    role: previousProfile.role || expertise || "Mentor đồng hành 1-1",
+    workplace: previousProfile.workplace || "Đang cập nhật",
+    focus: previousProfile.focus || expertise,
+    field: field,
+    serviceText: previousProfile.serviceText || "Mentoring 1-1",
+    servicePackages: Array.isArray(previousProfile.servicePackages) && previousProfile.servicePackages.length
+      ? previousProfile.servicePackages
+      : [
+          {
+            id: "package-1-1-1",
+            serviceKey: "1-1",
+            title: "Mentoring 1-1",
+            durationMinutes: 60,
+            priceValue: 0,
+            priceText: "Admin duyệt sau"
+          }
+        ],
+    pricing: previousProfile.pricing || "Admin duyệt sau",
+    availabilityText: previousProfile.availabilityText || "Linh hoạt theo lịch hẹn",
+    availabilitySlots: Array.isArray(previousProfile.availabilitySlots) ? previousProfile.availabilitySlots : [],
+    bio: previousProfile.bio || motivation || experience || "Mentor đang hoàn thiện hồ sơ chi tiết.",
+    achievements: uniqueAchievements,
+    fit: previousProfile.fit || experience || motivation,
+    rating: Number(previousProfile.rating || 4.8),
+    studentsTaught: Number(previousProfile.studentsTaught || 0),
+    reviews: Array.isArray(previousProfile.reviews) ? previousProfile.reviews : []
+  });
+
+  return {
+    id: mentorId,
+    owner_user_id: (existingProfile && existingProfile.owner_user_id) || null,
+    email: normalizeEmail((existingProfile && existingProfile.email) || application.email),
+    name: application.full_name,
+    field: field,
+    visibility: "draft",
+    status: "pending",
+    profile: profile
+  };
 }
 
 function canMentorManageBooking(user, bookingRequest) {
@@ -695,6 +819,23 @@ async function getMentorProfileById(mentorId) {
   });
 }
 
+async function getMentorProfileByEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  return restSelect("mentor_profiles", {
+    single: true,
+    query: {
+      select: "*",
+      email: toEqualityFilter(normalizedEmail),
+      order: "updated_at.desc",
+      limit: 1
+    }
+  });
+}
+
 async function getMentorProfiles(options = {}) {
   return restSelect("mentor_profiles", {
     query: Object.assign(
@@ -818,6 +959,93 @@ async function repairPublishedMentorProfiles() {
   }
 
   return repairedProfiles;
+}
+
+async function repairApprovedMentorApplicationProfiles() {
+  const approvedApplications = await restSelect("mentor_applications", {
+    query: {
+      select: "*",
+      status: "in.(approved,activated)",
+      order: "updated_at.desc"
+    }
+  });
+
+  if (!approvedApplications.length) {
+    return [];
+  }
+
+  const repairedProfiles = [];
+
+  for (const application of approvedApplications) {
+    const existingByEmail = await getMentorProfileByEmail(application.email);
+    const existingById = existingByEmail
+      ? existingByEmail
+      : await getMentorProfileById(buildMentorIdFromApplication(application));
+
+    if (existingById && existingById.visibility === "public") {
+      repairedProfiles.push(existingById);
+      continue;
+    }
+
+    const repairedProfile = await upsertMentorProfileRecord(Object.assign(
+      {},
+      buildPublishedMentorProfileFromApplication(application, existingById),
+      {
+        created_at: (existingById && existingById.created_at) || application.activated_at || application.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ));
+
+    repairedProfiles.push(repairedProfile);
+  }
+
+  return repairedProfiles;
+}
+
+function mapMentorProfileStateFromApplicationStatus(status) {
+  const normalizedStatus = String(status || "").trim().toLowerCase();
+
+  if (normalizedStatus === "approved" || normalizedStatus === "activated") {
+    return {
+      visibility: "draft",
+      status: "pending"
+    };
+  }
+
+  if (normalizedStatus === "rejected") {
+    return {
+      visibility: "draft",
+      status: "rejected"
+    };
+  }
+
+  return {
+    visibility: "draft",
+    status: normalizedStatus || "pending"
+  };
+}
+
+function mapMentorProfileStateFromReviewStatus(status) {
+  const normalizedStatus = String(status || "").trim().toLowerCase();
+
+  if (normalizedStatus === "approved") {
+    return {
+      visibility: "public",
+      status: "approved"
+    };
+  }
+
+  if (normalizedStatus === "rejected") {
+    return {
+      visibility: "draft",
+      status: "rejected"
+    };
+  }
+
+  return {
+    visibility: "draft",
+    status: "pending"
+  };
 }
 
 async function createAuthUser(attributes) {
@@ -1361,7 +1589,18 @@ app.post("/api/mentor-applications", async (req, res) => {
     });
 
     if (existedApplication && existedApplication.status !== "rejected") {
-      res.status(409).json({ message: "Email nay da co ho so ung tuyen mentor dang duoc xu ly." });
+      const fullExistingApplication = await restSelect("mentor_applications", {
+        single: true,
+        query: {
+          select: "*",
+          id: toEqualityFilter(existedApplication.id),
+          limit: 1
+        }
+      });
+      res.status(409).json({
+        message: buildMentorApplicationConflictMessage(fullExistingApplication || existedApplication),
+        application: fullExistingApplication ? sanitizeMentorApplication(fullExistingApplication) : null
+      });
       return;
     }
 
@@ -1797,6 +2036,27 @@ app.get("/api/admin/mentor-profile-updates", requireAdmin, async (req, res) => {
   }
 });
 
+app.get("/api/admin/mentor-profiles", requireAdmin, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  try {
+    const profiles = await getMentorProfiles({
+      query: {
+        select: "*",
+        order: "updated_at.desc"
+      }
+    });
+
+    res.json({
+      profiles: profiles.map(sanitizeMentorProfile)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai danh sach mentor luc nay.");
+  }
+});
+
 app.post("/api/admin/mentor-profiles", requireAdmin, async (req, res) => {
   if (!ensureSupabaseConfig(res)) {
     return;
@@ -1891,7 +2151,8 @@ app.post("/api/admin/mentor-profiles", requireAdmin, async (req, res) => {
       profile: Object.assign({}, profile, {
         id: mentorId,
         name: name,
-        field: normalizedField
+        field: normalizedField,
+        phone: normalizePhone(req.body.phone || profile.phone || "")
       }),
       updated_at: now,
       created_at: now
@@ -1906,6 +2167,134 @@ app.post("/api/admin/mentor-profiles", requireAdmin, async (req, res) => {
     });
   } catch (error) {
     handleRouteError(res, error, "Khong the tao mentor luc nay.");
+  }
+});
+
+app.put("/api/admin/mentor-profiles/:id", requireAdmin, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const mentorId = String(req.params.id || "").trim();
+  const name = String(req.body.name || "").trim();
+  const field = String(req.body.field || "").trim();
+  const email = normalizeEmail(req.body.email);
+  const password = String(req.body.password || "");
+  const profile = req.body.profile && typeof req.body.profile === "object"
+    ? req.body.profile
+    : null;
+
+  if (!mentorId) {
+    res.status(400).json({ message: "Ma mentor khong hop le." });
+    return;
+  }
+
+  if (name.length < 2) {
+    res.status(400).json({ message: "Ten mentor can co it nhat 2 ky tu." });
+    return;
+  }
+
+  if (!field) {
+    res.status(400).json({ message: "Vui long chon nhom linh vuc cho mentor." });
+    return;
+  }
+
+  if (!profile) {
+    res.status(400).json({ message: "Du lieu ho so mentor khong hop le." });
+    return;
+  }
+
+  const normalizedField = normalizeFieldCategory(field || profile.field || "");
+  if (!normalizedField) {
+    res.status(400).json({ message: "Vui long chon nhom linh vuc cho mentor." });
+    return;
+  }
+
+  if (!email.includes("@")) {
+    res.status(400).json({ message: "Email dang nhap cua mentor chua dung dinh dang." });
+    return;
+  }
+
+  try {
+    const now = new Date().toISOString();
+    const existingMentorProfile = await getMentorProfileById(mentorId);
+    if (!existingMentorProfile) {
+      res.status(404).json({ message: "Khong tim thay ho so mentor de cap nhat." });
+      return;
+    }
+
+    let ownerAuthUser = null;
+    if (existingMentorProfile.owner_user_id) {
+      ownerAuthUser = await getAuthUserById(existingMentorProfile.owner_user_id).catch(function () {
+        return null;
+      });
+    }
+
+    if (ownerAuthUser) {
+      const authPatch = {
+        email: email,
+        user_metadata: Object.assign({}, ownerAuthUser.user_metadata || {}, {
+          full_name: name,
+          role: "mentor"
+        })
+      };
+
+      if (password) {
+        if (password.length < 8) {
+          res.status(400).json({ message: "Mat khau dang nhap cua mentor can toi thieu 8 ky tu." });
+          return;
+        }
+        authPatch.password = password;
+      }
+
+      await updateAuthUserById(ownerAuthUser.id, authPatch);
+
+      const currentProfile = await getProfileById(ownerAuthUser.id).catch(function () {
+        return null;
+      });
+      await upsertProfile({
+        id: ownerAuthUser.id,
+        full_name: name,
+        phone: normalizePhone(req.body.phone || profile.phone || (currentProfile && currentProfile.phone) || ""),
+        goal: (currentProfile && currentProfile.goal) || "",
+        bio: (currentProfile && currentProfile.bio) || "",
+        role: "mentor",
+        mentor_id: mentorId,
+        avatar_url: String(profile.image || (currentProfile && currentProfile.avatar_url) || ""),
+        created_at: (currentProfile && currentProfile.created_at) || now,
+        updated_at: now
+      });
+    }
+
+    const updatedMentorProfile = await upsertMentorProfileRecord({
+      id: mentorId,
+      owner_user_id: existingMentorProfile.owner_user_id || null,
+      email: email,
+      name: name,
+      field: normalizedField,
+      visibility: String(req.body.visibility || existingMentorProfile.visibility || "public").trim() || "public",
+      status: String(req.body.status || existingMentorProfile.status || "approved").trim() || "approved",
+      profile: Object.assign({}, existingMentorProfile.profile || {}, profile, {
+        id: mentorId,
+        name: name,
+        field: normalizedField,
+        phone: normalizePhone(
+          req.body.phone ||
+          profile.phone ||
+          (existingMentorProfile.profile && existingMentorProfile.profile.phone) ||
+          ""
+        )
+      }),
+      created_at: existingMentorProfile.created_at || now,
+      updated_at: now
+    });
+
+    res.json({
+      message: "Da cap nhat ho so mentor.",
+      profile: sanitizeMentorProfile(updatedMentorProfile)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the cap nhat ho so mentor luc nay.");
   }
 });
 
@@ -2050,9 +2439,41 @@ app.put("/api/admin/mentor-applications/:id", requireAdmin, async (req, res) => 
       }
     );
 
+    const nextApplication = updatedApplication || existingApplication;
+    const existingProfile = await getMentorProfileByEmail(existingApplication.email);
+    const applicationProfileState = mapMentorProfileStateFromApplicationStatus(status);
+    let publishedProfile = null;
+
+    if (existingProfile || status === "approved" || status === "activated") {
+      publishedProfile = await upsertMentorProfileRecord(Object.assign(
+        {},
+        buildPublishedMentorProfileFromApplication(nextApplication, existingProfile),
+        existingProfile ? {
+          owner_user_id: existingProfile.owner_user_id || null,
+          email: existingProfile.email || normalizeEmail(existingApplication.email),
+          profile: Object.assign(
+            {},
+            existingProfile.profile && typeof existingProfile.profile === "object" ? existingProfile.profile : {},
+            buildPublishedMentorProfileFromApplication(nextApplication, existingProfile).profile || {}
+          )
+        } : {},
+        {
+          visibility: applicationProfileState.visibility,
+          status: applicationProfileState.status,
+          created_at:
+            (existingProfile && existingProfile.created_at) ||
+            existingApplication.activated_at ||
+            existingApplication.created_at ||
+            new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ));
+    }
+
     res.json({
       message: "Da cap nhat ho so ung tuyen mentor.",
-      application: sanitizeMentorApplication(updatedApplication || existingApplication)
+      application: sanitizeMentorApplication(nextApplication),
+      publishedProfile: publishedProfile ? sanitizeMentorProfile(publishedProfile) : null
     });
   } catch (error) {
     handleRouteError(res, error, "Khong the cap nhat ho so mentor.");
@@ -2108,17 +2529,19 @@ app.put("/api/admin/mentor-profile-updates/:id", requireAdmin, async (req, res) 
       }
     );
 
+    const currentPublished = await getMentorProfileById(existingRequest.mentor_id);
+    const reviewProfileState = mapMentorProfileStateFromReviewStatus(status);
     let publishedProfile = null;
-    if (status === "approved") {
-      const currentPublished = await getMentorProfileById(existingRequest.mentor_id);
+
+    if (currentPublished || existingRequest.profile) {
       publishedProfile = await upsertMentorProfileRecord({
         id: existingRequest.mentor_id,
         owner_user_id: existingRequest.mentor_user_id || (currentPublished && currentPublished.owner_user_id) || null,
         email: (currentPublished && currentPublished.email) || "",
         name: existingRequest.mentor_name,
         field: String((existingRequest.profile && existingRequest.profile.field) || (currentPublished && currentPublished.field) || "").trim(),
-        visibility: "public",
-        status: "approved",
+        visibility: reviewProfileState.visibility,
+        status: reviewProfileState.status,
         profile: Object.assign({}, currentPublished && currentPublished.profile ? currentPublished.profile : {}, existingRequest.profile || {}, {
           id: existingRequest.mentor_id,
           name: existingRequest.mentor_name
@@ -2414,17 +2837,17 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
         updated_at: now
       });
 
-      const currentMentorProfile = await getMentorProfileById(mentorId);
+      const currentMentorProfile = await getMentorProfileByEmail(email) || await getMentorProfileById(mentorId);
       await upsertMentorProfileRecord({
-        id: mentorId,
+        id: (currentMentorProfile && currentMentorProfile.id) || mentorId,
         owner_user_id: createdUser.id,
         email: email,
         name: fullName,
         field: String((currentMentorProfile && currentMentorProfile.field) || "").trim(),
         visibility: currentMentorProfile ? currentMentorProfile.visibility : "draft",
-        status: currentMentorProfile ? currentMentorProfile.status : "approved",
+        status: currentMentorProfile ? currentMentorProfile.status : "pending",
         profile: Object.assign({}, currentMentorProfile && currentMentorProfile.profile ? currentMentorProfile.profile : {}, {
-          id: mentorId,
+          id: (currentMentorProfile && currentMentorProfile.id) || mentorId,
           name: fullName
         }),
         created_at: (currentMentorProfile && currentMentorProfile.created_at) || now,

@@ -379,6 +379,41 @@ function getMentorAvailabilitySlots(mentor) {
   return buildAvailabilitySlotsFromLegacy(mentor && mentor.availability);
 }
 
+function buildLegacyAvailabilityFromSlots(slots) {
+  const normalizedSlots = Array.isArray(slots) ? slots.filter(Boolean) : [];
+  if (!normalizedSlots.length) {
+    return [];
+  }
+
+  const nextAvailability = [];
+  const hasWeekend = normalizedSlots.some(function (slotId) {
+    const parsedSlot = parseWeeklySlotId(slotId);
+    return parsedSlot && (parsedSlot.dayKey === "sat" || parsedSlot.dayKey === "sun");
+  });
+  const hasMorning = normalizedSlots.some(function (slotId) {
+    const parsedSlot = parseWeeklySlotId(slotId);
+    const hour = parsedSlot ? Number(parsedSlot.hourLabel.slice(0, 2)) : 0;
+    return hour >= 7 && hour <= 11;
+  });
+  const hasAfternoon = normalizedSlots.some(function (slotId) {
+    const parsedSlot = parseWeeklySlotId(slotId);
+    const hour = parsedSlot ? Number(parsedSlot.hourLabel.slice(0, 2)) : 0;
+    return hour >= 13 && hour <= 17;
+  });
+  const hasEvening = normalizedSlots.some(function (slotId) {
+    const parsedSlot = parseWeeklySlotId(slotId);
+    const hour = parsedSlot ? Number(parsedSlot.hourLabel.slice(0, 2)) : 0;
+    return hour >= 18 && hour <= 21;
+  });
+
+  if (hasMorning) nextAvailability.push("sang");
+  if (hasAfternoon) nextAvailability.push("chieu");
+  if (hasEvening) nextAvailability.push("toi");
+  if (hasWeekend) nextAvailability.push("cuoi-tuan");
+
+  return nextAvailability;
+}
+
 function buildAvailabilitySummaryFromSlots(slots) {
   const normalizedSlots = Array.isArray(slots) ? slots.filter(Boolean) : [];
   if (!normalizedSlots.length) {
@@ -442,6 +477,14 @@ function getMentorServicePackages(mentor) {
   }
 
   return buildServicePackagesFromLegacy(mentor && mentor.service, mentor && mentor.pricing);
+}
+
+function buildLegacyServiceKeysFromPackages(packages) {
+  const keys = (packages || []).map(function (item) {
+    return item && item.serviceKey ? item.serviceKey : "";
+  }).filter(Boolean);
+
+  return keys.length ? Array.from(new Set(keys)) : ["1-1"];
 }
 
 function buildServicePackageSummary(packages) {
@@ -844,6 +887,24 @@ function createAvatarFallback(name) {
   `;
 
   return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise(function (resolve, reject) {
+    if (!file) {
+      resolve("");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      resolve(String((event && event.target && event.target.result) || ""));
+    };
+    reader.onerror = function () {
+      reject(new Error("Không thể đọc file ảnh đã chọn."));
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function getCurrentUser() {
@@ -1511,10 +1572,18 @@ function getResolvedMentorById(mentorId) {
 
   const availabilitySlots = getMentorAvailabilitySlots(resolvedMentor);
   const servicePackages = getMentorServicePackages(resolvedMentor);
+  const availability = Array.isArray(resolvedMentor.availability) && resolvedMentor.availability.length
+    ? resolvedMentor.availability
+    : buildLegacyAvailabilityFromSlots(availabilitySlots);
+  const service = Array.isArray(resolvedMentor.service) && resolvedMentor.service.length
+    ? resolvedMentor.service
+    : buildLegacyServiceKeysFromPackages(servicePackages);
 
   return Object.assign({}, resolvedMentor, {
+    availability: availability,
     availabilitySlots: availabilitySlots,
     availabilityText: buildAvailabilitySummaryFromSlots(availabilitySlots),
+    service: service,
     servicePackages: servicePackages,
     serviceText: buildMentorServiceText(servicePackages.map(function (item) {
       return item.serviceKey;
@@ -2445,7 +2514,10 @@ async function updateAdminMentorApplication(adminKey, applicationId, payload) {
     throw new Error(data.message || "Không thể cập nhật hồ sơ ứng tuyển mentor.");
   }
 
-  return data.application;
+  return {
+    application: data.application || null,
+    publishedProfile: data.publishedProfile || null
+  };
 }
 
 async function submitMentorProfileUpdate(payload) {
@@ -2496,6 +2568,30 @@ async function fetchAdminMentorProfileUpdates(adminKey) {
   }
 
   return data.requests || [];
+}
+
+async function fetchAdminMentorProfiles(adminKey) {
+  const accessToken = await getAccessToken();
+  const headers = {};
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
+  const response = await fetch("/api/admin/mentor-profiles", {
+    headers: headers
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải danh sách mentor.");
+  }
+
+  return data.profiles || [];
 }
 
 async function updateAdminMentorProfileUpdate(adminKey, requestId, payload) {
@@ -2559,6 +2655,8 @@ function normalizeRemoteMentorProfile(record) {
     id: mentorId,
     name: profile.name || record.name || "Mentor",
     field: normalizeFieldCategory(profile.field || record.field || ""),
+    bio: profile.bio || profile.intro || "",
+    intro: profile.intro || profile.bio || "",
     _origin: "supabase"
   });
   normalizedProfile.searchableText = buildMentorSearchableText(normalizedProfile);
@@ -2608,6 +2706,42 @@ async function createAdminMentorProfile(adminKey, payload) {
 
   if (!response.ok) {
     throw new Error(data.message || "Không thể tạo tài khoản mentor.");
+  }
+
+  if (data.profile) {
+    const normalized = normalizeRemoteMentorProfile(data.profile);
+    if (normalized) {
+      mentorProfilesCache = Object.assign({}, mentorProfilesCache, {
+        [normalized.id]: normalized
+      });
+    }
+  }
+
+  return data;
+}
+
+async function updateAdminMentorProfile(adminKey, mentorId, payload) {
+  const accessToken = await getAccessToken();
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (accessToken) {
+    headers.Authorization = "Bearer " + accessToken;
+  } else if (adminKey) {
+    headers["X-Admin-Key"] = adminKey;
+  }
+
+  const response = await fetch("/api/admin/mentor-profiles/" + encodeURIComponent(mentorId), {
+    method: "PUT",
+    headers: headers,
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể cập nhật mentor.");
   }
 
   if (data.profile) {
@@ -2917,7 +3051,7 @@ function buildAdminMentorApplicationCard(application) {
     <article class="admin-request-card" data-application-id="${application.id}">
       <div class="admin-request-head">
         <div>
-          <span class="admin-request-label">Mentor Application #${application.id}</span>
+          <span class="admin-request-label">Bước 1 · Mentor Application #${application.id}</span>
           <h3>${safeFullName}</h3>
         </div>
         <span class="admin-request-status status-${safeStatus}">${safeStatus}</span>
@@ -2957,7 +3091,7 @@ function buildAdminMentorApplicationCard(application) {
 
       <form class="admin-mentor-application-form">
         <label class="auth-field">
-          <span>Trạng thái tuyển chọn / kích hoạt</span>
+          <span>Trạng thái ứng tuyển ở bước 1</span>
           <select name="status">
             <option value="pending" ${application.status === "pending" ? "selected" : ""}>pending</option>
             <option value="interviewing" ${application.status === "interviewing" ? "selected" : ""}>interviewing</option>
@@ -3032,7 +3166,7 @@ function buildAdminMentorProfileUpdateCard(request) {
     <article class="admin-request-card" data-mentor-profile-update-id="${request.id}">
       <div class="admin-request-head">
         <div>
-          <span class="admin-request-label">Public Profile Review</span>
+          <span class="admin-request-label">Bước 2 · Public Profile Review</span>
           <h3>${safeMentorName}</h3>
         </div>
         <span class="admin-request-status status-${safeStatus}">${safeStatus}</span>
@@ -3061,11 +3195,11 @@ function buildAdminMentorProfileUpdateCard(request) {
       <div class="admin-request-body">
         <div class="admin-request-block">
           <span>Giới thiệu mentor</span>
-          <p>${escapeHtml(profile.intro || "Chưa cập nhật")}</p>
+          <p>${escapeHtml(profile.bio || profile.intro || "Chưa cập nhật")}</p>
         </div>
         <div class="admin-request-block">
           <span>Thành tích nổi bật</span>
-          <p>${escapeHtml(String(profile.achievements || "").split("\n").filter(Boolean).join(" | ") || "Chưa cập nhật")}</p>
+          <p>${escapeHtml((Array.isArray(profile.achievements) ? profile.achievements : String(profile.achievements || "").split("\n")).filter(Boolean).join(" | ") || "Chưa cập nhật")}</p>
         </div>
       </div>
 
@@ -3079,7 +3213,7 @@ function buildAdminMentorProfileUpdateCard(request) {
 
       <form class="admin-mentor-profile-update-form">
         <label class="auth-field">
-          <span>Trạng thái hồ sơ công khai</span>
+          <span>Trạng thái hồ sơ công khai ở bước 2</span>
           <select name="status">
             <option value="pending" ${request.status === "pending" ? "selected" : ""}>pending</option>
             <option value="approved" ${request.status === "approved" ? "selected" : ""}>approved</option>
@@ -3098,9 +3232,48 @@ function buildAdminMentorProfileUpdateCard(request) {
   `;
 }
 
+function buildAdminMentorManageCard(record) {
+  const profile = record.profile || {};
+  const mentorId = escapeHtml(record.id || "");
+  const safeName = escapeHtml(record.name || profile.name || "Mentor");
+  const safeEmail = escapeHtml(record.email || "");
+  const safeStatus = escapeHtml(record.status || "approved");
+  const safeField = escapeHtml(record.field || profile.field || "Chưa cập nhật");
+  const safeRole = escapeHtml(profile.role || "Chưa cập nhật");
+  const safeFocus = escapeHtml(profile.focus || "Chưa cập nhật");
+  const safeWorkplace = escapeHtml(profile.workplace || "Chưa cập nhật");
+
+  return `
+    <article class="admin-request-card" data-admin-mentor-profile-id="${mentorId}">
+      <div class="admin-request-head">
+        <div>
+          <span class="admin-request-label">Mentor Public Profile</span>
+          <h3>${safeName}</h3>
+        </div>
+        <span class="admin-request-status status-${safeStatus}">${safeStatus}</span>
+      </div>
+
+      <div class="admin-request-grid">
+        <p><strong>Mentor ID:</strong> ${mentorId}</p>
+        <p><strong>Email:</strong> ${safeEmail || "Chưa cập nhật"}</p>
+        <p><strong>Nhóm lĩnh vực:</strong> ${safeField}</p>
+        <p><strong>Headline:</strong> ${safeRole}</p>
+        <p><strong>Lĩnh vực:</strong> ${safeFocus}</p>
+        <p><strong>Nơi làm việc / học tập:</strong> ${safeWorkplace}</p>
+      </div>
+
+      <div class="profile-actions">
+        <button type="button" class="mentor-primary-btn" data-edit-admin-mentor-profile="${mentorId}">Sửa mentor này</button>
+        <a href="mentor-detail.html?id=${encodeURIComponent(record.id || "")}" class="mentor-secondary-btn" target="_blank" rel="noreferrer">Xem trang chi tiết</a>
+      </div>
+    </article>
+  `;
+}
+
 function initializeMentorApplicationPage() {
   const form = document.getElementById("mentorApplicationForm");
   if (!form) return;
+  const submitButton = form.querySelector('button[type="submit"]');
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -3142,6 +3315,10 @@ function initializeMentorApplicationPage() {
     }
 
     try {
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Đang gửi hồ sơ...";
+      }
       await submitMentorApplication(payload);
       form.reset();
       showMessage(
@@ -3151,6 +3328,11 @@ function initializeMentorApplicationPage() {
       );
     } catch (error) {
       showMessage("mentorApplicationMessage", "error", error.message);
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Gửi hồ sơ ứng tuyển";
+      }
     }
   });
 }
@@ -3245,6 +3427,19 @@ function initializeAdminConsultationPage() {
   const mentorProfileUpdateRefreshButton = document.getElementById("adminRefreshMentorProfileUpdates");
   const mentorCreateDashboard = document.getElementById("adminMentorCreateDashboard");
   const mentorCreateForm = document.getElementById("adminMentorCreateForm");
+  const mentorManageList = document.getElementById("adminMentorManageList");
+  const mentorManageRefreshButton = document.getElementById("adminRefreshMentorProfiles");
+  const mentorEditIdField = document.getElementById("adminMentorEditId");
+  const mentorCreateModeLabel = document.getElementById("adminMentorCreateModeLabel");
+  const mentorCreateTitle = document.getElementById("adminMentorCreateTitle");
+  const mentorCreateDescription = document.getElementById("adminMentorCreateDescription");
+  const mentorCreatePasswordLabel = document.getElementById("adminMentorCreatePasswordLabel");
+  const mentorCreateSubmit = document.getElementById("adminMentorCreateSubmit");
+  const mentorEditCancel = document.getElementById("adminMentorEditCancel");
+  const mentorCreateImageInput = document.getElementById("adminMentorCreateImage");
+  const mentorCreateImageUpload = document.getElementById("adminMentorCreateImageUpload");
+  const mentorCreateImagePreview = document.getElementById("adminMentorCreateImagePreview");
+  let adminMentorProfilesCache = [];
 
   if (!accessForm || !dashboard || !listElement) return;
 
@@ -3371,12 +3566,98 @@ function initializeAdminConsultationPage() {
     }
   }
 
+  async function loadAdminMentorProfiles() {
+    if ((!currentAdminKey && !isRealAdmin) || !mentorCreateDashboard || !mentorManageList) return;
+
+    try {
+      const profiles = await fetchAdminMentorProfiles(currentAdminKey);
+      adminMentorProfilesCache = profiles;
+      mentorCreateDashboard.hidden = false;
+
+      if (!profiles.length) {
+        mentorManageList.innerHTML = `
+          <div class="admin-empty-state">
+            <h3>Chưa có mentor public nào</h3>
+            <p>Admin có thể dùng form bên trên để tạo mentor đầu tiên lên trang tìm kiếm.</p>
+          </div>
+        `;
+        return;
+      }
+
+      mentorManageList.innerHTML = profiles.map(buildAdminMentorManageCard).join("");
+    } catch (error) {
+      showMessage("adminConsultationMessage", "error", error.message);
+    }
+  }
+
+  function resetAdminMentorCreateForm() {
+    if (!mentorCreateForm) return;
+    mentorCreateForm.reset();
+    if (mentorEditIdField) mentorEditIdField.value = "";
+    const passwordField = document.getElementById("adminMentorCreatePassword");
+    if (passwordField) passwordField.required = true;
+    if (mentorCreateImagePreview) mentorCreateImagePreview.src = "logo.png";
+    if (mentorCreateImageUpload) mentorCreateImageUpload.value = "";
+    if (mentorCreateModeLabel) mentorCreateModeLabel.textContent = "Mentor mới";
+    if (mentorCreateTitle) mentorCreateTitle.textContent = "Đăng mentor lên tìm kiếm";
+    if (mentorCreateDescription) mentorCreateDescription.textContent = "Điền thông tin cơ bản để mentor hiển thị trên trang tìm kiếm.";
+    if (mentorCreatePasswordLabel) mentorCreatePasswordLabel.textContent = "Mật khẩu tạm cho mentor";
+    if (mentorCreateSubmit) mentorCreateSubmit.textContent = "Tạo mentor";
+    if (mentorEditCancel) mentorEditCancel.hidden = true;
+  }
+
+  function startAdminMentorEdit(mentorId) {
+    const target = adminMentorProfilesCache.find(function (item) {
+      return String(item.id) === String(mentorId);
+    });
+    if (!target || !mentorCreateForm) return;
+
+    const profile = target.profile || {};
+    if (mentorEditIdField) mentorEditIdField.value = target.id || "";
+    document.getElementById("adminMentorCreateName").value = target.name || profile.name || "";
+    document.getElementById("adminMentorCreateEmail").value = target.email || "";
+    document.getElementById("adminMentorCreatePhone").value = profile.phone || "";
+    document.getElementById("adminMentorCreatePassword").value = "";
+    document.getElementById("adminMentorCreateRole").value = profile.role || "";
+    document.getElementById("adminMentorCreateWorkplace").value = profile.workplace || "";
+    document.getElementById("adminMentorCreateFocus").value = profile.focus || "";
+    document.getElementById("adminMentorCreateField").value = normalizeFieldCategory(target.field || profile.field || "");
+    document.getElementById("adminMentorCreateImage").value = profile.image || "";
+    if (mentorCreateImagePreview) {
+      mentorCreateImagePreview.src = profile.image || "logo.png";
+    }
+    document.getElementById("adminMentorCreateTag").value = profile.tag || "";
+    document.getElementById("adminMentorCreateBio").value = profile.bio || "";
+    document.getElementById("adminMentorCreateAchievements").value = Array.isArray(profile.achievements) ? profile.achievements.join("\n") : "";
+    document.getElementById("adminMentorCreateFit").value = profile.fit || "";
+    document.getElementById("adminMentorCreateRating").value = profile.rating || "";
+    document.getElementById("adminMentorCreateStudents").value = profile.studentsTaught || "";
+
+    Array.from(mentorCreateForm.querySelectorAll('input[name="adminMentorCreateAvailability"]')).forEach(function (input) {
+      input.checked = Array.isArray(profile.availability) ? profile.availability.includes(input.value) : false;
+    });
+    Array.from(mentorCreateForm.querySelectorAll('input[name="adminMentorCreateService"]')).forEach(function (input) {
+      input.checked = Array.isArray(profile.service) ? profile.service.includes(input.value) : false;
+    });
+
+    const passwordField = document.getElementById("adminMentorCreatePassword");
+    if (passwordField) passwordField.required = false;
+    if (mentorCreateModeLabel) mentorCreateModeLabel.textContent = "Đang chỉnh sửa";
+    if (mentorCreateTitle) mentorCreateTitle.textContent = "Chỉnh sửa mentor đang hiển thị";
+    if (mentorCreateDescription) mentorCreateDescription.textContent = "Lưu thay đổi để cập nhật trực tiếp hồ sơ public và dữ liệu mentor trên hệ thống.";
+    if (mentorCreatePasswordLabel) mentorCreatePasswordLabel.textContent = "Đổi mật khẩu mentor (để trống nếu không đổi)";
+    if (mentorCreateSubmit) mentorCreateSubmit.textContent = "Lưu chỉnh sửa mentor";
+    if (mentorEditCancel) mentorEditCancel.hidden = false;
+    mentorCreateForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   if (isRealAdmin) {
     accessForm.hidden = true;
     loadRequests();
     loadMentorApplications();
     loadBookingRequestsForAdmin();
     loadMentorProfileUpdates();
+    loadAdminMentorProfiles();
     startAdminAutoRefresh();
     if (mentorCreateDashboard) {
       mentorCreateDashboard.hidden = false;
@@ -3396,6 +3677,7 @@ function initializeAdminConsultationPage() {
       await loadMentorApplications();
       loadBookingRequestsForAdmin();
       await loadMentorProfileUpdates();
+      await loadAdminMentorProfiles();
       startAdminAutoRefresh();
       if (mentorCreateDashboard) {
         mentorCreateDashboard.hidden = false;
@@ -3417,6 +3699,10 @@ function initializeAdminConsultationPage() {
 
   if (mentorProfileUpdateRefreshButton) {
     mentorProfileUpdateRefreshButton.addEventListener("click", loadMentorProfileUpdates);
+  }
+
+  if (mentorManageRefreshButton) {
+    mentorManageRefreshButton.addEventListener("click", loadAdminMentorProfiles);
   }
 
   listElement.addEventListener("submit", async function (e) {
@@ -3459,13 +3745,19 @@ function initializeAdminConsultationPage() {
       const formData = new FormData(form);
 
       try {
-        const updatedApplication = await updateAdminMentorApplication(currentAdminKey, applicationId, {
+        const result = await updateAdminMentorApplication(currentAdminKey, applicationId, {
           status: normalizeWhitespace(formData.get("status")),
           adminNote: normalizeWhitespace(formData.get("adminNote"))
         });
+        const updatedApplication = result && result.application ? result.application : null;
 
-        card.outerHTML = buildAdminMentorApplicationCard(updatedApplication);
-        showMessage("adminConsultationMessage", "success", "Đã cập nhật trạng thái ứng tuyển mentor. Nếu mentor đã kích hoạt và gửi hồ sơ, tiếp tục duyệt ở khu hồ sơ công khai.");
+        if (updatedApplication) {
+          card.outerHTML = buildAdminMentorApplicationCard(updatedApplication);
+        }
+        await fetchPublicMentorProfiles();
+        showMessage("adminConsultationMessage", "success", updatedApplication && updatedApplication.status === "approved"
+          ? "Đã duyệt hồ sơ ứng tuyển mentor và tạo hồ sơ nháp để mentor tiếp tục hoàn thiện ở dashboard."
+          : "Đã cập nhật trạng thái ứng tuyển mentor.");
       } catch (error) {
         showMessage("adminConsultationMessage", "error", error.message);
       }
@@ -3493,9 +3785,7 @@ function initializeAdminConsultationPage() {
           adminNote: adminNote
         });
 
-        if (request && status === "approved") {
-          await fetchPublicMentorProfiles();
-        }
+        await fetchPublicMentorProfiles();
 
         await loadMentorProfileUpdates();
         showMessage("adminConsultationMessage", "success", status === "approved"
@@ -3544,8 +3834,10 @@ function initializeAdminConsultationPage() {
       e.preventDefault();
       clearMessage("adminConsultationMessage");
 
+      const editMentorId = mentorEditIdField ? normalizeWhitespace(mentorEditIdField.value) : "";
       const name = normalizeWhitespace(document.getElementById("adminMentorCreateName").value);
       const email = normalizeEmail(document.getElementById("adminMentorCreateEmail").value);
+      const phone = normalizePhone(document.getElementById("adminMentorCreatePhone").value);
       const password = document.getElementById("adminMentorCreatePassword").value;
       const role = normalizeWhitespace(document.getElementById("adminMentorCreateRole").value);
       const workplace = normalizeWhitespace(document.getElementById("adminMentorCreateWorkplace").value);
@@ -3581,8 +3873,13 @@ function initializeAdminConsultationPage() {
         return;
       }
 
-      if (password.length < 8) {
+      if (!editMentorId && password.length < 8) {
         showMessage("adminConsultationMessage", "error", "Mật khẩu mentor cần tối thiểu 8 ký tự.");
+        return;
+      }
+
+      if (editMentorId && password && password.length < 8) {
+        showMessage("adminConsultationMessage", "error", "Mật khẩu mới của mentor cần tối thiểu 8 ký tự.");
         return;
       }
 
@@ -3629,21 +3926,74 @@ function initializeAdminConsultationPage() {
       mentorProfile._createdAt = new Date().toISOString();
 
       try {
-        await createAdminMentorProfile(currentAdminKey, {
-          mentorId: mentorId,
-          email: email,
-          password: password,
-          phone: "",
-          name: name,
-          field: field,
-          profile: mentorProfile
-        });
+        if (editMentorId) {
+          await updateAdminMentorProfile(currentAdminKey, editMentorId, {
+            email: email,
+            password: password,
+            phone: phone,
+            name: name,
+            field: field,
+            profile: mentorProfile,
+            visibility: "public",
+            status: "approved"
+          });
+        } else {
+          await createAdminMentorProfile(currentAdminKey, {
+            mentorId: mentorId,
+            email: email,
+            password: password,
+            phone: phone,
+            name: name,
+            field: field,
+            profile: mentorProfile
+          });
+        }
         await fetchPublicMentorProfiles();
-        mentorCreateForm.reset();
-        showMessage("adminConsultationMessage", "success", "Đã tạo tài khoản và hồ sơ mentor. Mentor có thể đăng nhập bằng email và mật khẩu vừa cấp.");
+        await loadAdminMentorProfiles();
+        resetAdminMentorCreateForm();
+        showMessage("adminConsultationMessage", "success", editMentorId
+          ? "Đã lưu chỉnh sửa hồ sơ mentor."
+          : "Đã tạo tài khoản và hồ sơ mentor. Mentor có thể đăng nhập bằng email và mật khẩu vừa cấp.");
       } catch (error) {
         showMessage("adminConsultationMessage", "error", error.message);
       }
+    });
+  }
+
+  if (mentorEditCancel) {
+    mentorEditCancel.addEventListener("click", function () {
+      resetAdminMentorCreateForm();
+    });
+  }
+
+  if (mentorCreateImageInput) {
+    mentorCreateImageInput.addEventListener("input", function () {
+      if (mentorCreateImagePreview) {
+        mentorCreateImagePreview.src = mentorCreateImageInput.value || "logo.png";
+      }
+    });
+  }
+
+  if (mentorCreateImageUpload) {
+    mentorCreateImageUpload.addEventListener("change", function () {
+      const file = mentorCreateImageUpload.files && mentorCreateImageUpload.files[0];
+      if (!file) return;
+      readFileAsDataUrl(file)
+        .then(function (dataUrl) {
+          if (mentorCreateImageInput) mentorCreateImageInput.value = dataUrl;
+          if (mentorCreateImagePreview) mentorCreateImagePreview.src = dataUrl;
+        })
+        .catch(function (error) {
+          showMessage("adminConsultationMessage", "error", error.message);
+        });
+    });
+  }
+
+  if (mentorManageList) {
+    mentorManageList.addEventListener("click", function (e) {
+      const button = e.target.closest("[data-edit-admin-mentor-profile]");
+      if (!button) return;
+      startAdminMentorEdit(button.getAttribute("data-edit-admin-mentor-profile"));
     });
   }
 
@@ -3656,6 +4006,7 @@ function initializeAdminConsultationPage() {
     loadMentorApplications();
     loadBookingRequestsForAdmin();
     loadMentorProfileUpdates();
+    loadAdminMentorProfiles();
     if (mentorCreateDashboard) {
       mentorCreateDashboard.hidden = false;
     }
@@ -3673,6 +4024,7 @@ function initializeAdminConsultationPage() {
       loadMentorApplications();
       loadBookingRequestsForAdmin();
       loadMentorProfileUpdates();
+      loadAdminMentorProfiles();
     }, 15000);
   }
 
@@ -3698,6 +4050,7 @@ function initializeMentorDashboardPage() {
 
   const fallbackProfile = {
     displayName: currentUser.name || "",
+    image: currentUser.avatar || "",
     headline: "",
     workplace: "",
     expertise: "",
@@ -3722,6 +4075,7 @@ function initializeMentorDashboardPage() {
     fallbackProfile,
     approvedMentor ? {
       displayName: approvedMentor.name,
+      image: approvedMentor.image || currentUser.avatar || "",
       headline: approvedMentor.role,
       workplace: approvedMentor.workplace || "",
       expertise: approvedMentor.focus,
@@ -3759,6 +4113,7 @@ function initializeMentorDashboardPage() {
     rating: document.getElementById("mentorDashboardRating"),
     studentsTaught: document.getElementById("mentorDashboardStudents")
   };
+  const imageUploadInput = document.getElementById("mentorDashboardImageUpload");
   const packageBuilder = document.getElementById("mentorDashboardPackageBuilder");
   const addPackageButton = document.getElementById("mentorDashboardAddPackage");
   const availabilityEditor = document.getElementById("mentorDashboardAvailabilityGrid");
@@ -3851,10 +4206,53 @@ function initializeMentorDashboardPage() {
         buildMentorScheduleLegendHtml() +
         buildMentorAvailabilityEditor(payload.availabilitySlots || [], getOccupiedSlotIdsForMentor(mentorContext.mentorId));
     }
+    if (previewElements.avatar) {
+      previewElements.avatar.src = payload.image || currentUser.avatar || createAvatarFallback(payload.displayName || currentUser.name);
+    }
+  }
+
+  function applyReviewRequestToDraft(reviewRequest) {
+    if (!reviewRequest || !reviewRequest.profile) {
+      return;
+    }
+
+    const payload = reviewRequest.profile || {};
+    const reviewPackages = Array.isArray(payload.servicePackages) && payload.servicePackages.length
+      ? payload.servicePackages
+      : getMentorServicePackages(payload);
+    const reviewSlots = Array.isArray(payload.availabilitySlots) && payload.availabilitySlots.length
+      ? payload.availabilitySlots
+      : getMentorAvailabilitySlots(payload);
+
+    draftProfile = Object.assign({}, draftProfile, {
+      displayName: payload.displayName || payload.name || draftProfile.displayName,
+      image: payload.image || draftProfile.image,
+      headline: payload.role || payload.headline || draftProfile.headline,
+      workplace: payload.workplace || draftProfile.workplace,
+      expertise: payload.focus || payload.expertise || draftProfile.expertise,
+      field: normalizeFieldCategory(payload.field || draftProfile.field),
+      services: payload.serviceText || buildMentorServiceText(reviewPackages.map(function (item) {
+        return item.serviceKey;
+      })),
+      pricing: payload.pricing || buildServicePackageSummary(reviewPackages),
+      availability: payload.availabilityText || buildAvailabilitySummaryFromSlots(reviewSlots),
+      availabilitySlots: reviewSlots,
+      servicePackages: reviewPackages,
+      intro: payload.bio || payload.intro || draftProfile.intro,
+      achievements: Array.isArray(payload.achievements) ? payload.achievements.join("\n") : (payload.achievements || draftProfile.achievements),
+      fit: payload.fit || draftProfile.fit,
+      rating: payload.rating || draftProfile.rating,
+      studentsTaught: payload.studentsTaught || draftProfile.studentsTaught,
+      visibility: "public",
+      updatedAt: reviewRequest.updatedAt || draftProfile.updatedAt
+    });
+
+    fillForm(draftProfile);
+    renderPreview(draftProfile);
   }
 
   function renderPreview(payload) {
-    previewElements.avatar.src = currentUser.avatar || createAvatarFallback(payload.displayName || currentUser.name);
+    previewElements.avatar.src = payload.image || currentUser.avatar || createAvatarFallback(payload.displayName || currentUser.name);
     previewElements.name.textContent = payload.displayName || currentUser.name || "Tên mentor";
     previewElements.headline.textContent = payload.headline || "Headline chuyên môn sẽ hiển thị ở đây.";
     previewElements.workplace.textContent = payload.workplace || "Chưa cập nhật";
@@ -3914,6 +4312,7 @@ function initializeMentorDashboardPage() {
 
     draftProfile = {
       displayName: normalizeWhitespace(fields.displayName.value),
+      image: draftProfile.image || (approvedMentor && approvedMentor.image) || currentUser.avatar || "",
       headline: normalizeWhitespace(fields.headline.value),
       workplace: normalizeWhitespace(fields.workplace.value),
       expertise: normalizeWhitespace(fields.expertise.value),
@@ -3946,6 +4345,7 @@ function initializeMentorDashboardPage() {
   if (!isDemoAccount(currentUser) && isSupabaseReady()) {
     fetchCurrentMentorProfileUpdate()
       .then(function (request) {
+        applyReviewRequestToDraft(request);
         renderReviewStatus(request);
       })
       .catch(function () {
@@ -3959,6 +4359,24 @@ function initializeMentorDashboardPage() {
     input.addEventListener("input", syncFromForm);
     input.addEventListener("change", syncFromForm);
   });
+
+  if (imageUploadInput) {
+    imageUploadInput.addEventListener("change", function () {
+      const file = imageUploadInput.files && imageUploadInput.files[0];
+      if (!file) return;
+      readFileAsDataUrl(file)
+        .then(function (dataUrl) {
+          draftProfile = Object.assign({}, draftProfile, {
+            image: dataUrl,
+            updatedAt: new Date().toISOString()
+          });
+          renderPreview(draftProfile);
+        })
+        .catch(function (error) {
+          showMessage("mentorDashboardMessage", "error", error.message);
+        });
+    });
+  }
 
   if (addPackageButton && !addPackageButton.dataset.boundAddPackage) {
     addPackageButton.addEventListener("click", function () {
@@ -4045,7 +4463,7 @@ function initializeMentorDashboardPage() {
       profile: {
         displayName: draftProfile.displayName || currentUser.name,
         name: draftProfile.displayName || currentUser.name,
-        image: approvedMentor ? approvedMentor.image : currentUser.avatar,
+        image: draftProfile.image || (approvedMentor && approvedMentor.image) || currentUser.avatar,
         role: draftProfile.headline,
         workplace: draftProfile.workplace,
         focus: draftProfile.expertise,
