@@ -33,6 +33,21 @@
       </p>
     </section>
 
+    <section class="admin-flow-card">
+      <article class="admin-flow-step">
+        <span class="admin-flow-badge">Bước 1</span>
+        <h2>Duyệt ứng tuyển mentor</h2>
+        <p>`pending` ở đây nghĩa là hồ sơ ứng tuyển ban đầu chưa được admin xử lý.</p>
+        <p>Sau khi `approved`, mentor chỉ mới được cấp mã kích hoạt hoặc đủ điều kiện tạo tài khoản, chưa chắc đã lên search.</p>
+      </article>
+      <article class="admin-flow-step">
+        <span class="admin-flow-badge">Bước 2</span>
+        <h2>Duyệt hồ sơ công khai lên search</h2>
+        <p>`pending` ở đây là hồ sơ công khai do mentor gửi từ dashboard, chờ admin duyệt hiển thị.</p>
+        <p>Chỉ khi bước này `approved`, thông tin hồ sơ mới cập nhật lên trang tìm kiếm mentor.</p>
+      </article>
+    </section>
+
     <section class="admin-access-card">
       <div id="adminConsultationMessage" class="auth-message" hidden></div>
       <form id="adminAccessForm" class="admin-access-form" novalidate>
@@ -54,7 +69,7 @@
 
     <section id="adminMentorApplicationDashboard" class="admin-dashboard" hidden>
       <div class="admin-dashboard-bar">
-        <h2>Duyệt ứng tuyển mentor và cấp mã kích hoạt</h2>
+        <h2>Bước 1: Duyệt ứng tuyển mentor và cấp mã kích hoạt</h2>
         <button type="button" id="adminRefreshMentorApplications" class="mentor-secondary-btn">Tải lại</button>
       </div>
       <div id="adminMentorApplicationSummary"></div>
@@ -71,7 +86,7 @@
 
     <section id="adminMentorProfileUpdateDashboard" class="admin-dashboard" hidden>
       <div class="admin-dashboard-bar">
-        <h2>Duyệt hồ sơ mentor để hiển thị lên tìm kiếm</h2>
+        <h2>Bước 2: Duyệt hồ sơ mentor để hiển thị lên tìm kiếm</h2>
         <button type="button" id="adminRefreshMentorProfileUpdates" class="mentor-secondary-btn">Tải lại</button>
       </div>
       <div id="adminMentorProfileUpdateList" class="admin-consultation-list"></div>
@@ -79,19 +94,21 @@
 
     <section id="adminMentorCreateDashboard" class="admin-dashboard" hidden>
       <div class="admin-dashboard-bar">
-        <h2>Thêm mentor lên tìm kiếm</h2>
+        <h2>Thêm / chỉnh sửa mentor trên tìm kiếm</h2>
       </div>
       <div class="admin-consultation-list">
         <article class="admin-request-card">
           <div class="admin-request-head">
             <div>
-              <span class="admin-request-label">Mentor mới</span>
-              <h3>Đăng mentor lên tìm kiếm</h3>
-              <p>Điền thông tin cơ bản để mentor hiển thị trên trang tìm kiếm.</p>
+              <span id="adminMentorCreateModeLabel" class="admin-request-label">Mentor mới</span>
+              <h3 id="adminMentorCreateTitle">Đăng mentor lên tìm kiếm</h3>
+              <p id="adminMentorCreateDescription">Điền thông tin cơ bản để mentor hiển thị trên trang tìm kiếm.</p>
             </div>
           </div>
 
           <form id="adminMentorCreateForm" class="admin-mentor-create-form" novalidate>
+            <input type="hidden" id="adminMentorEditId">
+
             <label class="auth-field">
               <span>Tên mentor</span>
               <input type="text" id="adminMentorCreateName" placeholder="Ví dụ: Nguyễn Minh Anh" required>
@@ -103,7 +120,12 @@
             </label>
 
             <label class="auth-field">
-              <span>Mật khẩu tạm cho mentor</span>
+              <span>Số điện thoại</span>
+              <input type="text" id="adminMentorCreatePhone" placeholder="Ví dụ: 0912345678">
+            </label>
+
+            <label class="auth-field">
+              <span id="adminMentorCreatePasswordLabel">Mật khẩu tạm cho mentor</span>
               <input type="password" id="adminMentorCreatePassword" placeholder="Tối thiểu 8 ký tự" required>
             </label>
 
@@ -143,6 +165,15 @@
             </label>
 
             <label class="auth-field">
+              <span>Upload ảnh mentor</span>
+              <input type="file" id="adminMentorCreateImageUpload" accept="image/*">
+            </label>
+
+            <div class="profile-full-width mentor-inline-image-preview">
+              <img id="adminMentorCreateImagePreview" src="logo.png" alt="Preview ảnh mentor">
+            </div>
+
+            <label class="auth-field">
               <span>Tag ngắn</span>
               <input type="text" id="adminMentorCreateTag" placeholder="Ví dụ: Mentor định hướng">
             </label>
@@ -164,7 +195,7 @@
                 <label><input type="checkbox" name="adminMentorCreateService" value="course"> Mini Course/ Course/ Class</label>
                 <label><input type="checkbox" name="adminMentorCreateService" value="coaching"> Career Package/ Coaching</label>
                 <label><input type="checkbox" name="adminMentorCreateService" value="quick-service"> Quick service (Sửa bài luận, Review CV,...)</label>
-                <label><input type="checkbox" name="adminMentorCreateService" value="qa-chat"> Hỏi đáp nhanh (Q&A/ Chat)</label>
+                <label><input type="checkbox" name="adminMentorCreateService" value="qa-chat"> Hỏi đáp nhanh (Q&A / Chat)</label>
               </div>
             </label>
 
@@ -193,8 +224,23 @@
               <input type="number" id="adminMentorCreateStudents" min="0" step="1" placeholder="Ví dụ: 20">
             </label>
 
-            <button type="submit" class="mentor-primary-btn">Tạo mentor</button>
+            <div class="profile-actions">
+              <button type="submit" id="adminMentorCreateSubmit" class="mentor-primary-btn">Tạo mentor</button>
+              <button type="button" id="adminMentorEditCancel" class="mentor-secondary-btn" hidden>Hủy chỉnh sửa</button>
+            </div>
           </form>
+        </article>
+
+        <article class="admin-request-card">
+          <div class="admin-request-head">
+            <div>
+              <span class="admin-request-label">Mentor đang hiển thị</span>
+              <h3>Danh sách mentor đã lưu</h3>
+              <p>Admin có thể mở từng mentor để chỉnh sửa và lưu lại trực tiếp.</p>
+            </div>
+            <button type="button" id="adminRefreshMentorProfiles" class="mentor-secondary-btn">Tải lại</button>
+          </div>
+          <div id="adminMentorManageList" class="admin-consultation-list"></div>
         </article>
       </div>
     </section>

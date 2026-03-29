@@ -47,8 +47,8 @@ const SERVICE_LABELS = {
   "1-1": "Mentoring 1-1",
   course: "Mini Course/ Course/ Class",
   coaching: "Career Package/ Coaching",
-  "quick-service": "Quick service (Sua bai luan, Review CV,...)",
-  "qa-chat": "Hoi dap nhanh (Q&A/ Chat)"
+  "quick-service": "Quick service (Sửa bài luận, Review CV,...)",
+  "qa-chat": "Hỏi đáp nhanh (Q&A / Chat)"
 };
 const FIELD_CATEGORY_ALIASES = {
   toan: "hoc-tap",
@@ -235,7 +235,7 @@ function buildMentorServiceText(services) {
     course: "mini course/ course/ class",
     coaching: "career package/ coaching",
     "quick-service": "quick service",
-    "qa-chat": "hoi dap nhanh"
+    "qa-chat": "hỏi đáp nhanh"
   };
   const list = (services || []).map(function (item) {
     return labels[item];
