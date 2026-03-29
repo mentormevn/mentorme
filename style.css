@@ -9497,6 +9497,104 @@ main{
   box-shadow:none !important;
 }
 
+@media (max-width: 1100px){
+  .hero-container{
+    display:grid !important;
+    grid-template-columns:minmax(220px, 320px) minmax(0, 1fr) !important;
+    align-items:center !important;
+    gap:28px !important;
+  }
+
+  .hero-image{
+    justify-content:center !important;
+  }
+
+  .hero-content{
+    align-items:flex-start !important;
+    text-align:left !important;
+  }
+
+  .hero-content h1{
+    margin-left:0 !important;
+    margin-right:0 !important;
+    text-align:left !important;
+  }
+}
+
+@media (max-width: 900px){
+  .hero-container{
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+  }
+
+  .hero-image{
+    order:-1 !important;
+    justify-content:center !important;
+  }
+
+  .hero-content{
+    align-items:center !important;
+    text-align:center !important;
+  }
+
+  .hero-content h1{
+    width:100% !important;
+    text-align:center !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+
+  .hero-sub,
+  .search-box,
+  .hero-quick-actions,
+  .hero-stats{
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+}
+
+@media (max-width: 900px){
+  .search-hero-container,
+  .services-hero{
+    grid-template-columns:1fr !important;
+  }
+
+  .search-content,
+  .services-hero-copy,
+  .services-hero-highlight{
+    align-items:center !important;
+    text-align:center !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+
+  .search-content h1,
+  .services-hero-copy h1{
+    width:100% !important;
+    text-align:center !important;
+  }
+}
+
+@media (max-width: 1100px){
+  .search-hero-container:has(.search-robot),
+  .services-hero:has(.services-hero-highlight){
+    grid-template-columns:minmax(220px, 320px) minmax(0, 1fr) !important;
+  }
+
+  .search-hero-container:has(.search-robot) .search-content,
+  .services-hero:has(.services-hero-highlight) .services-hero-copy{
+    align-items:flex-start !important;
+    text-align:left !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+  }
+
+  .search-hero-container:has(.search-robot) .search-content h1,
+  .services-hero:has(.services-hero-highlight) .services-hero-copy h1{
+    text-align:left !important;
+  }
+}
+
 .hamburger{
   display:none;
   width:52px !important;
