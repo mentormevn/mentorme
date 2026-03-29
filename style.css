@@ -8050,3 +8050,153 @@ body > main > .mentee{
     flex-basis:86vw !important;
   }
 }
+
+/* ===== ABOUT WOW PASS ===== */
+
+.about-scale::after{
+  display:none !important;
+}
+
+.about-scale{
+  position:relative;
+  overflow:clip;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(212, 230, 255, 0.95), rgba(212, 230, 255, 0) 24%),
+    radial-gradient(circle at 86% 84%, rgba(222, 238, 255, 0.88), rgba(222, 238, 255, 0) 26%),
+    linear-gradient(180deg, #ffffff 0%, #f7fbff 100%) !important;
+}
+
+.about{
+  position:relative;
+}
+
+.about-left{
+  position:relative;
+  z-index:2;
+}
+
+.about-left h3{
+  width:auto !important;
+  max-width:15ch;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-wrap:balance;
+}
+
+.about-title-reveal{
+  position:relative;
+  display:inline-block;
+  padding:0.04em 0.18em 0.12em;
+}
+
+.about-title-reveal::after{
+  content:"";
+  position:absolute;
+  left:0.18em;
+  right:0.18em;
+  bottom:0.02em;
+  height:0.42em;
+  border-radius:999px;
+  background:linear-gradient(90deg, rgba(210, 229, 255, 0.95), rgba(238, 246, 255, 0.55));
+  z-index:-1;
+  filter:blur(0.2px);
+}
+
+.about-left p{
+  max-width:34ch !important;
+}
+
+.about-right{
+  z-index:1;
+}
+
+.robot-wrap{
+  filter:drop-shadow(0 28px 36px rgba(18, 70, 145, 0.12));
+}
+
+@media (min-width: 641px) and (max-width: 1024px){
+  .about-scale{
+    padding:36px 0 22px !important;
+  }
+
+  .about{
+    display:block !important;
+    min-height:318px;
+    padding:8px 24px 20px !important;
+    overflow:visible;
+  }
+
+  .about-left{
+    max-width:min(58%, 430px) !important;
+  }
+
+  .about-left h3{
+    font-size:clamp(30px, 4.2vw, 42px) !important;
+    line-height:1.04 !important;
+    max-width:12ch;
+  }
+
+  .about-left p{
+    font-size:17px !important;
+    line-height:1.65 !important;
+    max-width:29ch !important;
+  }
+
+  .about-right{
+    display:flex !important;
+    position:absolute;
+    right:-6px;
+    bottom:-10px;
+    justify-content:flex-end;
+    pointer-events:none;
+  }
+
+  .robot-wrap{
+    width:min(34vw, 276px);
+  }
+
+  .about-robot{
+    max-width:100%;
+  }
+
+  .about-chat{
+    width:min(15vw, 132px);
+    top:-4px;
+    right:-8px;
+  }
+}
+
+@media (max-width: 640px){
+  .about-scale{
+    padding:22px 0 12px !important;
+    background:
+      radial-gradient(circle at 10% 14%, rgba(214, 232, 255, 0.92), rgba(214, 232, 255, 0) 24%),
+      linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+  }
+
+  .about{
+    padding:2px 12px 6px !important;
+  }
+
+  .about-left{
+    max-width:100% !important;
+  }
+
+  .about-left h3{
+    font-size:clamp(24px, 7.2vw, 30px) !important;
+    line-height:1.05 !important;
+    max-width:11ch;
+    letter-spacing:-0.05em !important;
+    margin-bottom:10px !important;
+  }
+
+  .about-left p{
+    font-size:15px !important;
+    line-height:1.58 !important;
+    max-width:30ch !important;
+  }
+
+  .about-right{
+    display:none !important;
+  }
+}
