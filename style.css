@@ -9464,8 +9464,8 @@ main{
   background:transparent !important;
   border:none !important;
   box-shadow:none !important;
-  border-radius:0 !important;
-  padding:0 !important;
+  border-radius:14px !important;
+  padding:10px 14px !important;
 }
 
 .navbar .menu li.active a{
@@ -9477,13 +9477,24 @@ main{
 .hero-kicker,
 .services-panel-label,
 .service-type,
-.home-service-type,
-.partner-pill-row span{
+.home-service-type{
   background:transparent !important;
   border:none !important;
   box-shadow:none !important;
   padding:0 !important;
   color:#0048a8 !important;
+}
+
+.partner-pill-row span{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:10px 16px !important;
+  border-radius:999px !important;
+  background:#ffffff !important;
+  border:1px solid rgba(0, 72, 168, 0.12) !important;
+  color:#0048a8 !important;
+  box-shadow:none !important;
 }
 
 .hamburger{
