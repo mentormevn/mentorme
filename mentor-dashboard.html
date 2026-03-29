@@ -73,19 +73,10 @@
             <input type="file" id="mentorDashboardImageUpload" accept="image/*">
           </label>
 
-          <label class="auth-field">
-            <span>Nhóm lĩnh vực</span>
-            <select id="mentorDashboardField" required>
-              <option value="">Chọn nhóm lĩnh vực</option>
-              <option value="hoc-tap">Học tập (Toán, Văn,..)</option>
-              <option value="ngoai-ngu">Ngoại ngữ và chứng chỉ</option>
-              <option value="ngoai-khoa">Hoạt động ngoại khóa</option>
-              <option value="cuoc-thi-nghien-cuu">Cuộc thi học thuật, nghiên cứu khoa học</option>
-              <option value="dinh-huong-ky-nang">Định hướng nghề nghiệp & kỹ năng</option>
-              <option value="kinh-doanh-khoi-nghiep">Kinh doanh & khởi nghiệp</option>
-              <option value="cong-nghe">Công nghệ</option>
-              <option value="phat-trien-ban-than">Phát triển bản thân</option>
-            </select>
+          <label class="auth-field profile-full-width">
+            <span>Nhóm lĩnh vực mentor có thể đồng hành</span>
+            <div id="mentorDashboardFieldOptions" class="auth-field-checkboxes"></div>
+            <small class="profile-field-hint">Mentor có thể chọn nhiều nhóm. Nhóm đầu tiên sẽ được dùng làm lĩnh vực chính cho bộ lọc tìm kiếm.</small>
           </label>
 
           <label class="auth-field">
@@ -136,6 +127,31 @@
           </label>
 
           <label class="auth-field profile-full-width">
+            <span>Kinh nghiệm làm việc</span>
+            <textarea id="mentorDashboardExperience" rows="4" placeholder="Chia sẻ kinh nghiệm làm việc, dự án thực tế hoặc vai trò chuyên môn bạn từng đảm nhiệm."></textarea>
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Quá trình học tập</span>
+            <textarea id="mentorDashboardEducation" rows="4" placeholder="Liệt kê trường lớp, chuyên ngành, lộ trình học hoặc những mốc học tập quan trọng."></textarea>
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Hoạt động ngoại khóa</span>
+            <textarea id="mentorDashboardActivities" rows="4" placeholder="Ví dụ: câu lạc bộ, dự án cộng đồng, hoạt động lãnh đạo hoặc chương trình bạn từng tham gia."></textarea>
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Tên giải thưởng</span>
+            <textarea id="mentorDashboardAwards" rows="4" placeholder="Liệt kê giải thưởng, học bổng hoặc thành tích nổi bật để public cùng hồ sơ."></textarea>
+          </label>
+
+          <label class="auth-field profile-full-width">
+            <span>Kỹ năng &amp; chứng chỉ</span>
+            <textarea id="mentorDashboardSkills" rows="4" placeholder="Ví dụ: IELTS, MOS, thuyết trình, nghiên cứu, giảng dạy, công cụ chuyên môn."></textarea>
+          </label>
+
+          <label class="auth-field profile-full-width">
             <span>Thành tích nổi bật</span>
             <textarea id="mentorDashboardAchievements" rows="5" placeholder="Mỗi dòng là một thành tích hoặc điểm mạnh nổi bật."></textarea>
           </label>
@@ -183,6 +199,10 @@
             <strong id="mentorDashboardPreviewExpertise">Chưa cập nhật</strong>
           </div>
           <div>
+            <span>Nhóm lĩnh vực</span>
+            <strong id="mentorDashboardPreviewFieldSummary">Chưa cập nhật</strong>
+          </div>
+          <div>
             <span>Dịch vụ</span>
             <strong id="mentorDashboardPreviewServices">Chưa cập nhật</strong>
           </div>
@@ -199,6 +219,31 @@
         <div class="mentor-preview-section">
           <span>Giới thiệu</span>
           <p id="mentorDashboardPreviewIntro">Phần giới thiệu mentor sẽ xuất hiện ở đây để bạn xem trước cách hiển thị.</p>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Kinh nghiệm làm việc</span>
+          <p id="mentorDashboardPreviewExperience">Chưa cập nhật kinh nghiệm làm việc.</p>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Quá trình học tập</span>
+          <p id="mentorDashboardPreviewEducation">Chưa cập nhật quá trình học tập.</p>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Hoạt động ngoại khóa</span>
+          <p id="mentorDashboardPreviewActivities">Chưa cập nhật hoạt động ngoại khóa.</p>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Tên giải thưởng</span>
+          <p id="mentorDashboardPreviewAwards">Chưa cập nhật giải thưởng.</p>
+        </div>
+
+        <div class="mentor-preview-section">
+          <span>Kỹ năng &amp; chứng chỉ</span>
+          <p id="mentorDashboardPreviewSkills">Chưa cập nhật kỹ năng và chứng chỉ.</p>
         </div>
 
         <div class="mentor-preview-section">

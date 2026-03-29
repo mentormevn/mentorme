@@ -82,6 +82,16 @@ const FIELD_CATEGORY_ALIASES = {
   "cong-nghe": "cong-nghe",
   "phat-trien-ban-than": "phat-trien-ban-than"
 };
+const FIELD_CATEGORY_OPTIONS = [
+  { value: "hoc-tap", label: "Học tập (Toán, Văn,..)" },
+  { value: "ngoai-ngu", label: "Ngoại ngữ và chứng chỉ" },
+  { value: "ngoai-khoa", label: "Hoạt động ngoại khóa" },
+  { value: "cuoc-thi-nghien-cuu", label: "Cuộc thi học thuật, nghiên cứu khoa học" },
+  { value: "dinh-huong-ky-nang", label: "Định hướng nghề nghiệp & kỹ năng" },
+  { value: "kinh-doanh-khoi-nghiep", label: "Kinh doanh & khởi nghiệp" },
+  { value: "cong-nghe", label: "Công nghệ" },
+  { value: "phat-trien-ban-than", label: "Phát triển bản thân" }
+];
 let currentSearchPage = 1;
 let currentSessionUser = null;
 let mentorProfileDraftStore = {};
@@ -148,6 +158,33 @@ function normalizeRole(role) {
 function normalizeFieldCategory(field) {
   const normalized = slugifyText(field);
   return FIELD_CATEGORY_ALIASES[normalized] || normalized;
+}
+
+function normalizeFieldCategoryList(values) {
+  const rawValues = Array.isArray(values) ? values : [values];
+  return rawValues
+    .map(function (value) {
+      return normalizeFieldCategory(value);
+    })
+    .filter(Boolean)
+    .filter(function (value, index, list) {
+      return list.indexOf(value) === index;
+    });
+}
+
+function getFieldCategoryLabel(field) {
+  const normalized = normalizeFieldCategory(field);
+  const found = FIELD_CATEGORY_OPTIONS.find(function (item) {
+    return item.value === normalized;
+  });
+  return found ? found.label : normalized || "Chưa cập nhật";
+}
+
+function buildFieldCategorySummary(values) {
+  const normalized = normalizeFieldCategoryList(values);
+  return normalized.length
+    ? normalized.map(getFieldCategoryLabel).join(", ")
+    : "Chưa cập nhật";
 }
 
 function formatRoleLabel(role) {
@@ -778,8 +815,14 @@ function buildMentorSearchableText(mentor) {
     mentor.role,
     mentor.bio,
     mentor.focus,
+    buildFieldCategorySummary(mentor.fields || mentor.field),
     mentor.fit,
-    mentor.workplace
+    mentor.workplace,
+    mentor.experience,
+    mentor.education,
+    mentor.activities,
+    mentor.awards,
+    mentor.skills
   ]
     .map(slugifyText)
     .filter(Boolean)
@@ -1611,6 +1654,8 @@ function getResolvedMentorById(mentorId) {
     : buildLegacyServiceKeysFromPackages(servicePackages);
 
   return Object.assign({}, resolvedMentor, {
+    field: normalizeFieldCategoryList(resolvedMentor.fields || resolvedMentor.field || [])[0] || normalizeFieldCategory(resolvedMentor.field || ""),
+    fields: normalizeFieldCategoryList(resolvedMentor.fields || resolvedMentor.field || []),
     availability: availability,
     availabilitySlots: availabilitySlots,
     availabilityText: buildAvailabilitySummaryFromSlots(availabilitySlots),
@@ -1875,7 +1920,8 @@ function filterMentors() {
     .filter(function (entry) {
       const mentor = entry.mentor;
       const matchesKeyword = !keyword || entry.score > 0;
-      const matchesField = !selectedField || normalizeFieldCategory(mentor.field) === selectedField;
+      const mentorFields = normalizeFieldCategoryList(mentor.fields || mentor.field || []);
+      const matchesField = !selectedField || mentorFields.includes(selectedField);
       const matchesAvailability =
         !selectedAvailability || mentor.availability.includes(selectedAvailability);
       const matchesService = !selectedService || mentor.service.includes(selectedService);
@@ -1960,11 +2006,27 @@ function renderMentorDetail() {
   document.getElementById("mentorDetailStudents").textContent = (mentor.studentsTaught || 0) + " học sinh";
   document.getElementById("mentorDetailWorkplace").textContent = mentor.workplace || "Đang cập nhật";
   document.getElementById("mentorDetailFocus").textContent = mentor.focus;
+  const fieldSummaryElement = document.getElementById("mentorDetailFieldSummary");
+  if (fieldSummaryElement) {
+    fieldSummaryElement.textContent = buildFieldCategorySummary(mentor.fields || mentor.field);
+  }
   const availabilityElement = document.getElementById("mentorDetailAvailability");
   if (availabilityElement) {
     availabilityElement.textContent = "Xem bảng lịch phía dưới";
   }
   document.getElementById("mentorDetailService").textContent = buildCompactServicePackageSummary(mentor.servicePackages || []);
+  const introElement = document.getElementById("mentorDetailIntro");
+  if (introElement) introElement.textContent = mentor.intro || mentor.bio || "Mentor chưa cập nhật phần giới thiệu bản thân.";
+  const experienceElement = document.getElementById("mentorDetailExperience");
+  if (experienceElement) experienceElement.textContent = mentor.experience || "Mentor chưa cập nhật kinh nghiệm làm việc.";
+  const educationElement = document.getElementById("mentorDetailEducation");
+  if (educationElement) educationElement.textContent = mentor.education || "Mentor chưa cập nhật quá trình học tập.";
+  const activitiesElement = document.getElementById("mentorDetailActivities");
+  if (activitiesElement) activitiesElement.textContent = mentor.activities || "Mentor chưa cập nhật hoạt động ngoại khóa.";
+  const awardsElement = document.getElementById("mentorDetailAwards");
+  if (awardsElement) awardsElement.textContent = mentor.awards || "Mentor chưa cập nhật giải thưởng.";
+  const skillsElement = document.getElementById("mentorDetailSkills");
+  if (skillsElement) skillsElement.textContent = mentor.skills || "Mentor chưa cập nhật kỹ năng và chứng chỉ.";
   document.getElementById("mentorDetailFit").textContent = mentor.fit;
 
   const bookingLink = document.getElementById("mentorBookingLink");
@@ -2682,11 +2744,13 @@ function normalizeRemoteMentorProfile(record) {
   const profile = record.profile || {};
   const mentorId = String(record.id || profile.id || "").trim();
   if (!mentorId) return null;
+  const fields = normalizeFieldCategoryList(profile.fields || profile.field || record.field || []);
 
   const normalizedProfile = Object.assign({}, profile, {
     id: mentorId,
     name: profile.name || record.name || "Mentor",
-    field: normalizeFieldCategory(profile.field || record.field || ""),
+    field: fields[0] || normalizeFieldCategory(profile.field || record.field || ""),
+    fields: fields,
     bio: profile.bio || profile.intro || "",
     intro: profile.intro || profile.bio || "",
     _origin: "supabase"
@@ -4140,12 +4204,18 @@ function initializeMentorDashboardPage() {
     workplace: "",
     expertise: "",
     field: "",
+    fields: [],
     services: "",
     pricing: "",
     availability: "",
     availabilitySlots: [],
     servicePackages: [],
     intro: "",
+    experience: "",
+    education: "",
+    activities: "",
+    awards: "",
+    skills: "",
     achievements: "",
     fit: "",
     visibility: "draft",
@@ -4165,6 +4235,7 @@ function initializeMentorDashboardPage() {
       workplace: approvedMentor.workplace || "",
       expertise: approvedMentor.focus,
       field: normalizeFieldCategory(approvedMentor.field),
+      fields: normalizeFieldCategoryList(approvedMentor.fields || approvedMentor.field || []),
       services: buildMentorServiceText((approvedMentor.servicePackages || []).map(function (item) {
         return item.serviceKey;
       })),
@@ -4173,6 +4244,11 @@ function initializeMentorDashboardPage() {
       availabilitySlots: getMentorAvailabilitySlots(approvedMentor),
       servicePackages: getMentorServicePackages(approvedMentor),
       intro: approvedMentor.bio || "",
+      experience: approvedMentor.experience || "",
+      education: approvedMentor.education || "",
+      activities: approvedMentor.activities || "",
+      awards: approvedMentor.awards || "",
+      skills: approvedMentor.skills || "",
       achievements: (approvedMentor.achievements || []).join("\n"),
       fit: approvedMentor.fit || "",
       visibility: "public",
@@ -4187,11 +4263,16 @@ function initializeMentorDashboardPage() {
     headline: document.getElementById("mentorDashboardHeadline"),
     workplace: document.getElementById("mentorDashboardWorkplace"),
     expertise: document.getElementById("mentorDashboardExpertise"),
-    field: document.getElementById("mentorDashboardField"),
+    fieldOptions: document.getElementById("mentorDashboardFieldOptions"),
     services: document.getElementById("mentorDashboardServices"),
     pricing: document.getElementById("mentorDashboardPricing"),
     availability: document.getElementById("mentorDashboardAvailability"),
     intro: document.getElementById("mentorDashboardIntro"),
+    experience: document.getElementById("mentorDashboardExperience"),
+    education: document.getElementById("mentorDashboardEducation"),
+    activities: document.getElementById("mentorDashboardActivities"),
+    awards: document.getElementById("mentorDashboardAwards"),
+    skills: document.getElementById("mentorDashboardSkills"),
     achievements: document.getElementById("mentorDashboardAchievements"),
     fit: document.getElementById("mentorDashboardFit"),
     visibility: document.getElementById("mentorDashboardVisibility"),
@@ -4209,17 +4290,44 @@ function initializeMentorDashboardPage() {
     headline: document.getElementById("mentorDashboardPreviewHeadline"),
     workplace: document.getElementById("mentorDashboardPreviewWorkplace"),
     expertise: document.getElementById("mentorDashboardPreviewExpertise"),
+    fieldSummary: document.getElementById("mentorDashboardPreviewFieldSummary"),
     services: document.getElementById("mentorDashboardPreviewServices"),
     pricing: document.getElementById("mentorDashboardPreviewPricing"),
     availability: document.getElementById("mentorDashboardPreviewAvailability"),
     packageList: document.getElementById("mentorDashboardPreviewPackages"),
     schedule: document.getElementById("mentorDashboardPreviewSchedule"),
     intro: document.getElementById("mentorDashboardPreviewIntro"),
+    experience: document.getElementById("mentorDashboardPreviewExperience"),
+    education: document.getElementById("mentorDashboardPreviewEducation"),
+    activities: document.getElementById("mentorDashboardPreviewActivities"),
+    awards: document.getElementById("mentorDashboardPreviewAwards"),
+    skills: document.getElementById("mentorDashboardPreviewSkills"),
     achievements: document.getElementById("mentorDashboardPreviewAchievements"),
     fit: document.getElementById("mentorDashboardPreviewFit"),
     statusBadge: document.getElementById("mentorDashboardStatusBadge")
   };
   const reviewStatusElement = document.getElementById("mentorDashboardReviewStatus");
+
+  function renderFieldOptions(selectedFields) {
+    if (!fields.fieldOptions) return;
+    const normalizedSelectedFields = normalizeFieldCategoryList(selectedFields);
+    fields.fieldOptions.innerHTML = FIELD_CATEGORY_OPTIONS.map(function (option) {
+      return `
+        <label>
+          <input type="checkbox" value="${option.value}" ${normalizedSelectedFields.includes(option.value) ? "checked" : ""}>
+          <span>${option.label}</span>
+        </label>
+      `;
+    }).join("");
+  }
+
+  function collectSelectedFieldOptions() {
+    if (!fields.fieldOptions) return [];
+    return Array.from(fields.fieldOptions.querySelectorAll("input[type=\"checkbox\"]:checked"))
+      .map(function (input) {
+        return input.value;
+      });
+  }
 
   function renderReviewStatus(reviewRequest) {
     if (!reviewStatusElement) {
@@ -4272,11 +4380,16 @@ function initializeMentorDashboardPage() {
     fields.headline.value = payload.headline || "";
     fields.workplace.value = payload.workplace || "";
     fields.expertise.value = payload.expertise || "";
-    fields.field.value = normalizeFieldCategory(payload.field || "");
+    renderFieldOptions(payload.fields || payload.field || []);
     fields.services.value = payload.services || "";
     fields.pricing.value = payload.pricing || "";
     fields.availability.value = payload.availability || "";
     fields.intro.value = payload.intro || "";
+    if (fields.experience) fields.experience.value = payload.experience || "";
+    if (fields.education) fields.education.value = payload.education || "";
+    if (fields.activities) fields.activities.value = payload.activities || "";
+    if (fields.awards) fields.awards.value = payload.awards || "";
+    if (fields.skills) fields.skills.value = payload.skills || "";
     fields.achievements.value = payload.achievements || "";
     fields.fit.value = payload.fit || "";
     fields.visibility.value = payload.visibility || "draft";
@@ -4315,7 +4428,8 @@ function initializeMentorDashboardPage() {
       headline: payload.role || payload.headline || draftProfile.headline,
       workplace: payload.workplace || draftProfile.workplace,
       expertise: payload.focus || payload.expertise || draftProfile.expertise,
-      field: normalizeFieldCategory(payload.field || draftProfile.field),
+      field: normalizeFieldCategoryList(payload.fields || payload.field || draftProfile.field)[0] || draftProfile.field,
+      fields: normalizeFieldCategoryList(payload.fields || payload.field || draftProfile.fields || draftProfile.field),
       services: payload.serviceText || buildMentorServiceText(reviewPackages.map(function (item) {
         return item.serviceKey;
       })),
@@ -4324,6 +4438,11 @@ function initializeMentorDashboardPage() {
       availabilitySlots: reviewSlots,
       servicePackages: reviewPackages,
       intro: payload.bio || payload.intro || draftProfile.intro,
+      experience: payload.experience || draftProfile.experience,
+      education: payload.education || draftProfile.education,
+      activities: payload.activities || draftProfile.activities,
+      awards: payload.awards || draftProfile.awards,
+      skills: payload.skills || draftProfile.skills,
       achievements: Array.isArray(payload.achievements) ? payload.achievements.join("\n") : (payload.achievements || draftProfile.achievements),
       fit: payload.fit || draftProfile.fit,
       rating: payload.rating || draftProfile.rating,
@@ -4342,6 +4461,9 @@ function initializeMentorDashboardPage() {
     previewElements.headline.textContent = payload.headline || "Headline chuyên môn sẽ hiển thị ở đây.";
     previewElements.workplace.textContent = payload.workplace || "Chưa cập nhật";
     previewElements.expertise.textContent = payload.expertise || "Chưa cập nhật";
+    if (previewElements.fieldSummary) {
+      previewElements.fieldSummary.textContent = buildFieldCategorySummary(payload.fields || payload.field);
+    }
     previewElements.services.textContent = payload.services || "Chưa cập nhật";
     previewElements.pricing.textContent = payload.pricing || "Chưa cập nhật";
     previewElements.availability.textContent = payload.availability || "Chưa cập nhật";
@@ -4360,6 +4482,11 @@ function initializeMentorDashboardPage() {
         });
     }
     previewElements.intro.textContent = payload.intro || "Phần giới thiệu mentor sẽ xuất hiện ở đây để bạn xem trước cách hiển thị.";
+    if (previewElements.experience) previewElements.experience.textContent = payload.experience || "Chưa cập nhật kinh nghiệm làm việc.";
+    if (previewElements.education) previewElements.education.textContent = payload.education || "Chưa cập nhật quá trình học tập.";
+    if (previewElements.activities) previewElements.activities.textContent = payload.activities || "Chưa cập nhật hoạt động ngoại khóa.";
+    if (previewElements.awards) previewElements.awards.textContent = payload.awards || "Chưa cập nhật giải thưởng.";
+    if (previewElements.skills) previewElements.skills.textContent = payload.skills || "Chưa cập nhật kỹ năng và chứng chỉ.";
     previewElements.fit.textContent = payload.fit || "Mô tả nhóm mentee phù hợp sẽ hiển thị tại đây.";
     previewElements.statusBadge.textContent =
       payload.visibility === "public" ? "Sẵn sàng gửi duyệt công khai" : "Lưu nháp nội bộ";
@@ -4394,6 +4521,7 @@ function initializeMentorDashboardPage() {
     }));
     const pricingSummary = buildServicePackageSummary(servicePackages);
     const availabilitySummary = buildAvailabilitySummaryFromSlots(selectedAvailabilitySlots);
+    const selectedFields = normalizeFieldCategoryList(collectSelectedFieldOptions());
 
     draftProfile = {
       displayName: normalizeWhitespace(fields.displayName.value),
@@ -4401,13 +4529,19 @@ function initializeMentorDashboardPage() {
       headline: normalizeWhitespace(fields.headline.value),
       workplace: normalizeWhitespace(fields.workplace.value),
       expertise: normalizeWhitespace(fields.expertise.value),
-      field: normalizeFieldCategory(fields.field && fields.field.value),
+      field: selectedFields[0] || "",
+      fields: selectedFields,
       services: servicesSummary,
       pricing: pricingSummary,
       availability: availabilitySummary,
       availabilitySlots: selectedAvailabilitySlots,
       servicePackages: servicePackages,
       intro: normalizeWhitespace(fields.intro.value),
+      experience: normalizeWhitespace(fields.experience && fields.experience.value),
+      education: normalizeWhitespace(fields.education && fields.education.value),
+      activities: normalizeWhitespace(fields.activities && fields.activities.value),
+      awards: normalizeWhitespace(fields.awards && fields.awards.value),
+      skills: normalizeWhitespace(fields.skills && fields.skills.value),
       achievements: fields.achievements.value.trim(),
       fit: normalizeWhitespace(fields.fit.value),
       visibility: fields.visibility.value === "public" ? "public" : "draft",
@@ -4441,9 +4575,15 @@ function initializeMentorDashboardPage() {
   Object.keys(fields).forEach(function (key) {
     const input = fields[key];
     if (!input) return;
+    if (key === "fieldOptions") return;
     input.addEventListener("input", syncFromForm);
     input.addEventListener("change", syncFromForm);
   });
+
+  if (fields.fieldOptions && !fields.fieldOptions.dataset.boundFieldOptions) {
+    fields.fieldOptions.addEventListener("change", syncFromForm);
+    fields.fieldOptions.dataset.boundFieldOptions = "true";
+  }
 
   if (imageUploadInput) {
     imageUploadInput.addEventListener("change", function () {
@@ -4553,12 +4693,18 @@ function initializeMentorDashboardPage() {
         workplace: draftProfile.workplace,
         focus: draftProfile.expertise,
         field: draftProfile.field,
+        fields: draftProfile.fields,
         serviceText: draftProfile.services,
         servicePackages: draftProfile.servicePackages,
         pricing: draftProfile.pricing,
         availabilityText: draftProfile.availability,
         availabilitySlots: draftProfile.availabilitySlots,
         bio: draftProfile.intro,
+        experience: draftProfile.experience,
+        education: draftProfile.education,
+        activities: draftProfile.activities,
+        awards: draftProfile.awards,
+        skills: draftProfile.skills,
         achievements: String(draftProfile.achievements || "").split("\n").map(function (item) { return item.trim(); }).filter(Boolean),
         fit: draftProfile.fit,
         rating: Number(draftProfile.rating || (approvedMentor && approvedMentor.rating) || 4.8),
@@ -4570,8 +4716,14 @@ function initializeMentorDashboardPage() {
           role: draftProfile.headline,
           bio: draftProfile.intro,
           focus: draftProfile.expertise,
+          fields: draftProfile.fields,
           fit: draftProfile.fit,
-          workplace: draftProfile.workplace
+          workplace: draftProfile.workplace,
+          experience: draftProfile.experience,
+          education: draftProfile.education,
+          activities: draftProfile.activities,
+          awards: draftProfile.awards,
+          skills: draftProfile.skills
         })
       }
     };
