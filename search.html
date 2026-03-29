@@ -4,31 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tìm kiếm Mentor</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="search-page">
-  <div class="navbar">
-    <a href="index.html" class="logo">
-      <img src="logo.png" alt="Mentor Me logo">
-      <span>MENTOR ME</span>
-    </a>
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo">
+        <img src="logo.svg" alt="Mentor Me logo">
+        <span>MENTOR ME</span>
+      </a>
 
-    <ul class="menu">
-      <li><a href="index.html">Trang chủ</a></li>
-      <li class="active"><a href="search.html">Tìm kiếm Mentor</a></li>
-      <li><a href="services.html">Dịch vụ</a></li>
-      <li><a href="mentee-schedule.html">Lịch học</a></li>
-    </ul>
-
-    <div id="authArea">
-      <div class="auth-links">
-        <a href="login.html">Đăng nhập</a>
-        <a href="register.html" class="btn-register">Đăng ký</a>
+      <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
-    </div>
-  </div>
 
+      <ul class="menu">
+        <li><a href="index.html">Trang chủ</a></li>
+        <li class="active"><a href="search.html">Tìm kiếm mentor</a></li>
+        <li><a href="services.html">Dịch vụ</a></li>
+        <li><a href="mentee-schedule.html">Lịch học</a></li>
+      </ul>
+
+      <div id="authArea"></div>
+    </nav>
+  </header>
+
+  <main>
   <section class="search-hero">
     <div class="search-hero-container">
       <div class="search-robot">
@@ -48,6 +52,12 @@
         <p class="search-sub">
           (Hãy điền mục tiêu môn học/cuộc thi và thời gian rảnh mà bạn mong muốn tìm Mentor, TIGI sẽ giúp bạn!)
         </p>
+        <p class="search-hero-lead">Gõ nhu cầu theo cách bạn đang nghĩ, hệ thống sẽ gợi ý mentor phù hợp nhanh hơn và đúng hơn.</p>
+        <div class="search-prompt-list">
+          <span>IELTS buổi tối</span>
+          <span>Review CV ứng tuyển</span>
+          <span>Mentor debate</span>
+          <span>Định hướng nghề nghiệp</span>
         </div>
       </div>
     </div>
@@ -108,6 +118,7 @@
     <div id="mentorGrid" class="mentor-grid"></div>
     <div id="mentorPagination" class="mentor-pagination" hidden></div>
   </section>
+  </main>
 
   <footer class="footer">
     <div class="footer-container">

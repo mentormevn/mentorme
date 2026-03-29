@@ -8,31 +8,34 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="services-page">
-  <div class="navbar">
-    <a href="index.html" class="logo">
-      <img src="logo.png" alt="Mentor Me logo">
-      <span>MENTOR ME</span>
-    </a>
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo">
+        <img src="logo.svg" alt="Mentor Me logo">
+        <span>MENTOR ME</span>
+      </a>
 
-    <ul class="menu">
-      <li><a href="index.html">Trang chủ</a></li>
-      <li><a href="search.html">Tìm kiếm Mentor</a></li>
-      <li class="active"><a href="services.html">Dịch vụ</a></li>
-      <li><a href="mentee-schedule.html">Lịch học</a></li>
-    </ul>
-
-    <div id="authArea">
-      <div class="auth-links">
-        <a href="login.html">Đăng nhập</a>
-        <a href="register.html" class="btn-register">Đăng ký</a>
+      <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
-    </div>
-  </div>
+
+      <ul class="menu">
+        <li><a href="index.html">Trang chủ</a></li>
+        <li><a href="search.html">Tìm kiếm mentor</a></li>
+        <li class="active"><a href="services.html">Dịch vụ</a></li>
+        <li><a href="mentee-schedule.html">Lịch học</a></li>
+      </ul>
+
+      <div id="authArea"></div>
+    </nav>
+  </header>
 
   <main class="services-shell">
     <section class="services-hero">
       <div class="services-hero-copy">
-        <h1>Chọn đúng hình thức mentoring cho mục tiêu của bạn.</h1>
+        <h1>Chọn dịch vụ phù hợp.</h1>
         <p>
           Mentor Me cung cấp các gói cố vấn linh hoạt cho học sinh, sinh viên và người đi làm:
           từ kèm cặp 1:1, khóa học nhóm nhỏ đến coaching nghề nghiệp và membership dài hạn.
@@ -44,7 +47,7 @@
         </div>
         <div class="services-metrics">
           <div class="services-metric-card">
-            <strong>7</strong>
+            <strong>6</strong>
             <span>Nhóm dịch vụ từ hỏi đáp nhanh đến membership dài hạn</span>
           </div>
           <div class="services-metric-card">
@@ -60,8 +63,13 @@
 
       <div class="services-hero-highlight">
         <span class="services-panel-label">Gói nổi bật</span>
-        <strong>Matching Mentor + Premium Membership giúp tìm nhanh và dùng lâu dài</strong>
-        <span>Tiết kiệm thời gian chọn mentor, được ưu tiên kết nối và tối ưu chi phí nếu bạn dùng thường xuyên.</span>
+        <strong>Premium Membership</strong>
+        <span>Tối ưu chi phí, nhận thêm quyền lợi ưu tiên và phù hợp nếu bạn dùng nền tảng thường xuyên.</span>
+        <ul class="services-panel-list">
+          <li>Giảm chi phí khi sử dụng nhiều dịch vụ trên nền tảng</li>
+          <li>Ưu tiên kết nối với mentor chất lượng cao</li>
+          <li>Phù hợp cho người muốn dùng nền tảng lâu dài</li>
+        </ul>
       </div>
     </section>
 
@@ -76,13 +84,13 @@
       </div>
       <div class="services-intro-card">
         <span>Cho nhu cầu dài hạn</span>
-        <p>Matching + membership giúp bạn tìm đúng mentor và dùng nền tảng hiệu quả hơn về lâu dài.</p>
+        <p>Premium membership giúp bạn tối ưu chi phí và dùng nền tảng hiệu quả hơn về lâu dài.</p>
       </div>
     </section>
 
     <section class="services-grid-section">
       <div class="services-section-heading">
-        <h2>Các dịch vụ hiện có trên nền tảng</h2>
+        <h2>Dịch vụ hiện có</h2>
       </div>
       <div class="services-grid">
         <article class="service-card">
@@ -190,27 +198,6 @@
           </div>
         </article>
 
-        <article class="service-card">
-          <div class="service-card-top">
-            <span class="service-type">Matching Mentor</span>
-            <h2>Hệ thống đề xuất mentor phù hợp tự động</h2>
-            <p class="service-price">Miễn phí</p>
-          </div>
-          <div class="service-kicker">Dành cho tất cả người dùng muốn tiết kiệm thời gian tìm kiếm.</div>
-          <p class="service-desc">
-            Người dùng nhập mục tiêu, lĩnh vực quan tâm và ngân sách,
-            hệ thống sẽ gợi ý danh sách mentor phù hợp kèm thông tin và đánh giá.
-          </p>
-          <div class="service-block">
-            <span>Đối tượng chính</span>
-            <p>Tất cả người dùng trên nền tảng.</p>
-          </div>
-          <div class="service-block">
-            <span>Hình thức</span>
-            <p>Tự động ngay trên nền tảng, không phát sinh phí sử dụng.</p>
-          </div>
-        </article>
-
         <article class="service-card service-card-featured">
           <div class="service-card-top">
             <span class="service-badge">Recommended</span>
@@ -233,6 +220,21 @@
           </div>
         </article>
       </div>
+    </section>
+
+    <section class="services-value-strip">
+      <article class="services-value-card">
+        <strong>1 nền tảng, nhiều mức đồng hành</strong>
+        <p>Bạn có thể bắt đầu từ một câu hỏi nhỏ rồi chuyển dần sang mentoring chuyên sâu mà không phải đổi hệ thống.</p>
+      </article>
+      <article class="services-value-card">
+        <strong>Linh hoạt theo ngân sách</strong>
+        <p>Có từ các gói chi phí thấp như Q&amp;A, review tài liệu cho đến coaching dài hạn và membership.</p>
+      </article>
+      <article class="services-value-card">
+        <strong>Thiết kế cho hành trình thật</strong>
+        <p>Phù hợp cho học sinh, sinh viên, người đi làm trẻ và cả những bạn đang chuyển giai đoạn quan trọng.</p>
+      </article>
     </section>
 
     <section id="consultationSection" class="services-consult-section">
@@ -286,7 +288,6 @@
               <option value="Hỏi đáp nhanh (Q&A)">Hỏi đáp nhanh (Q&A)</option>
               <option value="Review & Feedback">Review & Feedback</option>
               <option value="Career Mentoring">Career Mentoring</option>
-              <option value="Matching Mentor">Matching Mentor</option>
               <option value="Premium Membership">Premium Membership</option>
             </select>
           </label>
