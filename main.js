@@ -48,7 +48,7 @@ const SERVICE_LABELS = {
   course: "Mini Course/ Course/ Class",
   coaching: "Career Package/ Coaching",
   "quick-service": "Quick service (Sửa bài luận, Review CV,...)",
-  "qa-chat": "Hỏi đáp nhanh (Q&A / Chat)"
+  "qa-chat": "Hỏi đáp nhanh (Q&A/ Chat)"
 };
 const FIELD_CATEGORY_ALIASES = {
   toan: "hoc-tap",
@@ -1673,7 +1673,7 @@ function createMentorCard(mentor) {
       <div class="mentor-card-body">
         <h3>${safeMentor.name}</h3>
         <div class="mentor-card-rating-line">
-          <span>${Number(safeMentor.rating || 0).toFixed(1)} / 5 sao</span>
+          <span>${Number(safeMentor.rating || 0).toFixed(1)}/ 5 sao</span>
           <span>${safeMentor.studentsTaught || 0} học sinh</span>
         </div>
         <div class="mentor-card-achievements">
@@ -1956,7 +1956,7 @@ function renderMentorDetail() {
   document.getElementById("mentorDetailImage").alt = mentor.name;
   nameElement.textContent = mentor.name;
   document.getElementById("mentorDetailHeadline").textContent = mentor.role;
-  document.getElementById("mentorDetailRating").textContent = Number(mentor.rating || 0).toFixed(1) + " / 5 sao";
+  document.getElementById("mentorDetailRating").textContent = Number(mentor.rating || 0).toFixed(1) + "/ 5 sao";
   document.getElementById("mentorDetailStudents").textContent = (mentor.studentsTaught || 0) + " học sinh";
   document.getElementById("mentorDetailWorkplace").textContent = mentor.workplace || "Đang cập nhật";
   document.getElementById("mentorDetailFocus").textContent = mentor.focus;
@@ -3164,7 +3164,7 @@ function buildAdminMentorApplicationCard(application) {
 
       <div class="admin-request-body">
         <div class="admin-request-online">
-          <span>Portfolio / LinkedIn</span>
+          <span>Portfolio/ LinkedIn</span>
           <div class="admin-request-link">${portfolioHtml}</div>
         </div>
         <div class="admin-request-online">
@@ -3230,7 +3230,7 @@ function buildAdminMentorApplicationSummary(applications) {
         <p>Ứng viên đang ở vòng trao đổi, đánh giá và chọn lọc.</p>
       </article>
       <article class="admin-summary-card">
-        <span>Đã cấp mã / đã kích hoạt</span>
+        <span>Đã cấp mã/ đã kích hoạt</span>
         <strong>${counts.approved + counts.activated}</strong>
         <p>Đây mới là bước cấp tài khoản. Mentor vẫn cần gửi hồ sơ để admin duyệt công khai lên tìm kiếm.</p>
       </article>
@@ -3262,7 +3262,7 @@ function buildAdminMentorProfileUpdateCard(request) {
         <p><strong>Gửi lúc:</strong> ${formatDate(request.createdAt)}</p>
         <p><strong>Nhóm lĩnh vực:</strong> ${escapeHtml(profile.field || "Chưa cập nhật")}</p>
         <p><strong>Headline:</strong> ${escapeHtml(profile.role || "Chưa cập nhật")}</p>
-        <p><strong>Nơi làm việc / học tập:</strong> ${escapeHtml(profile.workplace || "Chưa cập nhật")}</p>
+        <p><strong>Nơi làm việc/ học tập:</strong> ${escapeHtml(profile.workplace || "Chưa cập nhật")}</p>
         <p><strong>Lịch rảnh:</strong> ${escapeHtml(profile.availabilityText || "Chưa cập nhật")}</p>
       </div>
 
@@ -3344,7 +3344,7 @@ function buildAdminMentorManageCard(record) {
         <p><strong>Nhóm lĩnh vực:</strong> ${safeField}</p>
         <p><strong>Headline:</strong> ${safeRole}</p>
         <p><strong>Lĩnh vực:</strong> ${safeFocus}</p>
-        <p><strong>Nơi làm việc / học tập:</strong> ${safeWorkplace}</p>
+        <p><strong>Nơi làm việc/ học tập:</strong> ${safeWorkplace}</p>
       </div>
 
       <div class="profile-actions">
@@ -5113,7 +5113,7 @@ function buildMenteeScheduleCard(request) {
           <div class="schedule-review-box">
             <span>Đánh giá của bạn</span>
             <div class="schedule-review-summary">
-              <strong>${Number(submittedReview.rating || 0).toFixed(1)} / 5 sao</strong>
+              <strong>${Number(submittedReview.rating || 0).toFixed(1)}/ 5 sao</strong>
               <p>${escapeHtml(submittedReview.content || "Bạn đã gửi đánh giá cho mentor này.")}</p>
             </div>
           </div>
@@ -6066,9 +6066,9 @@ async function initializeMentorBookingDetailPage() {
       <span class="schedule-card-label">Mentor phụ trách</span>
       <h2>${escapeHtml(request.mentorName)}</h2>
       <div class="schedule-card-grid">
-        <p><strong>Nơi làm việc / học tập:</strong> ${escapeHtml((mentor && mentor.workplace) || "Đang cập nhật")}</p>
+        <p><strong>Nơi làm việc/ học tập:</strong> ${escapeHtml((mentor && mentor.workplace) || "Đang cập nhật")}</p>
         <p><strong>Lĩnh vực:</strong> ${escapeHtml((mentor && mentor.focus) || request.mentorFocus || "Đang cập nhật")}</p>
-        <p><strong>Đánh giá:</strong> ${escapeHtml(mentor ? Number(mentor.rating || 0).toFixed(1) + " / 5 sao" : "Đang cập nhật")}</p>
+        <p><strong>Đánh giá:</strong> ${escapeHtml(mentor ? Number(mentor.rating || 0).toFixed(1) + "/ 5 sao" : "Đang cập nhật")}</p>
         <p><strong>Đã đồng hành:</strong> ${escapeHtml(mentor ? String(mentor.studentsTaught || 0) + " học sinh" : "Đang cập nhật")}</p>
       </div>
       <div class="schedule-card-note">
