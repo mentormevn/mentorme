@@ -762,10 +762,23 @@ async function upsertProfile(profile) {
   );
 
   payload.details = normalizeProfileDetails(payload.details);
+  let savedProfile;
 
-  const [savedProfile] = await restUpsert("profiles", payload, {
-    onConflict: "id"
-  });
+  try {
+    [savedProfile] = await restUpsert("profiles", payload, {
+      onConflict: "id"
+    });
+  } catch (error) {
+    if (/details.*column|column.*details/i.test(String(error && error.message || ""))) {
+      const fallbackPayload = Object.assign({}, payload);
+      delete fallbackPayload.details;
+      [savedProfile] = await restUpsert("profiles", fallbackPayload, {
+        onConflict: "id"
+      });
+    } else {
+      throw error;
+    }
+  }
 
   return savedProfile || null;
 }

@@ -1324,11 +1324,24 @@ async function getProfileByUserId(userId) {
 }
 
 async function upsertProfile(profile) {
-  const { data, error } = await supabaseClient
+  let data;
+  let error;
+
+  ({ data, error } = await supabaseClient
     .from("profiles")
     .upsert(profile, { onConflict: "id" })
     .select()
-    .single();
+    .single());
+
+  if (error && /details.*column|column.*details/i.test(String(error.message || ""))) {
+    const fallbackProfile = Object.assign({}, profile);
+    delete fallbackProfile.details;
+    ({ data, error } = await supabaseClient
+      .from("profiles")
+      .upsert(fallbackProfile, { onConflict: "id" })
+      .select()
+      .single());
+  }
 
   if (error) {
     throw new Error(error.message || "Không thể cập nhật hồ sơ.");
