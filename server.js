@@ -45,7 +45,6 @@ const SUPABASE_SERVICE_ROLE_KEY =
   localEnv.SUPABASE_SERVICE_ROLE_KEY ||
   localEnv.SUPABASE_SERVICE_KEY ||
   "";
-const PUBLIC_CONFIG_PATH = path.join(__dirname, "public-config.js");
 
 function getPublicClientConfig() {
   return {
@@ -53,13 +52,6 @@ function getPublicClientConfig() {
     SUPABASE_ANON_KEY: SUPABASE_ANON_KEY
   };
 }
-
-function writePublicConfigFile() {
-  const fileContent = "window.MENTOR_ME_CONFIG = " + JSON.stringify(getPublicClientConfig(), null, 2) + ";\n";
-  fs.writeFileSync(PUBLIC_CONFIG_PATH, fileContent, "utf8");
-}
-
-writePublicConfigFile();
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
