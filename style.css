@@ -7750,3 +7750,303 @@ body > main > .mentee{
   color:#6b84ad;
   font-size:12px;
 }
+
+/* ===== PREMIUM MOBILE UX ===== */
+@media (max-width: 768px){
+  body{
+    background:
+      radial-gradient(circle at top center, rgba(196, 224, 255, 0.95), rgba(196, 224, 255, 0) 34%),
+      linear-gradient(180deg, #edf5ff 0%, #f8fbff 46%, #eef4ff 100%) !important;
+  }
+
+  .navbar{
+    padding:12px 14px !important;
+    background:rgba(255,255,255,0.9) !important;
+    backdrop-filter:blur(18px);
+    border-bottom:1px solid rgba(177, 205, 239, 0.72) !important;
+    box-shadow:0 10px 30px rgba(15, 56, 120, 0.08) !important;
+  }
+
+  .logo{
+    gap:8px !important;
+    font-size:18px !important;
+    letter-spacing:-0.02em;
+  }
+
+  .logo img{
+    height:36px !important;
+  }
+
+  .hamburger{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    background:linear-gradient(180deg, #f9fbff 0%, #ebf3ff 100%);
+    border:1px solid rgba(177, 205, 239, 0.9);
+    box-shadow:0 10px 24px rgba(18, 58, 120, 0.08);
+  }
+
+  .menu{
+    margin-top:10px !important;
+    padding:12px !important;
+    border-radius:22px !important;
+    background:rgba(255,255,255,0.92) !important;
+    box-shadow:0 18px 40px rgba(15, 56, 120, 0.12) !important;
+  }
+
+  #authArea{
+    margin-top:10px;
+  }
+
+  .menu a,
+  #authArea a,
+  #authArea .btn-register{
+    min-height:46px;
+    border-radius:14px;
+  }
+
+  main{
+    padding-bottom:28px;
+  }
+
+  body > main > .hero,
+  body > main > .about-scale,
+  body > main > .mentor,
+  body > main > .mentee,
+  body > main > .home-services{
+    margin:12px 12px 0 !important;
+    border:1px solid rgba(182, 207, 236, 0.72);
+    border-radius:30px !important;
+    box-shadow:0 18px 45px rgba(20, 65, 132, 0.08);
+    overflow:hidden;
+  }
+
+  .hero{
+    background:
+      radial-gradient(circle at top right, rgba(255,255,255,0.42), rgba(255,255,255,0) 34%),
+      linear-gradient(180deg, #d9ebff 0%, #eef6ff 100%) !important;
+  }
+
+  .hero-content{
+    padding:2px 2px 0;
+  }
+
+  .hero-content h1{
+    margin-bottom:12px;
+    letter-spacing:-0.04em !important;
+    color:#10418a !important;
+  }
+
+  .search-box{
+    padding:8px 8px 8px 14px !important;
+    border-radius:22px !important;
+    background:rgba(255,255,255,0.82) !important;
+    border:1px solid rgba(173, 201, 237, 0.92) !important;
+    box-shadow:0 18px 30px rgba(18, 58, 120, 0.08) !important;
+  }
+
+  .search-box input{
+    font-size:15px !important;
+    font-weight:600 !important;
+    color:#19407f !important;
+  }
+
+  .search-btn,
+  .search-box button{
+    min-width:46px !important;
+    width:46px !important;
+    height:46px !important;
+    border-radius:16px !important;
+    background:linear-gradient(180deg, #f4f8ff 0%, #dcecff 100%) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.95), 0 8px 18px rgba(33, 90, 171, 0.14);
+  }
+
+  .hero-sub{
+    margin-top:10px !important;
+    color:#4771b0 !important;
+    max-width:100% !important;
+  }
+
+  .hero-stats{
+    margin-top:16px !important;
+  }
+
+  .hero-stat-card{
+    background:rgba(255,255,255,0.72) !important;
+    border:1px solid rgba(175, 204, 239, 0.84);
+    box-shadow:none !important;
+  }
+
+  .about-scale{
+    background:
+      radial-gradient(circle at top left, rgba(221, 236, 255, 0.8), rgba(221, 236, 255, 0) 28%),
+      linear-gradient(180deg, #ffffff 0%, #f7fbff 100%) !important;
+  }
+
+  .about{
+    padding:2px 12px 10px !important;
+  }
+
+  .about-left h3{
+    font-size:clamp(24px, 6.3vw, 30px) !important;
+    line-height:1.06 !important;
+    letter-spacing:-0.04em;
+    color:#113d83 !important;
+  }
+
+  .about-left p{
+    color:#496488 !important;
+    max-width:32ch;
+  }
+
+  .mentor,
+  .mentee,
+  .home-services{
+    padding-top:22px !important;
+    padding-bottom:24px !important;
+  }
+
+  .mentor h2,
+  .mentee h2,
+  .home-services-head h2{
+    letter-spacing:-0.04em;
+  }
+
+  .mentor-home-intro p,
+  .mentee-home-intro p,
+  .home-services-head p{
+    color:#5a7398 !important;
+  }
+
+  .mentor-track,
+  .mentee-track,
+  .home-services-track,
+  .services-grid{
+    padding:4px 2px 8px !important;
+    scroll-padding-left:4px;
+  }
+
+  .mentor-slide{
+    min-width:84vw !important;
+    flex-basis:84vw !important;
+  }
+
+  .mentor-card,
+  .mentee-card,
+  .home-service-card,
+  .service-card,
+  .schedule-card,
+  .mentor-detail-card,
+  .booking-mentor-card,
+  .booking-form-card,
+  .profile-avatar-card,
+  .profile-summary-card,
+  .profile-section-card,
+  .services-hero-copy,
+  .services-hero-highlight,
+  .services-consult-copy,
+  .services-consult-form-card,
+  .mentor-dashboard-form-card,
+  .mentor-dashboard-preview-card,
+  .admin-request-card{
+    border-radius:24px !important;
+    border:1px solid rgba(181, 207, 238, 0.78);
+    box-shadow:0 14px 34px rgba(20, 65, 132, 0.08) !important;
+  }
+
+  .mentor-card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(241,247,255,0.94) 100%) !important;
+  }
+
+  .mentor-card-body{
+    padding:16px 14px 14px !important;
+  }
+
+  .mentor-card h3,
+  .mentee-content h3,
+  .home-service-card h3,
+  .service-card h2{
+    letter-spacing:-0.03em;
+  }
+
+  .mentor-card-achievements,
+  .schedule-card-note,
+  .profile-detail-block{
+    background:rgba(244, 249, 255, 0.9) !important;
+    border-color:rgba(181, 207, 238, 0.72) !important;
+  }
+
+  .mentee-card{
+    background:linear-gradient(180deg, #eaf4ff 0%, #f8fbff 100%) !important;
+    border:1px solid rgba(181, 207, 238, 0.84) !important;
+  }
+
+  .home-service-card{
+    flex-basis:82vw !important;
+    background:linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(240,247,255,0.96) 100%) !important;
+  }
+
+  .home-service-card-featured{
+    background:
+      radial-gradient(circle at top right, rgba(220,238,255,0.95), rgba(220,238,255,0) 34%),
+      linear-gradient(180deg, #ffffff 0%, #edf5ff 100%) !important;
+  }
+
+  .home-service-meta{
+    padding-top:12px !important;
+    border-top:1px solid rgba(187, 210, 238, 0.8) !important;
+  }
+
+  .footer{
+    padding:28px 14px 18px !important;
+    background:transparent !important;
+  }
+
+  .footer-col{
+    background:linear-gradient(180deg, rgba(18,58,120,0.92) 0%, rgba(13,42,89,0.96) 100%) !important;
+    border:none !important;
+    box-shadow:0 18px 36px rgba(8, 28, 61, 0.22) !important;
+  }
+}
+
+@media (max-width: 540px){
+  body > main > .hero,
+  body > main > .about-scale,
+  body > main > .mentor,
+  body > main > .mentee,
+  body > main > .home-services{
+    margin:10px 10px 0 !important;
+    border-radius:26px !important;
+  }
+
+  .navbar{
+    padding:10px 12px !important;
+  }
+
+  .logo{
+    font-size:17px !important;
+  }
+
+  .hero{
+    padding-left:14px !important;
+    padding-right:14px !important;
+  }
+
+  .hero-content h1{
+    font-size:clamp(26px, 8vw, 32px) !important;
+  }
+
+  .about-left h3{
+    font-size:clamp(22px, 7vw, 28px) !important;
+  }
+
+  .mentor-slide,
+  .home-service-card{
+    min-width:84vw !important;
+  }
+
+  .mentee-slide{
+    min-width:86vw !important;
+    flex-basis:86vw !important;
+  }
+}
