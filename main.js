@@ -4275,22 +4275,9 @@ function initializeAdminConsultationPage() {
     startAdminAutoRefresh();
   }
 
-  let adminAutoRefreshTimer = 0;
   function startAdminAutoRefresh() {
-    if ((!currentAdminKey && !isRealAdmin) || adminAutoRefreshTimer) {
-      return;
-    }
-
-    adminAutoRefreshTimer = window.setInterval(function () {
-      loadRequests();
-      loadMentorApplications();
-      loadBookingRequestsForAdmin();
-      loadMentorProfileUpdates();
-      loadAdminMentorProfiles();
-    }, 15000);
+    return;
   }
-
-  startAdminAutoRefresh();
 }
 
 function initializeMentorDashboardPage() {
