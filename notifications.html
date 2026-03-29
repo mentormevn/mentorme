@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thông báo | Mentor Me</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="schedule-page">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="search.html">Tìm kiếm Mentor</a></li>
+      <li><a href="services.html">Dịch vụ</a></li>
+      <li class="active"><a href="notifications.html">Thông báo</a></li>
+    </ul>
+
+    <div id="authArea"></div>
+  </div>
+
+  <main class="schedule-shell">
+    <section class="schedule-hero-card">
+      <h1>Thông báo hệ thống</h1>
+      <p>Booking mới, trạng thái đã đổi và tin nhắn chat mới sẽ được gom lại ở đây để bạn theo dõi nhanh.</p>
+    </section>
+
+    <section id="notificationsList" class="schedule-list"></section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h3>MENTOR ME</h3>
+        <p>Nền tảng kết nối mentor - mentee trong học tập và phát triển kĩ năng.</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      © 2026 Mentor Me. All rights reserved.
+    </div>
+  </footer>
+
+  <script src="public-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
+</body>
+</html>

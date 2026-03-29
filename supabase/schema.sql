@@ -6,6 +6,7 @@ create table if not exists public.profiles (
   phone text not null default '',
   goal text not null default '',
   bio text not null default '',
+  details jsonb not null default '{}'::jsonb,
   role text not null default 'mentee' check (role in ('mentee', 'mentor', 'admin')),
   mentor_id text not null default '',
   avatar_url text not null default '',
@@ -99,11 +100,26 @@ create table if not exists public.booking_requests (
   proposed_options jsonb not null default '[]'::jsonb,
   slot_id text not null default '',
   slot_ids jsonb not null default '[]'::jsonb,
+  mentee_profile_snapshot jsonb not null default '{}'::jsonb,
+  chat_messages jsonb not null default '[]'::jsonb,
   goal text not null default '',
   preferred_time text not null default '',
   note text not null default '',
   status text not null default 'pending',
   admin_note text not null default '',
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users (id) on delete cascade,
+  title text not null default '',
+  body text not null default '',
+  link text not null default '',
+  type text not null default 'general',
+  is_read boolean not null default false,
+  meta jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
@@ -178,12 +194,19 @@ alter table public.booking_requests
   add constraint booking_requests_status_check
   check (status in ('pending', 'accepted', 'rejected', 'completed'));
 
+alter table public.notifications
+  drop constraint if exists notifications_type_check;
+alter table public.notifications
+  add constraint notifications_type_check
+  check (type in ('general', 'booking', 'chat', 'system'));
+
 alter table public.profiles enable row level security;
 alter table public.consultation_requests enable row level security;
 alter table public.mentor_applications enable row level security;
 alter table public.mentor_profile_updates enable row level security;
 alter table public.mentor_profiles enable row level security;
 alter table public.booking_requests enable row level security;
+alter table public.notifications enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own"
@@ -206,3 +229,18 @@ create policy "profiles_update_own"
   to authenticated
   using (auth.uid() = id)
   with check (auth.uid() = id);
+
+drop policy if exists "notifications_select_own" on public.notifications;
+create policy "notifications_select_own"
+  on public.notifications
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "notifications_update_own" on public.notifications;
+create policy "notifications_update_own"
+  on public.notifications
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

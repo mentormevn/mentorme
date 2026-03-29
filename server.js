@@ -327,7 +327,9 @@ function sanitizeUser(authUser, profile) {
     phone: profileData.phone || "",
     goal: profileData.goal || "",
     bio: profileData.bio || "",
+    details: normalizeProfileDetails(profileData.details || {}),
     role: role,
+    mentorId: profileData.mentor_id || "",
     avatar: profileData.avatar_url || "",
     createdAt:
       profileData.created_at ||
@@ -443,6 +445,8 @@ function sanitizeBookingRequest(request) {
     proposedOptions: Array.isArray(request.proposed_options) ? request.proposed_options : [],
     slotId: request.slot_id || "",
     slotIds: Array.isArray(request.slot_ids) ? request.slot_ids : [],
+    menteeProfileSnapshot: normalizeProfileDetails(request.mentee_profile_snapshot || {}),
+    chatMessages: Array.isArray(request.chat_messages) ? request.chat_messages : [],
     goal: request.goal || "",
     preferredTime: request.preferred_time || "",
     note: request.note || "",
@@ -450,6 +454,21 @@ function sanitizeBookingRequest(request) {
     adminNote: request.admin_note || "",
     createdAt: request.created_at,
     updatedAt: request.updated_at
+  };
+}
+
+function sanitizeNotification(notification) {
+  return {
+    id: String(notification.id || ""),
+    userId: notification.user_id || "",
+    title: notification.title || "",
+    body: notification.body || "",
+    link: notification.link || "",
+    type: notification.type || "general",
+    isRead: Boolean(notification.is_read),
+    meta: notification.meta || {},
+    createdAt: notification.created_at,
+    updatedAt: notification.updated_at
   };
 }
 
@@ -469,6 +488,17 @@ function slugifyText(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function normalizeProfileDetails(details) {
+  const source = details && typeof details === "object" ? details : {};
+  return {
+    experience: String(source.experience || "").trim(),
+    education: String(source.education || "").trim(),
+    activities: String(source.activities || "").trim(),
+    awards: String(source.awards || "").trim(),
+    skills: String(source.skills || "").trim()
+  };
 }
 
 function normalizeFieldCategory(field) {
@@ -631,6 +661,48 @@ function canMentorManageBooking(user, bookingRequest) {
   return bookingMentorSlug === userSlug || bookingMentorSlug.includes(userSlug) || userSlug.includes(bookingMentorSlug);
 }
 
+function canUserAccessBooking(user, bookingRequest) {
+  if (!user || !bookingRequest) {
+    return false;
+  }
+
+  const role = normalizeRole(user.role);
+  if (role === "admin") {
+    return true;
+  }
+
+  if (role === "mentor") {
+    return canMentorManageBooking(user, bookingRequest);
+  }
+
+  return (
+    String(bookingRequest.mentee_user_id || "") === String(user.id || "") ||
+    normalizeEmail(bookingRequest.mentee_email || "") === normalizeEmail(user.email || "")
+  );
+}
+
+async function createNotification(payload) {
+  const userId = String(payload && payload.userId ? payload.userId : "").trim();
+  if (!userId) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const [savedNotification] = await restInsert("notifications", {
+    user_id: userId,
+    title: String(payload.title || "").trim(),
+    body: String(payload.body || "").trim(),
+    link: String(payload.link || "").trim(),
+    type: String(payload.type || "general").trim() || "general",
+    is_read: false,
+    meta: payload.meta && typeof payload.meta === "object" ? payload.meta : {},
+    created_at: now,
+    updated_at: now
+  });
+
+  return savedNotification || null;
+}
+
 async function getProfileById(userId) {
   if (!userId) {
     return null;
@@ -654,6 +726,7 @@ async function upsertProfile(profile) {
       phone: "",
       goal: "",
       bio: "",
+      details: {},
       role: "mentee",
       mentor_id: "",
       avatar_url: "",
@@ -661,6 +734,8 @@ async function upsertProfile(profile) {
     },
     profile
   );
+
+  payload.details = normalizeProfileDetails(payload.details);
 
   const [savedProfile] = await restUpsert("profiles", payload, {
     onConflict: "id"
@@ -1216,6 +1291,7 @@ app.post("/api/auth/register", async (req, res) => {
         phone: phone,
         goal: goal,
         bio: "",
+        details: {},
         role: role,
         avatar_url: "",
         created_at: createdUser.created_at || new Date().toISOString(),
@@ -1379,6 +1455,7 @@ app.put("/api/profile", authMiddleware, async (req, res) => {
   const goal = String(req.body.goal || "").trim();
   const bio = String(req.body.bio || "").trim();
   const avatar = String(req.body.avatar || "").trim();
+  const details = normalizeProfileDetails(req.body.details || {});
 
   if (name.length < 2) {
     res.status(400).json({ message: "Ten hien thi can co it nhat 2 ky tu." });
@@ -1414,6 +1491,7 @@ app.put("/api/profile", authMiddleware, async (req, res) => {
       phone: phone,
       goal: goal,
       bio: bio,
+      details: details,
       role: normalizeRole((req.profile && req.profile.role) || (req.authUser.user_metadata && req.authUser.user_metadata.role)),
       avatar_url: avatar || ((req.profile && req.profile.avatar_url) || ""),
       created_at:
@@ -1849,6 +1927,7 @@ app.post("/api/booking-requests", async (req, res) => {
   const serviceDurationMinutes = Number(req.body.serviceDurationMinutes || 0);
   const servicePriceText = String(req.body.servicePriceText || "").trim();
   const proposedOptions = Array.isArray(req.body.proposedOptions) ? req.body.proposedOptions : [];
+  const menteeProfileSnapshot = normalizeProfileDetails(req.body.menteeProfileSnapshot || {});
   const goal = String(req.body.goal || "").trim();
   const preferredTime = String(req.body.preferredTime || "").trim();
   const note = String(req.body.note || "").trim();
@@ -1880,6 +1959,12 @@ app.post("/api/booking-requests", async (req, res) => {
 
   try {
     const now = new Date().toISOString();
+    const menteeProfile = menteeUserId ? await getProfileById(menteeUserId).catch(function () {
+      return null;
+    }) : null;
+    const mentorProfile = await getMentorProfileById(mentorId).catch(function () {
+      return null;
+    });
     const [createdRequest] = await restInsert("booking_requests", {
       mentor_id: mentorId,
       mentor_name: mentorName,
@@ -1895,6 +1980,12 @@ app.post("/api/booking-requests", async (req, res) => {
       proposed_options: proposedOptions,
       slot_id: "",
       slot_ids: [],
+      mentee_profile_snapshot: Object.assign(
+        {},
+        normalizeProfileDetails(menteeProfile && menteeProfile.details),
+        menteeProfileSnapshot
+      ),
+      chat_messages: [],
       goal: goal,
       preferred_time: preferredTime,
       note: note,
@@ -1903,6 +1994,22 @@ app.post("/api/booking-requests", async (req, res) => {
       created_at: now,
       updated_at: now
     });
+
+    if (mentorProfile && mentorProfile.owner_user_id) {
+      await createNotification({
+        userId: mentorProfile.owner_user_id,
+        title: "Bạn có mentee mới",
+        body: menteeName + " vừa gửi yêu cầu booking cho " + mentorName + ".",
+        link: "mentor-requests.html",
+        type: "booking",
+        meta: {
+          bookingId: createdRequest && createdRequest.id ? createdRequest.id : null,
+          mentorId: mentorId
+        }
+      }).catch(function () {
+        return null;
+      });
+    }
 
     res.status(201).json({
       message: "Yeu cau booking da duoc gui thanh cong.",
@@ -1932,6 +2039,59 @@ app.get("/api/booking-requests/mine", authMiddleware, async (req, res) => {
     });
   } catch (error) {
     handleRouteError(res, error, "Khong the tai danh sach booking cua ban.");
+  }
+});
+
+app.get("/api/notifications", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  try {
+    const notifications = await restSelect("notifications", {
+      query: {
+        select: "*",
+        user_id: toEqualityFilter(req.authUser.id),
+        order: "created_at.desc"
+      }
+    });
+
+    res.json({
+      notifications: notifications.map(sanitizeNotification)
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai thong bao luc nay.");
+  }
+});
+
+app.put("/api/notifications/:id/read", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const notificationId = String(req.params.id || "").trim();
+  if (!notificationId) {
+    res.status(400).json({ message: "Ma thong bao khong hop le." });
+    return;
+  }
+
+  try {
+    const [updatedNotification] = await restUpdate("notifications", {
+      is_read: true,
+      updated_at: new Date().toISOString()
+    }, {
+      query: {
+        id: toEqualityFilter(notificationId),
+        user_id: toEqualityFilter(req.authUser.id)
+      }
+    });
+
+    res.json({
+      message: "Da danh dau thong bao da doc.",
+      notification: sanitizeNotification(updatedNotification || {})
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the cap nhat thong bao.");
   }
 });
 
@@ -2617,6 +2777,22 @@ app.put("/api/admin/booking-requests/:id", requireAdmin, async (req, res) => {
       }
     });
 
+    if (existingRequest.mentee_user_id) {
+      await createNotification({
+        userId: existingRequest.mentee_user_id,
+        title: "Booking được cập nhật",
+        body: "Yêu cầu với mentor " + existingRequest.mentor_name + " đã được chuyển sang trạng thái " + status + ".",
+        link: "mentee-schedule.html",
+        type: "booking",
+        meta: {
+          bookingId: requestId,
+          status: status
+        }
+      }).catch(function () {
+        return null;
+      });
+    }
+
     res.json({
       message: "Da cap nhat booking.",
       request: sanitizeBookingRequest(updatedRequest || existingRequest)
@@ -2690,12 +2866,161 @@ app.put("/api/mentor/booking-requests/:id", authMiddleware, async (req, res) => 
       }
     });
 
+    if (existingRequest.mentee_user_id) {
+      await createNotification({
+        userId: existingRequest.mentee_user_id,
+        title: patch.status === "accepted" ? "Mentor đã nhận lịch của bạn" : "Booking đã được cập nhật",
+        body:
+          patch.status === "accepted"
+            ? existingRequest.mentor_name + " đã nhận yêu cầu và chốt lịch " + (patch.preferred_time || existingRequest.preferred_time || "đã chọn") + "."
+            : existingRequest.mentor_name + " đã cập nhật trạng thái booking sang " + patch.status + ".",
+        link: "mentee-schedule.html",
+        type: "booking",
+        meta: {
+          bookingId: requestId,
+          status: patch.status
+        }
+      }).catch(function () {
+        return null;
+      });
+    }
+
     res.json({
       message: "Da cap nhat booking cho mentor.",
       request: sanitizeBookingRequest(updatedRequest || existingRequest)
     });
   } catch (error) {
     handleRouteError(res, error, "Khong the cap nhat booking cho mentor.");
+  }
+});
+
+app.get("/api/booking-requests/:id/chat", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const requestId = parseNumericId(req.params.id);
+  if (!requestId) {
+    res.status(400).json({ message: "Ma booking khong hop le." });
+    return;
+  }
+
+  try {
+    const bookingRequest = await restSelect("booking_requests", {
+      single: true,
+      query: {
+        select: "*",
+        id: toEqualityFilter(requestId),
+        limit: 1
+      }
+    });
+
+    if (!bookingRequest) {
+      res.status(404).json({ message: "Khong tim thay booking." });
+      return;
+    }
+
+    if (!canUserAccessBooking(req.user, bookingRequest)) {
+      res.status(403).json({ message: "Ban khong co quyen xem doan chat nay." });
+      return;
+    }
+
+    res.json({
+      request: sanitizeBookingRequest(bookingRequest),
+      messages: Array.isArray(bookingRequest.chat_messages) ? bookingRequest.chat_messages : []
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the tai doan chat.");
+  }
+});
+
+app.post("/api/booking-requests/:id/chat", authMiddleware, async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const requestId = parseNumericId(req.params.id);
+  const content = String(req.body.content || "").trim();
+  if (!requestId) {
+    res.status(400).json({ message: "Ma booking khong hop le." });
+    return;
+  }
+
+  if (content.length < 1) {
+    res.status(400).json({ message: "Noi dung tin nhan khong hop le." });
+    return;
+  }
+
+  try {
+    const bookingRequest = await restSelect("booking_requests", {
+      single: true,
+      query: {
+        select: "*",
+        id: toEqualityFilter(requestId),
+        limit: 1
+      }
+    });
+
+    if (!bookingRequest) {
+      res.status(404).json({ message: "Khong tim thay booking." });
+      return;
+    }
+
+    if (!canUserAccessBooking(req.user, bookingRequest)) {
+      res.status(403).json({ message: "Ban khong co quyen gui tin nhan o doan chat nay." });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const nextMessage = {
+      id: "chat-" + requestId + "-" + Date.now(),
+      senderUserId: req.authUser.id,
+      senderRole: normalizeRole(req.user.role),
+      senderName: req.user.name || req.authUser.email || "Mentor Me",
+      content: content,
+      createdAt: now
+    };
+    const existingMessages = Array.isArray(bookingRequest.chat_messages) ? bookingRequest.chat_messages : [];
+    const [updatedRequest] = await restUpdate("booking_requests", {
+      chat_messages: existingMessages.concat(nextMessage),
+      updated_at: now
+    }, {
+      query: {
+        id: toEqualityFilter(requestId)
+      }
+    });
+
+    const senderRole = normalizeRole(req.user.role);
+    let recipientUserId = "";
+    if (senderRole === "mentor" || senderRole === "admin") {
+      recipientUserId = String(bookingRequest.mentee_user_id || "").trim();
+    } else {
+      const mentorProfile = await getMentorProfileById(bookingRequest.mentor_id).catch(function () {
+        return null;
+      });
+      recipientUserId = String((mentorProfile && mentorProfile.owner_user_id) || "").trim();
+    }
+
+    await createNotification({
+      userId: recipientUserId,
+      title: "Bạn có tin nhắn mới",
+      body: (req.user.name || "Người dùng") + " vừa gửi tin nhắn trong booking với " + bookingRequest.mentor_name + ".",
+      link: "booking-chat.html?id=" + requestId,
+      type: "chat",
+      meta: {
+        bookingId: requestId
+      }
+    }).catch(function () {
+      return null;
+    });
+
+    res.status(201).json({
+      message: "Da gui tin nhan.",
+      request: sanitizeBookingRequest(updatedRequest || bookingRequest),
+      chatMessage: nextMessage
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the gui tin nhan luc nay.");
   }
 });
 

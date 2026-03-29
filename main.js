@@ -89,6 +89,7 @@ let bookingRequestsCache = null;
 let bookingOccupiedSlotsCache = {};
 let mentorProfilesCache = {};
 let mentorSubmittedReviewsCache = [];
+let notificationsCache = [];
 const appConfig = browserWindow.MENTOR_ME_CONFIG || {};
 const SUPABASE_URL = appConfig.SUPABASE_URL || "";
 const SUPABASE_PUBLISHABLE_KEY = appConfig.SUPABASE_ANON_KEY || "";
@@ -153,6 +154,24 @@ function formatRoleLabel(role) {
   if (role === "mentor") return "Mentor";
   if (role === "admin") return "Nội bộ";
   return "Mentee";
+}
+
+function normalizeProfileDetails(details) {
+  const source = details && typeof details === "object" ? details : {};
+  return {
+    experience: String(source.experience || "").trim(),
+    education: String(source.education || "").trim(),
+    activities: String(source.activities || "").trim(),
+    awards: String(source.awards || "").trim(),
+    skills: String(source.skills || "").trim()
+  };
+}
+
+function hasProfileDetails(details) {
+  const normalized = normalizeProfileDetails(details);
+  return Object.keys(normalized).some(function (key) {
+    return Boolean(normalized[key]);
+  });
 }
 
 function getRoleHomePath(role) {
@@ -947,6 +966,14 @@ function saveMentorSubmittedReviews(reviews) {
   mentorSubmittedReviewsCache = Array.isArray(reviews) ? reviews : [];
 }
 
+function getNotifications() {
+  return Array.isArray(notificationsCache) ? notificationsCache : [];
+}
+
+function saveNotifications(notifications) {
+  notificationsCache = Array.isArray(notifications) ? notifications : [];
+}
+
 function getSubmittedReviewByBookingId(bookingId) {
   return getMentorSubmittedReviews().find(function (review) {
     return review.bookingId === bookingId;
@@ -1196,6 +1223,7 @@ function buildSessionUser(authUser, profile) {
     phone: profileData.phone || "",
     goal: profileData.goal || "",
     bio: profileData.bio || "",
+    details: normalizeProfileDetails(profileData.details || {}),
     role: role,
     mentorId: profileData.mentor_id || "",
     avatar: profileData.avatar_url || createAvatarFallback(profileData.full_name || authUser.email || "MM"),
@@ -1273,6 +1301,7 @@ function renderAuthArea(user) {
   if (normalizedRole === "mentor") {
     dropdownLinks = `
       <a href="profile.html">Hồ sơ tài khoản</a>
+      <a href="notifications.html">Thông báo</a>
       <a href="mentor-dashboard.html">Hồ sơ mentor</a>
       <a href="mentee-schedule.html">Lịch học</a>
       <a href="mentor-accepted.html">Mentee đã nhận</a>
@@ -1282,6 +1311,7 @@ function renderAuthArea(user) {
   } else if (normalizedRole === "admin") {
     dropdownLinks = `
       <a href="profile.html">Hồ sơ nội bộ</a>
+      <a href="notifications.html">Thông báo</a>
       <a href="admin-consultations.html">Quản trị nội bộ</a>
       <a href="mentor-dashboard.html">Hồ sơ mentor</a>
       <a href="mentor-teaching-calendar.html">Lịch dạy</a>
@@ -1289,6 +1319,7 @@ function renderAuthArea(user) {
   } else {
     dropdownLinks = `
       <a href="profile.html">Hồ sơ mentee</a>
+      <a href="notifications.html">Thông báo</a>
       <a href="mentee-schedule.html">Lịch học</a>
     `;
   }
@@ -2201,6 +2232,7 @@ async function initializeBookingPage() {
       servicePriceText: selectedPackage.priceText,
       proposedOptions: proposedOptions,
       slotIds: [],
+      menteeProfileSnapshot: normalizeProfileDetails(currentUser && currentUser.details),
       goal: goal,
       preferredTime: buildProposedTimeSummary(proposedOptions),
       note: note,
@@ -2840,6 +2872,59 @@ async function fetchBookingRequestsForCurrentMentor(mentorId) {
 
   bookingRequestsCache = data.requests || [];
   return bookingRequestsCache;
+}
+
+async function fetchNotifications() {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    return getNotifications();
+  }
+
+  const response = await fetch("/api/notifications", {
+    headers: {
+      Authorization: "Bearer " + accessToken
+    }
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải thông báo.");
+  }
+
+  notificationsCache = data.notifications || [];
+  return notificationsCache;
+}
+
+async function markNotificationAsRead(notificationId) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    return null;
+  }
+
+  const response = await fetch("/api/notifications/" + encodeURIComponent(notificationId) + "/read", {
+    method: "PUT",
+    headers: {
+      Authorization: "Bearer " + accessToken
+    }
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể cập nhật thông báo.");
+  }
+
+  const updatedNotification = data.notification || null;
+  if (updatedNotification) {
+    notificationsCache = getNotifications().map(function (item) {
+      return item.id === updatedNotification.id ? updatedNotification : item;
+    });
+  }
+
+  return updatedNotification;
 }
 
 async function fetchAdminBookingRequests(adminKey) {
@@ -4713,6 +4798,11 @@ function initializeProfilePage() {
   const profileRoleHint = document.getElementById("profileRoleHint");
   const profileBioInput = document.getElementById("profileBioInput");
   const profileBioLabel = document.getElementById("profileBioLabel");
+  const profileExperienceInput = document.getElementById("profileExperienceInput");
+  const profileEducationInput = document.getElementById("profileEducationInput");
+  const profileActivitiesInput = document.getElementById("profileActivitiesInput");
+  const profileAwardsInput = document.getElementById("profileAwardsInput");
+  const profileSkillsInput = document.getElementById("profileSkillsInput");
   const profileAvatarUpload = document.getElementById("profileAvatarUpload");
   const profileLogoutBtn = document.getElementById("profileLogoutBtn");
 
@@ -4788,6 +4878,12 @@ function initializeProfilePage() {
     profileGoalInput.value = account.goal || "";
     profileRoleInput.value = normalizedRole;
     profileBioInput.value = account.bio || "";
+    const details = normalizeProfileDetails(account.details || {});
+    if (profileExperienceInput) profileExperienceInput.value = details.experience || "";
+    if (profileEducationInput) profileEducationInput.value = details.education || "";
+    if (profileActivitiesInput) profileActivitiesInput.value = details.activities || "";
+    if (profileAwardsInput) profileAwardsInput.value = details.awards || "";
+    if (profileSkillsInput) profileSkillsInput.value = details.skills || "";
     updateProfileFormCopy(account);
   }
 
@@ -4833,6 +4929,13 @@ function initializeProfilePage() {
     const updatedGoal = profileGoalInput.value.trim();
     const updatedRole = normalizeRole(profileRoleInput.value);
     const updatedBio = profileBioInput.value.trim();
+    const updatedDetails = normalizeProfileDetails({
+      experience: profileExperienceInput ? profileExperienceInput.value : "",
+      education: profileEducationInput ? profileEducationInput.value : "",
+      activities: profileActivitiesInput ? profileActivitiesInput.value : "",
+      awards: profileAwardsInput ? profileAwardsInput.value : "",
+      skills: profileSkillsInput ? profileSkillsInput.value : ""
+    });
     if (updatedName.length < 2) {
       showMessage("profileMessage", "error", "Tên hiển thị cần có ít nhất 2 ký tự.");
       return;
@@ -4850,6 +4953,7 @@ function initializeProfilePage() {
           phone: updatedPhone,
           goal: updatedGoal,
           bio: updatedBio,
+          details: updatedDetails,
           role: updatedRole,
           avatar: draftAvatar || createAvatarFallback(updatedName)
         });
@@ -4865,6 +4969,7 @@ function initializeProfilePage() {
         phone: updatedPhone,
         goal: updatedGoal,
         bio: updatedBio,
+        details: updatedDetails,
         role: updatedRole,
         avatar_url: draftAvatar || createAvatarFallback(updatedName),
         updated_at: new Date().toISOString()
@@ -4877,6 +4982,7 @@ function initializeProfilePage() {
         phone: updatedPhone,
         goal: updatedGoal,
         bio: updatedBio,
+        details: updatedDetails,
         role: updatedRole,
         mentor_id: currentProfileUser.mentorId || "",
         avatar_url: draftAvatar || createAvatarFallback(updatedName),
@@ -4963,6 +5069,35 @@ function buildBookingStatusLabel(status) {
   return "Chờ phản hồi";
 }
 
+function renderProfileDetailsSections(details, options) {
+  const normalized = normalizeProfileDetails(details);
+  const title = options && options.title ? options.title : "Hồ sơ cá nhân";
+  const emptyText = options && options.emptyText ? options.emptyText : "Người dùng này chưa bổ sung hồ sơ mở rộng.";
+  const sections = [
+    { label: "Kinh nghiệm làm việc", value: normalized.experience },
+    { label: "Quá trình học tập", value: normalized.education },
+    { label: "Hoạt động ngoại khóa", value: normalized.activities },
+    { label: "Tên giải thưởng", value: normalized.awards },
+    { label: "Kỹ năng & chứng chỉ", value: normalized.skills }
+  ];
+
+  return `
+    <div class="schedule-card-note profile-detail-sections">
+      <span>${escapeHtml(title)}</span>
+      ${hasProfileDetails(normalized)
+        ? sections.map(function (section) {
+            return `
+              <div class="profile-detail-block">
+                <strong>${escapeHtml(section.label)}</strong>
+                <p>${escapeHtml(section.value || "Chưa cập nhật")}</p>
+              </div>
+            `;
+          }).join("")
+        : `<p>${escapeHtml(emptyText)}</p>`}
+    </div>
+  `;
+}
+
 function buildMenteeScheduleCard(request) {
   const submittedReview = getSubmittedReviewByBookingId(request.id);
   const canReview = request.status === "accepted" || request.status === "completed";
@@ -5031,6 +5166,9 @@ function buildMenteeScheduleCard(request) {
         <span>Ghi chú</span>
         <p>${escapeHtml(request.note || "Không có ghi chú thêm.")}</p>
       </div>
+      <div class="schedule-card-actions">
+        <a href="booking-chat.html?id=${encodeURIComponent(request.id)}" class="mentor-secondary-btn">Chat với mentor</a>
+      </div>
       ${reviewHtml}
     </article>
   `;
@@ -5071,8 +5209,13 @@ function buildMentorLeadCard(request) {
         <span>Mục tiêu mentee</span>
         <p>${escapeHtml(request.goal)}</p>
       </div>
+      ${renderProfileDetailsSections(request.menteeProfileSnapshot, {
+        title: "Hồ sơ mentee",
+        emptyText: "Mentee chưa bổ sung đủ hồ sơ học tập để mentor xem trước."
+      })}
       ${proposedHtml}
       <div class="schedule-card-actions">
+        <a href="booking-chat.html?id=${encodeURIComponent(request.id)}" class="mentor-secondary-btn">Mở chat</a>
         <button type="button" class="mentor-primary-btn" data-booking-action="accept" data-booking-id="${request.id}">Nhận mentee</button>
         <button type="button" class="mentor-secondary-btn" data-booking-action="reject" data-booking-id="${request.id}">Từ chối</button>
       </div>
@@ -5159,6 +5302,13 @@ function buildAcceptedMenteeCard(request) {
       <div class="schedule-card-note">
         <span>Ghi chú của mentee</span>
         <p>${escapeHtml(request.note || "Không có ghi chú thêm.")}</p>
+      </div>
+      ${renderProfileDetailsSections(request.menteeProfileSnapshot, {
+        title: "Hồ sơ mentee",
+        emptyText: "Mentee chưa bổ sung hồ sơ mở rộng."
+      })}
+      <div class="schedule-card-actions">
+        <a href="booking-chat.html?id=${encodeURIComponent(request.id)}" class="mentor-secondary-btn">Chat với mentee</a>
       </div>
     </article>
   `;
@@ -5904,6 +6054,13 @@ async function initializeMentorBookingDetailPage() {
         <span>Ghi chú của mentee</span>
         <p>${escapeHtml(request.note || "Không có ghi chú thêm.")}</p>
       </div>
+      ${renderProfileDetailsSections(request.menteeProfileSnapshot, {
+        title: "Hồ sơ cá nhân mentee",
+        emptyText: "Mentee chưa bổ sung đủ hồ sơ mở rộng."
+      })}
+      <div class="schedule-card-actions">
+        <a href="booking-chat.html?id=${encodeURIComponent(request.id)}" class="mentor-primary-btn">Mở chat với mentee</a>
+      </div>
     </article>
     <article class="mentor-booking-detail-card">
       <span class="schedule-card-label">Mentor phụ trách</span>
@@ -5924,6 +6081,237 @@ async function initializeMentorBookingDetailPage() {
       </div>
     </article>
   `;
+}
+
+async function fetchBookingChat(bookingId) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    throw new Error("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.");
+  }
+
+  const response = await fetch("/api/booking-requests/" + encodeURIComponent(bookingId) + "/chat", {
+    headers: {
+      Authorization: "Bearer " + accessToken
+    }
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể tải đoạn chat.");
+  }
+
+  const request = data.request || null;
+  if (request) {
+    bookingRequestsCache = getBookingRequests()
+      .filter(function (item) {
+        return item.id !== request.id;
+      })
+      .concat([request]);
+  }
+
+  return data;
+}
+
+async function sendBookingChatMessage(bookingId, content) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    throw new Error("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.");
+  }
+
+  const response = await fetch("/api/booking-requests/" + encodeURIComponent(bookingId) + "/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + accessToken
+    },
+    body: JSON.stringify({
+      content: content
+    })
+  });
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể gửi tin nhắn.");
+  }
+
+  const request = data.request || null;
+  if (request) {
+    bookingRequestsCache = getBookingRequests()
+      .filter(function (item) {
+        return item.id !== request.id;
+      })
+      .concat([request]);
+  }
+
+  return data;
+}
+
+async function initializeBookingChatPage() {
+  const container = document.getElementById("bookingChatPage");
+  if (!container) return;
+
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = "login.html?redirect=booking-chat.html";
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const bookingId = params.get("id");
+  const heroNote = document.getElementById("bookingChatScopeNote");
+  const content = document.getElementById("bookingChatMessages");
+  const form = document.getElementById("bookingChatForm");
+  const input = document.getElementById("bookingChatInput");
+
+  if (!bookingId || !content || !form || !input) {
+    return;
+  }
+
+  async function renderChat() {
+    const payload = await fetchBookingChat(bookingId);
+    const request = payload.request || null;
+    const messages = Array.isArray(payload.messages) ? payload.messages : [];
+
+    if (!request) {
+      throw new Error("Không tìm thấy booking để chat.");
+    }
+
+    if (heroNote) {
+      heroNote.textContent = "Chat giữa " + request.mentorName + " và " + request.menteeName + " cho booking " + (request.serviceName || "đã chọn") + ".";
+    }
+
+    content.innerHTML = `
+      <article class="mentor-booking-detail-card">
+        <span class="schedule-card-label">Thông tin nhanh</span>
+        <h2>${escapeHtml(request.serviceName || "Trao đổi booking")}</h2>
+        <div class="schedule-card-grid">
+          <p><strong>Mentor:</strong> ${escapeHtml(request.mentorName)}</p>
+          <p><strong>Mentee:</strong> ${escapeHtml(request.menteeName)}</p>
+          <p><strong>Khung giờ:</strong> ${escapeHtml(request.preferredTime || "Chưa cập nhật")}</p>
+          <p><strong>Trạng thái:</strong> ${escapeHtml(buildBookingStatusLabel(request.status))}</p>
+        </div>
+      </article>
+      <article class="mentor-booking-detail-card booking-chat-card">
+        <span class="schedule-card-label">Đoạn chat</span>
+        <div class="booking-chat-thread">
+          ${messages.length
+            ? messages.map(function (message) {
+                const isMine = String(message.senderUserId || "") === String(currentUser.id || "");
+                return `
+                  <div class="booking-chat-bubble ${isMine ? "is-mine" : ""}">
+                    <strong>${escapeHtml(message.senderName || "Mentor Me")}</strong>
+                    <p>${escapeHtml(message.content || "")}</p>
+                    <span>${escapeHtml(formatDate(message.createdAt || new Date().toISOString()))}</span>
+                  </div>
+                `;
+              }).join("")
+            : '<div class="admin-empty-state"><p>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện.</p></div>'}
+        </div>
+      </article>
+    `;
+  }
+
+  try {
+    await renderChat();
+  } catch (error) {
+    content.innerHTML = `
+      <div class="admin-empty-state">
+        <h3>Không tải được đoạn chat</h3>
+        <p>${escapeHtml(error.message || "Hãy thử tải lại trang.")}</p>
+      </div>
+    `;
+  }
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const message = normalizeWhitespace(input.value);
+    if (!message) {
+      return;
+    }
+
+    try {
+      await sendBookingChatMessage(bookingId, message);
+      input.value = "";
+      await renderChat();
+    } catch (error) {
+      alert(error.message || "Không thể gửi tin nhắn.");
+    }
+  });
+}
+
+async function initializeNotificationsPage() {
+  const list = document.getElementById("notificationsList");
+  if (!list) return;
+
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    window.location.href = "login.html?redirect=notifications.html";
+    return;
+  }
+
+  try {
+    const notifications = await fetchNotifications();
+    if (!notifications.length) {
+      list.innerHTML = `
+        <div class="admin-empty-state">
+          <h3>Chưa có thông báo</h3>
+          <p>Khi có booking mới, tin nhắn mới hoặc cập nhật trạng thái, thông báo sẽ xuất hiện ở đây.</p>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = notifications.map(function (notification) {
+      return `
+        <article class="admin-request-card notification-card ${notification.isRead ? "is-read" : "is-unread"}" data-notification-id="${escapeHtml(notification.id)}">
+          <div class="admin-request-head">
+            <div>
+              <span class="admin-request-label">${escapeHtml(notification.type || "general")}</span>
+              <h3>${escapeHtml(notification.title)}</h3>
+            </div>
+            <span class="admin-request-status ${notification.isRead ? "status-completed" : "status-pending"}">${notification.isRead ? "Đã đọc" : "Mới"}</span>
+          </div>
+          <div class="schedule-card-note">
+            <span>Nội dung</span>
+            <p>${escapeHtml(notification.body || "")}</p>
+          </div>
+          <div class="schedule-card-actions">
+            ${notification.link ? `<a href="${escapeHtml(notification.link)}" class="mentor-primary-btn">Mở</a>` : ""}
+            ${notification.isRead ? "" : '<button type="button" class="mentor-secondary-btn" data-notification-read="true">Đánh dấu đã đọc</button>'}
+          </div>
+        </article>
+      `;
+    }).join("");
+  } catch (error) {
+    list.innerHTML = `
+      <div class="admin-empty-state">
+        <h3>Không tải được thông báo</h3>
+        <p>${escapeHtml(error.message || "Hãy thử tải lại trang.")}</p>
+      </div>
+    `;
+  }
+
+  if (!list.dataset.boundNotifications) {
+    list.addEventListener("click", async function (event) {
+      const button = event.target.closest("[data-notification-read]");
+      if (!button) return;
+
+      const card = event.target.closest("[data-notification-id]");
+      if (!card) return;
+
+      try {
+        await markNotificationAsRead(card.getAttribute("data-notification-id"));
+        await initializeNotificationsPage();
+      } catch (error) {
+        alert(error.message || "Không thể cập nhật thông báo.");
+      }
+    });
+    list.dataset.boundNotifications = "true";
+  }
 }
 
 function initializeForgotPasswordPage() {
@@ -6040,6 +6428,8 @@ async function bootstrapApp() {
   initializeMentorAcceptedPage();
   initializeMentorTeachingCalendarPage();
   initializeMentorBookingDetailPage();
+  initializeBookingChatPage();
+  initializeNotificationsPage();
   initializeProfilePage();
 }
 
