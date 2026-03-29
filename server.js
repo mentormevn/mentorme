@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const localEnv = {};
 try {
   require("dotenv").config();
 } catch (error) {
@@ -20,7 +21,10 @@ try {
 
       const key = trimmed.slice(0, separatorIndex).trim();
       const value = trimmed.slice(separatorIndex + 1).trim();
-      if (key && process.env[key] === undefined) {
+      if (key) {
+        localEnv[key] = value;
+      }
+      if (key && !process.env[key]) {
         process.env[key] = value;
       }
     });
@@ -33,11 +37,13 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_DASHBOARD_PASSWORD = process.env.ADMIN_DASHBOARD_PASSWORD || "ADMIN2026";
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "";
+const SUPABASE_URL = process.env.SUPABASE_URL || localEnv.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || localEnv.SUPABASE_ANON_KEY || "";
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_SERVICE_KEY ||
+  localEnv.SUPABASE_SERVICE_ROLE_KEY ||
+  localEnv.SUPABASE_SERVICE_KEY ||
   "";
 const PUBLIC_CONFIG_PATH = path.join(__dirname, "public-config.js");
 
@@ -745,13 +751,15 @@ async function createNotification(payload) {
   return savedNotification || null;
 }
 
-async function getProfileById(userId) {
+async function getProfileById(userId, options = {}) {
   if (!userId) {
     return null;
   }
 
   return restSelect("profiles", {
     single: true,
+    useServiceRole: options.useServiceRole !== false,
+    accessToken: options.accessToken,
     query: {
       select: "*",
       id: toEqualityFilter(userId),
@@ -760,7 +768,7 @@ async function getProfileById(userId) {
   });
 }
 
-async function upsertProfile(profile) {
+async function upsertProfile(profile, options = {}) {
   const now = new Date().toISOString();
   const payload = Object.assign(
     {
@@ -782,14 +790,18 @@ async function upsertProfile(profile) {
 
   try {
     [savedProfile] = await restUpsert("profiles", payload, {
-      onConflict: "id"
+      onConflict: "id",
+      useServiceRole: options.useServiceRole !== false,
+      accessToken: options.accessToken
     });
   } catch (error) {
     if (/details.*column|column.*details/i.test(String(error && error.message || ""))) {
       const fallbackPayload = Object.assign({}, payload);
       delete fallbackPayload.details;
       [savedProfile] = await restUpsert("profiles", fallbackPayload, {
-        onConflict: "id"
+        onConflict: "id",
+        useServiceRole: options.useServiceRole !== false,
+        accessToken: options.accessToken
       });
     } else {
       throw error;
@@ -799,7 +811,7 @@ async function upsertProfile(profile) {
   return savedProfile || null;
 }
 
-async function getProfileByPhone(phone, excludeUserId) {
+async function getProfileByPhone(phone, excludeUserId, options = {}) {
   if (!phone) {
     return null;
   }
@@ -816,6 +828,8 @@ async function getProfileByPhone(phone, excludeUserId) {
 
   return restSelect("profiles", {
     single: true,
+    useServiceRole: options.useServiceRole !== false,
+    accessToken: options.accessToken,
     query: query
   });
 }
@@ -867,6 +881,14 @@ async function signInWithPassword(credentials) {
     query: {
       grant_type: "password"
     },
+    body: credentials,
+    useServiceRole: false
+  });
+}
+
+async function signUpWithPassword(credentials) {
+  return authRequest("signup", {
+    method: "POST",
     body: credentials,
     useServiceRole: false
   });
@@ -1264,7 +1286,10 @@ async function authMiddleware(req, res, next) {
       return;
     }
 
-    const profile = await getProfileById(authUser.id);
+    const profile = await getProfileById(authUser.id, {
+      useServiceRole: false,
+      accessToken: token
+    });
     req.token = token;
     req.authUser = authUser;
     req.profile = profile;
@@ -1286,7 +1311,7 @@ function handleRouteError(res, error, fallbackMessage, fallbackStatus) {
 }
 
 app.post("/api/auth/register", async (req, res) => {
-  if (!ensureSupabaseConfig(res)) {
+  if (!ensureSupabaseConfig(res, { requireServiceRole: false })) {
     return;
   }
 
@@ -1318,21 +1343,41 @@ app.post("/api/auth/register", async (req, res) => {
   }
 
   try {
-    const phoneExists = await getProfileByPhone(phone);
-    if (phoneExists) {
-      res.status(409).json({ message: "So dien thoai nay da duoc su dung." });
-      return;
+    if (hasSupabaseServerConfig()) {
+      const phoneExists = await getProfileByPhone(phone);
+      if (phoneExists) {
+        res.status(409).json({ message: "So dien thoai nay da duoc su dung." });
+        return;
+      }
     }
 
-    const createdUser = await createAuthUser({
-      email: email,
-      password: password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: name,
-        role: role
-      }
-    });
+    let createdUser = null;
+    let token = "";
+    if (hasSupabaseServerConfig()) {
+      createdUser = await createAuthUser({
+        email: email,
+        password: password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: name,
+          role: role
+        }
+      });
+    } else {
+      const signUpResult = await signUpWithPassword({
+        email: email,
+        password: password,
+        data: {
+          full_name: name,
+          role: role
+        }
+      });
+      createdUser =
+        unwrapAuthUser(signUpResult) ||
+        (signUpResult.session && signUpResult.session.user) ||
+        null;
+      token = signUpResult.access_token || (signUpResult.session && signUpResult.session.access_token) || "";
+    }
 
     if (!createdUser) {
       throw new SupabaseError(500, "Khong the tao tai khoan luc nay.");
@@ -1351,17 +1396,35 @@ app.post("/api/auth/register", async (req, res) => {
         avatar_url: "",
         created_at: createdUser.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString()
-      });
+      }, hasSupabaseServerConfig()
+        ? {}
+        : {
+            useServiceRole: false,
+            accessToken: token
+          });
     } catch (profileError) {
-      await deleteAuthUserById(createdUser.id).catch(function ignoreCleanupError() {});
+      if (!hasSupabaseServerConfig() && !token) {
+        throw new SupabaseError(500, "Da tao tai khoan xac thuc nhung chua the luu ho so vi thieu quyen truy cap. Hay cau hinh SUPABASE_SERVICE_ROLE_KEY tren server.");
+      }
+      if (hasSupabaseServerConfig()) {
+        await deleteAuthUserById(createdUser.id).catch(function ignoreCleanupError() {});
+      }
       throw profileError;
     }
 
-    const loginResult = await signInWithPassword({
-      email: email,
-      password: password
-    });
-    const token = loginResult.access_token || (loginResult.session && loginResult.session.access_token) || "";
+    const loginResult = token
+      ? {
+          access_token: token,
+          session: {
+            access_token: token,
+            user: createdUser
+          }
+        }
+      : await signInWithPassword({
+          email: email,
+          password: password
+        });
+    token = loginResult.access_token || (loginResult.session && loginResult.session.access_token) || "";
     const responseUser =
       unwrapAuthUser(loginResult) ||
       (loginResult.session && loginResult.session.user) ||
@@ -1500,7 +1563,7 @@ app.get("/api/profile", authMiddleware, async (req, res) => {
 });
 
 app.put("/api/profile", authMiddleware, async (req, res) => {
-  if (!ensureSupabaseConfig(res)) {
+  if (!ensureSupabaseConfig(res, { requireServiceRole: false })) {
     return;
   }
 
@@ -1528,7 +1591,9 @@ app.put("/api/profile", authMiddleware, async (req, res) => {
   }
 
   try {
-    const phoneExists = await getProfileByPhone(phone, req.authUser.id);
+    const phoneExists = hasSupabaseServerConfig()
+      ? await getProfileByPhone(phone, req.authUser.id)
+      : null;
 
     if (phoneExists) {
       res.status(409).json({ message: "So dien thoai nay dang duoc su dung boi tai khoan khac." });
@@ -1552,6 +1617,9 @@ app.put("/api/profile", authMiddleware, async (req, res) => {
       created_at:
         (req.profile && req.profile.created_at) || req.authUser.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
+    }, {
+      useServiceRole: false,
+      accessToken: req.token
     });
 
     res.json({
