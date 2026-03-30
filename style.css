@@ -4139,6 +4139,7 @@ body,
   padding:12px 14px;
   border-radius:16px;
   background:rgba(234,243,255,0.88);
+  border:1px solid rgba(0, 72, 168, 0.14);
   color:#204a85;
   font-weight:700;
   line-height:1.6;
@@ -4148,6 +4149,7 @@ body,
   padding:16px 18px;
   border-radius:20px;
   background:var(--surface-soft);
+  border:1px solid rgba(0, 72, 168, 0.14);
 }
 
 .service-block span{
