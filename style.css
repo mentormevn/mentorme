@@ -11150,7 +11150,6 @@ body > main > section{
     min-width:0 !important;
   }
 
-  .hero-stats,
   .home-proof-grid,
   .home-journey-grid,
   .home-fields-grid,
@@ -11158,6 +11157,25 @@ body > main > section{
   .services-grid,
   .mentor-grid{
     grid-template-columns:1fr !important;
+  }
+
+  .hero-stats{
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    gap:10px !important;
+  }
+
+  .hero-stat-card{
+    min-width:0 !important;
+    padding:14px 10px !important;
+  }
+
+  .hero-stat-card strong{
+    font-size:15px !important;
+  }
+
+  .hero-stat-card span{
+    font-size:11px !important;
+    line-height:1.35 !important;
   }
 
   .home-services-head{
@@ -11240,6 +11258,10 @@ body > main > section{
   .partner-pill-row span{
     width:100% !important;
     justify-content:flex-start !important;
+  }
+
+  .hero-stats{
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
   }
 }
 
