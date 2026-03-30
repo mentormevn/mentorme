@@ -2095,20 +2095,45 @@ function initializeMenteeSection() {
 
 function initializeScrollReveal() {
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const revealTargets = Array.from(document.querySelectorAll(
-    ".about, .home-proof-copy, .home-proof-grid .proof-card, .home-journey-head, .home-journey-grid .journey-card, .mentor h2, .mentor-home-intro, .mentor-wrapper, .mentor-home-actions, .home-partners-copy, .partner-pill-row span, .home-fields-copy, .home-fields-grid .field-feature-card, .home-results-head, .home-results-grid .result-card, .mentee h2, .mentee-wrapper, .home-services-head, .home-services-track .home-service-card, .home-cta-copy, .home-cta-actions"
-  ));
+  const revealSections = [
+    { section: ".hero", targets: [".hero-image", ".hero-content h1", ".search-box", ".hero-sub", ".hero-quick-actions a", ".hero-stats .hero-stat-card"] },
+    { section: ".about-scale", targets: [".about"] },
+    { section: ".home-proof", targets: [".home-proof-copy", ".home-proof-grid .proof-card"] },
+    { section: ".home-journey", targets: [".home-journey-head", ".home-journey-grid .journey-card"] },
+    { section: ".mentor", targets: ["h2", ".mentor-home-intro", ".mentor-wrapper", ".mentor-home-actions"] },
+    { section: ".home-partners", targets: [".home-partners-copy", ".partner-pill-row span"] },
+    { section: ".home-fields", targets: [".home-fields-copy", ".home-fields-grid .field-feature-card"] },
+    { section: ".home-results", targets: [".home-results-head", ".home-results-grid .result-card"] },
+    { section: ".mentee", targets: ["h2", ".mentee-wrapper"] },
+    { section: ".home-services", targets: [".home-services-head", ".home-services-track .home-service-card"] },
+    { section: ".home-cta-band", targets: [".home-cta-copy", ".home-cta-actions"] }
+  ];
+  const revealTargets = [];
+
+  revealSections.forEach(function (config, sectionIndex) {
+    const sectionElement = document.querySelector(config.section);
+    if (!sectionElement) return;
+
+    const direction = sectionIndex % 2 === 0 ? "left" : "right";
+    let revealIndex = 0;
+
+    config.targets.forEach(function (selector) {
+      sectionElement.querySelectorAll(selector).forEach(function (element) {
+        if (!element.classList.contains("reveal-on-scroll")) {
+          element.classList.add("reveal-on-scroll");
+        }
+
+        element.setAttribute("data-reveal-direction", direction);
+        element.style.transitionDelay = `${Math.min(revealIndex * 0.12, 0.48)}s`;
+        revealIndex += 1;
+        revealTargets.push(element);
+      });
+    });
+  });
 
   if (!revealTargets.length) return;
 
-  revealTargets.forEach(function (element, index) {
-    if (!element.classList.contains("reveal-on-scroll")) {
-      element.classList.add("reveal-on-scroll");
-    }
-
-    const direction = index % 2 === 0 ? "left" : "right";
-    element.setAttribute("data-reveal-direction", direction);
-
+  revealTargets.forEach(function (element) {
     if (prefersReducedMotion) {
       element.classList.add("is-visible");
     }
@@ -2135,6 +2160,87 @@ function initializeScrollReveal() {
   revealTargets.forEach(function (element) {
     observer.observe(element);
   });
+}
+
+function initializeAboutTitleTyping() {
+  const title = document.querySelector(".about-title-reveal");
+  if (!title || title.dataset.typewriterReady === "true") return;
+
+  const originalMarkup = title.innerHTML;
+  title.dataset.typewriterReady = "true";
+
+  function startTyping() {
+    if (title.dataset.typewriterStarted === "true") return;
+    title.dataset.typewriterStarted = "true";
+
+    const lines = originalMarkup
+      .split(/<br\s*\/?>/i)
+      .map(function (line) {
+        return line.replace(/<[^>]+>/g, "").trim();
+      })
+      .filter(Boolean);
+
+    title.innerHTML = "";
+    title.classList.add("is-typewriting");
+
+    let lineIndex = 0;
+    let charIndex = 0;
+
+    function typeNextCharacter() {
+      if (lineIndex >= lines.length) {
+        title.classList.remove("is-typewriting");
+        title.classList.add("is-typed");
+        return;
+      }
+
+      const currentLineText = lines[lineIndex];
+      let currentLineElement = title.querySelector(`[data-type-line="${lineIndex}"]`);
+
+      if (!currentLineElement) {
+        currentLineElement = document.createElement("span");
+        currentLineElement.className = "type-line";
+        currentLineElement.setAttribute("data-type-line", String(lineIndex));
+        title.appendChild(currentLineElement);
+      }
+
+      currentLineElement.textContent += currentLineText.charAt(charIndex);
+      charIndex += 1;
+
+      if (charIndex >= currentLineText.length) {
+        lineIndex += 1;
+        charIndex = 0;
+
+        if (lineIndex < lines.length) {
+          title.appendChild(document.createElement("br"));
+        }
+
+        window.setTimeout(typeNextCharacter, 120);
+        return;
+      }
+
+      window.setTimeout(typeNextCharacter, 55);
+    }
+
+    typeNextCharacter();
+  }
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || typeof IntersectionObserver !== "function") {
+    title.innerHTML = originalMarkup;
+    title.classList.add("is-typed");
+    return;
+  }
+
+  const observer = new IntersectionObserver(function (entries, activeObserver) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      activeObserver.unobserve(entry.target);
+      startTyping();
+    });
+  }, {
+    threshold: 0.45
+  });
+
+  observer.observe(title);
 }
 
 function filterMentors() {
@@ -6831,6 +6937,7 @@ async function bootstrapApp() {
   initializeHomeMentorSection();
   initializeMenteeSection();
   initializeScrollReveal();
+  initializeAboutTitleTyping();
   renderMentorDetail();
   initializeBookingPage();
   initializeConsultationRequestForm();
