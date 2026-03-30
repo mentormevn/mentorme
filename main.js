@@ -1936,6 +1936,23 @@ function initializeHomeMentorSection() {
   }
 
   let mentorPages = renderHomeMentorPages();
+  let autoAdvanceHandle = null;
+
+  function stopAutoAdvance() {
+    if (autoAdvanceHandle) {
+      window.clearInterval(autoAdvanceHandle);
+      autoAdvanceHandle = null;
+    }
+  }
+
+  function startAutoAdvance() {
+    stopAutoAdvance();
+    if (mentorPages.length <= 1) return;
+    autoAdvanceHandle = window.setInterval(function () {
+      currentPage = currentPage >= mentorPages.length - 1 ? 0 : currentPage + 1;
+      updateHomeMentorSlider();
+    }, 2000);
+  }
 
   function updateHomeMentorSlider() {
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
@@ -1966,6 +1983,7 @@ function initializeHomeMentorSection() {
       if (currentPage > 0) {
         currentPage -= 1;
         updateHomeMentorSlider();
+        startAutoAdvance();
       }
     });
   }
@@ -1975,9 +1993,20 @@ function initializeHomeMentorSection() {
       if (currentPage < mentorPages.length - 1) {
         currentPage += 1;
         updateHomeMentorSlider();
+        startAutoAdvance();
       }
     });
   }
+
+  [homeMentorTrack, prevButton, nextButton].forEach(function (element) {
+    if (!element) return;
+    element.addEventListener("mouseenter", stopAutoAdvance);
+    element.addEventListener("mouseleave", startAutoAdvance);
+    element.addEventListener("focusin", stopAutoAdvance);
+    element.addEventListener("focusout", startAutoAdvance);
+    element.addEventListener("touchstart", stopAutoAdvance, { passive: true });
+    element.addEventListener("touchend", startAutoAdvance, { passive: true });
+  });
 
   window.addEventListener("resize", function () {
     const nextPages = getMentorPages();
@@ -1985,9 +2014,127 @@ function initializeHomeMentorSection() {
       mentorPages = renderHomeMentorPages();
     }
     updateHomeMentorSlider();
+    startAutoAdvance();
   });
 
   updateHomeMentorSlider();
+  startAutoAdvance();
+}
+
+function initializeMenteeSection() {
+  const track = document.querySelector(".mentee-track");
+  if (!track) return;
+
+  const slides = Array.from(track.querySelectorAll(".mentee-slide"));
+  const prevButton = document.querySelector(".mentee-prev");
+  const nextButton = document.querySelector(".mentee-next");
+  if (!slides.length) return;
+
+  let currentIndex = 0;
+  let autoAdvanceHandle = null;
+
+  function updateMenteeSlider() {
+    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+    if (prevButton) {
+      prevButton.disabled = slides.length <= 1;
+      prevButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
+    }
+
+    if (nextButton) {
+      nextButton.disabled = slides.length <= 1;
+      nextButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
+    }
+  }
+
+  function stopAutoAdvance() {
+    if (autoAdvanceHandle) {
+      window.clearInterval(autoAdvanceHandle);
+      autoAdvanceHandle = null;
+    }
+  }
+
+  function startAutoAdvance() {
+    stopAutoAdvance();
+    if (slides.length <= 1) return;
+    autoAdvanceHandle = window.setInterval(function () {
+      currentIndex = currentIndex >= slides.length - 1 ? 0 : currentIndex + 1;
+      updateMenteeSlider();
+    }, 2000);
+  }
+
+  if (prevButton) {
+    prevButton.addEventListener("click", function () {
+      currentIndex = currentIndex <= 0 ? slides.length - 1 : currentIndex - 1;
+      updateMenteeSlider();
+      startAutoAdvance();
+    });
+  }
+
+  if (nextButton) {
+    nextButton.addEventListener("click", function () {
+      currentIndex = currentIndex >= slides.length - 1 ? 0 : currentIndex + 1;
+      updateMenteeSlider();
+      startAutoAdvance();
+    });
+  }
+
+  [track, prevButton, nextButton].forEach(function (element) {
+    if (!element) return;
+    element.addEventListener("mouseenter", stopAutoAdvance);
+    element.addEventListener("mouseleave", startAutoAdvance);
+    element.addEventListener("focusin", stopAutoAdvance);
+    element.addEventListener("focusout", startAutoAdvance);
+    element.addEventListener("touchstart", stopAutoAdvance, { passive: true });
+    element.addEventListener("touchend", startAutoAdvance, { passive: true });
+  });
+
+  updateMenteeSlider();
+  startAutoAdvance();
+}
+
+function initializeScrollReveal() {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const revealTargets = Array.from(document.querySelectorAll(
+    ".about, .home-proof-copy, .home-proof-grid .proof-card, .home-journey-head, .home-journey-grid .journey-card, .mentor h2, .mentor-home-intro, .mentor-wrapper, .mentor-home-actions, .home-partners-copy, .partner-pill-row span, .home-fields-copy, .home-fields-grid .field-feature-card, .home-results-head, .home-results-grid .result-card, .mentee h2, .mentee-wrapper, .home-services-head, .home-services-track .home-service-card, .home-cta-copy, .home-cta-actions"
+  ));
+
+  if (!revealTargets.length) return;
+
+  revealTargets.forEach(function (element, index) {
+    if (!element.classList.contains("reveal-on-scroll")) {
+      element.classList.add("reveal-on-scroll");
+    }
+
+    const direction = index % 2 === 0 ? "left" : "right";
+    element.setAttribute("data-reveal-direction", direction);
+
+    if (prefersReducedMotion) {
+      element.classList.add("is-visible");
+    }
+  });
+
+  if (prefersReducedMotion || typeof IntersectionObserver !== "function") {
+    revealTargets.forEach(function (element) {
+      element.classList.add("is-visible");
+    });
+    return;
+  }
+
+  const observer = new IntersectionObserver(function (entries, activeObserver) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("is-visible");
+      activeObserver.unobserve(entry.target);
+    });
+  }, {
+    threshold: 0.18,
+    rootMargin: "0px 0px -10% 0px"
+  });
+
+  revealTargets.forEach(function (element) {
+    observer.observe(element);
+  });
 }
 
 function filterMentors() {
@@ -6682,6 +6829,8 @@ async function bootstrapApp() {
   initializeResetPasswordPage();
   initializeSearchPage();
   initializeHomeMentorSection();
+  initializeMenteeSection();
+  initializeScrollReveal();
   renderMentorDetail();
   initializeBookingPage();
   initializeConsultationRequestForm();
