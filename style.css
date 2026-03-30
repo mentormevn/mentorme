@@ -9909,12 +9909,19 @@ main{
 }
 
 .hero-stat-card.reveal-on-scroll,
-.proof-card.reveal-on-scroll{
+.proof-card.reveal-on-scroll,
+.services-intro-card.reveal-on-scroll,
+.service-card.reveal-on-scroll,
+.services-value-card.reveal-on-scroll{
   transition-duration:1.05s, 1.2s;
 }
 
 .mentor-wrapper.reveal-on-scroll,
-.mentee-wrapper.reveal-on-scroll{
+.mentee-wrapper.reveal-on-scroll,
+.services-hero-copy.reveal-on-scroll,
+.services-hero-highlight.reveal-on-scroll,
+.services-consult-copy.reveal-on-scroll,
+.services-consult-card.reveal-on-scroll{
   transition-duration:1.1s, 1.25s;
 }
 

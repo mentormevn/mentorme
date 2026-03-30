@@ -2106,7 +2106,12 @@ function initializeScrollReveal() {
     { section: ".home-results", targets: [".home-results-head", ".home-results-grid .result-card"] },
     { section: ".mentee", targets: ["h2", ".mentee-wrapper"] },
     { section: ".home-services", targets: [".home-services-head", ".home-services-track .home-service-card"] },
-    { section: ".home-cta-band", targets: [".home-cta-copy", ".home-cta-actions"] }
+    { section: ".home-cta-band", targets: [".home-cta-copy", ".home-cta-actions"] },
+    { section: ".services-hero", targets: [".services-hero-copy", ".services-hero-highlight"] },
+    { section: ".services-intro-band", targets: [".services-intro-card"] },
+    { section: ".services-grid-section", targets: [".services-section-heading", ".services-grid .service-card"] },
+    { section: ".services-value-strip", targets: [".services-value-card"] },
+    { section: ".services-consult-section", targets: [".services-consult-copy", ".services-consult-card"] }
   ];
   const revealTargets = [];
 
