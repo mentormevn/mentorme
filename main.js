@@ -1889,6 +1889,36 @@ function renderMentorList(mentors, keyword, page) {
   );
 }
 
+function renderHomeMentorLoadingState() {
+  const homeMentorTrack = document.getElementById("homeMentorTrack");
+  if (!homeMentorTrack) return;
+
+  const skeletonCards = Array.from({ length: 3 }, function () {
+    return `
+      <div class="mentor-card mentor-grid-card mentor-card-skeleton" aria-hidden="true">
+        <div class="mentor-card-media">
+          <div class="mentor-skeleton-block mentor-skeleton-image"></div>
+        </div>
+        <div class="mentor-card-body">
+          <div class="mentor-skeleton-block mentor-skeleton-title"></div>
+          <div class="mentor-skeleton-row">
+            <div class="mentor-skeleton-block mentor-skeleton-meta"></div>
+            <div class="mentor-skeleton-block mentor-skeleton-meta is-short"></div>
+          </div>
+          <div class="mentor-card-achievements">
+            <div class="mentor-skeleton-block mentor-skeleton-label"></div>
+            <div class="mentor-skeleton-block mentor-skeleton-line"></div>
+            <div class="mentor-skeleton-block mentor-skeleton-line is-short"></div>
+          </div>
+          <div class="mentor-skeleton-block mentor-skeleton-button"></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  homeMentorTrack.innerHTML = `<div class="mentor-slide mentor-slide-loading">${skeletonCards}</div>`;
+}
+
 function initializeHomeMentorSection() {
   const homeMentorTrack = document.getElementById("homeMentorTrack");
   if (!homeMentorTrack) return;
@@ -6953,6 +6983,7 @@ async function bootstrapApp() {
   initializePasswordToggles();
   syncSubmittedReviewsWithCurrentData();
   ensureDemoBookingRequests();
+  renderHomeMentorLoadingState();
   if (isSupabaseReady()) {
     try {
       await fetchPublicMentorProfiles();
