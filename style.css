@@ -2,6 +2,59 @@ body{
   font-family: 'Montserrat', sans-serif;
 }
 
+@media (min-width: 769px){
+  .navbar{
+    flex-wrap:nowrap !important;
+    gap:18px !important;
+  }
+
+  .logo,
+  .logo span,
+  .menu a,
+  #authArea,
+  #authArea a,
+  #authArea .btn-register{
+    white-space:nowrap !important;
+  }
+
+  .logo{
+    flex:0 0 auto !important;
+  }
+
+  .menu{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    justify-content:center !important;
+    gap:16px !important;
+  }
+
+  .menu li{
+    flex:0 1 auto !important;
+    min-width:0 !important;
+  }
+
+  .menu a,
+  .menu li.active a{
+    font-size:14px !important;
+    line-height:1 !important;
+    padding:10px 10px !important;
+  }
+
+  #authArea{
+    flex:0 0 auto !important;
+    gap:10px !important;
+  }
+
+  #authArea a,
+  #authArea .btn-register{
+    font-size:14px !important;
+  }
+
+  .btn-register{
+    padding:8px 12px !important;
+  }
+}
+
 body > main > .hero{
   background:#dceeff !important;
 }
