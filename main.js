@@ -1555,39 +1555,6 @@ if (searchInput) {
   });
 }
 
-const mentorData = {
-  "tien-dung": {
-    id: "tien-dung",
-    name: "NGUYỄN TIẾN DŨNG",
-    image: "mentor2.jpg",
-    workplace: "Học viện Báo chí và Tuyên truyền - Chuyên ngành Truyền thông chính sách",
-    tag: "Mentor Ngữ văn, truyền thông và hồ sơ",
-    role: "Mentor Ngữ văn, truyền thông, thuyết trình và hoạt động ngoại khóa",
-    bio: "Nguyễn Tiến Dũng hiện theo học chuyên ngành Truyền thông chính sách tại Học viện Báo chí và Tuyên truyền, có nền tảng học thuật mạnh ở môn Ngữ văn và nhiều trải nghiệm thực tế trong truyền thông, tổ chức hoạt động học sinh.",
-    focus: "Ngữ văn, truyền thông, thuyết trình, hoạt động ngoại khóa",
-    field: "hoc-tap",
-    availability: ["sang", "chieu", "toi", "cuoi-tuan"],
-    availabilityText: "Linh hoạt theo lịch hẹn",
-    service: ["1-1", "course", "coaching", "quick-service"],
-    serviceText: "Mentoring 1-1, mini course/ course/ class, career package/ coaching, quick service",
-    achievements: [
-      "Học sinh giỏi Tỉnh môn Ngữ văn cấp THPT năm học 2023 - 2024 và 2024 - 2025, cùng danh hiệu Học sinh giỏi Thành phố môn Ngữ văn cấp THCS năm học 2021 - 2022.",
-      "Giải Nhất thuyết trình Ngày hội Văn hóa Đọc năm học 2024 - 2025.",
-      "Giải Nhì cuộc thi Sáng kiến phòng, chống bạo lực học đường năm học 2024 - 2025.",
-      "Thành viên ACC - Câu lạc bộ truyền thông Học viện Báo chí và Tuyên truyền, thành viên Đội Báo chí - Truyền thông Spotlight 2025 và Trưởng ban Nội dung HS14 năm 2023 - 2024."
-    ],
-    fit: "Phù hợp với học sinh cần học tốt môn Văn, muốn cải thiện kỹ năng thuyết trình, tham gia hoạt động ngoại khóa, làm truyền thông học đường hoặc xây dựng hồ sơ cá nhân chỉn chu hơn.",
-    searchableText: "nguyen tien dung ngu van van hoc truyen thong thuyet trinh ky nang mem hoat dong ngoai khoa hoc vien bao chi truyen thong chinh sach spotlight hs14 ho so"
-  }
-};
-
-const mentorExperienceData = {
-  "tien-dung": {
-    rating: 0,
-    studentsTaught: 0,
-    reviews: []
-  }
-};
 
 const querySynonyms = [
   { phrases: ["em yeu speaking", "yeu speaking", "ngai noi", "so noi tieng anh"], tags: ["speaking", "giao tiep", "tieng anh", "ielts"] },
