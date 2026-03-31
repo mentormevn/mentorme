@@ -5155,7 +5155,8 @@ function initializeRegisterPage() {
     const email = normalizeEmail(document.getElementById("registerEmail").value);
     const phone = normalizePhone(document.getElementById("registerPhone").value);
     const goal = document.getElementById("registerGoal").value.trim();
-    const role = normalizeRole(document.getElementById("registerRole").value);
+    const roleField = document.getElementById("registerRole");
+    const role = normalizeRole(roleField ? roleField.value : "mentee");
     const password = document.getElementById("registerPassword").value;
     const confirmPassword = document.getElementById("registerConfirmPassword").value;
     const agreed = document.getElementById("registerAgree").checked;
