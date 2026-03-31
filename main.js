@@ -30,6 +30,7 @@ const DEMO_MENTEE_PASSWORD = "trang2007";
 const SEARCH_PAGE_SIZE = 12;
 const REAL_MENTOR_DATA_VERSION = "2026-03-26-real-v2";
 const REVIEW_CLEANUP_VERSION = "2026-03-26-clear-trang-dung";
+const BLOCKED_MENTOR_SLUGS = ["tien-dung", "nguyen-tien-dung"];
 const WEEKLY_SCHEDULE_DAYS = [
   { key: "mon", label: "Thứ 2", shortLabel: "2" },
   { key: "tue", label: "Thứ 3", shortLabel: "3" },
@@ -300,6 +301,23 @@ function slugifyText(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function isBlockedMentor(mentor) {
+  if (!mentor) return false;
+
+  const candidateSlugs = [
+    mentor.id,
+    mentor.name,
+    mentor.displayName,
+    mentor.mentorId
+  ]
+    .map(slugifyText)
+    .filter(Boolean);
+
+  return candidateSlugs.some(function (slug) {
+    return BLOCKED_MENTOR_SLUGS.includes(slug);
+  });
 }
 
 function buildMentorAvailabilityText(availability) {
@@ -1555,6 +1573,9 @@ if (searchInput) {
   });
 }
 
+const mentorData = {};
+
+const mentorExperienceData = {};
 
 const querySynonyms = [
   { phrases: ["em yeu speaking", "yeu speaking", "ngai noi", "so noi tieng anh"], tags: ["speaking", "giao tiep", "tieng anh", "ielts"] },
@@ -1659,9 +1680,13 @@ function getAcceptedStudentCountForMentor(mentorId) {
 }
 
 function getResolvedMentorById(mentorId) {
+  if (isBlockedMentor({ id: mentorId })) return null;
   const approvedStore = getApprovedMentorProfiles();
   const approvedProfile = approvedStore[mentorId] || {};
-  const baseMentor = approvedProfile.id ? approvedProfile : (mentorData[mentorId] || null);
+  const baseSeedMentor = mentorData[mentorId] || null;
+  const baseMentor = approvedProfile.id
+    ? Object.assign({}, baseSeedMentor || {}, approvedProfile)
+    : baseSeedMentor;
   if (!baseMentor) return null;
   const experience = mentorExperienceData[mentorId] || {};
   const acceptedCount = getAcceptedStudentCountForMentor(mentorId);
@@ -1714,7 +1739,7 @@ function getResolvedMentorById(mentorId) {
     ? resolvedMentor.service
     : buildLegacyServiceKeysFromPackages(servicePackages);
 
-  return Object.assign({}, resolvedMentor, {
+  const normalizedMentor = Object.assign({}, resolvedMentor, {
     field: normalizeFieldCategoryList(resolvedMentor.fields || resolvedMentor.field || [])[0] || normalizeFieldCategory(resolvedMentor.field || ""),
     fields: normalizeFieldCategoryList(resolvedMentor.fields || resolvedMentor.field || []),
     availability: availability,
@@ -1727,6 +1752,8 @@ function getResolvedMentorById(mentorId) {
     })),
     pricing: buildServicePackageSummary(servicePackages)
   });
+
+  return isBlockedMentor(normalizedMentor) ? null : normalizedMentor;
 }
 
 function getResolvedMentorList() {
@@ -1739,7 +1766,10 @@ function getResolvedMentorList() {
     .map(function (mentorId) {
       return getResolvedMentorById(mentorId);
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter(function (mentor) {
+      return !isBlockedMentor(mentor);
+    });
 }
 
 function renderMentorStatsBadge(mentor) {
@@ -2067,7 +2097,7 @@ function initializeScrollReveal() {
     { section: ".about-scale", targets: [".about"] },
     { section: ".home-proof", targets: [".home-proof-copy", ".home-proof-grid .proof-card"] },
     { section: ".home-journey", targets: [".home-journey-head", ".home-journey-grid .journey-card"] },
-    { section: ".mentor", targets: ["h2", ".mentor-home-intro", ".mentor-wrapper", ".mentor-home-actions"] },
+    { section: ".mentor", targets: ["h2"] },
     { section: ".home-partners", targets: [".home-partners-copy", ".partner-pill-row span"] },
     { section: ".home-fields", targets: [".home-fields-copy", ".home-fields-grid .field-feature-card"] },
     { section: ".home-results", targets: [".home-results-head", ".home-results-grid .result-card"] },
@@ -2315,7 +2345,20 @@ function renderMentorDetail() {
 
   const params = new URLSearchParams(window.location.search);
   const mentorId = params.get("id");
-  const mentor = getResolvedMentorById(mentorId) || getResolvedMentorById("tien-dung");
+  const mentor = getResolvedMentorById(mentorId);
+  if (!mentor) {
+    const detailPage = document.querySelector(".mentor-detail-card");
+    if (detailPage) {
+      detailPage.innerHTML = `
+        <div class="admin-empty-state">
+          <h3>Không tìm thấy mentor</h3>
+          <p>Mentor này đã bị gỡ khỏi hệ thống hoặc đường dẫn không còn hợp lệ.</p>
+          <a href="search.html" class="mentor-primary-btn">Quay lại danh sách mentor</a>
+        </div>
+      `;
+    }
+    return;
+  }
 
   document.getElementById("mentorDetailImage").src = mentor.image;
   document.getElementById("mentorDetailImage").alt = mentor.name;
@@ -2396,7 +2439,20 @@ async function initializeBookingPage() {
 
   const params = new URLSearchParams(window.location.search);
   const mentorId = params.get("id");
-  const mentor = getResolvedMentorById(mentorId) || getResolvedMentorById("tien-dung");
+  const mentor = getResolvedMentorById(mentorId);
+  if (!mentor) {
+    const bookingShell = document.querySelector(".booking-shell");
+    if (bookingShell) {
+      bookingShell.innerHTML = `
+        <div class="admin-empty-state">
+          <h3>Không thể đặt lịch</h3>
+          <p>Mentor này đã bị gỡ khỏi hệ thống nên không còn nhận booking.</p>
+          <a href="search.html" class="mentor-primary-btn">Xem mentor khác</a>
+        </div>
+      `;
+    }
+    return;
+  }
   const currentUser = getCurrentUser();
 
   document.getElementById("bookingMentorImage").src = mentor.image;
@@ -3053,22 +3109,28 @@ async function fetchCurrentMentorProfileUpdate() {
 
 function normalizeRemoteMentorProfile(record) {
   if (!record) return null;
+  if (isBlockedMentor(record)) return null;
   const profile = record.profile || {};
   const mentorId = String(record.id || profile.id || "").trim();
   if (!mentorId) return null;
+  const baseMentor = mentorData[mentorId] || {};
   const fields = normalizeFieldCategoryList(profile.fields || profile.field || record.field || []);
 
-  const normalizedProfile = Object.assign({}, profile, {
+  const normalizedProfile = Object.assign({}, baseMentor, profile, {
     id: mentorId,
-    name: profile.name || record.name || "Mentor",
+    name: profile.name || record.name || baseMentor.name || "Mentor",
     field: fields[0] || normalizeFieldCategory(profile.field || record.field || ""),
     fields: fields,
-    bio: profile.bio || profile.intro || "",
-    intro: profile.intro || profile.bio || "",
+    bio: profile.bio || profile.intro || baseMentor.bio || "",
+    intro: profile.intro || profile.bio || baseMentor.intro || baseMentor.bio || "",
+    image: profile.image || record.image || baseMentor.image || "mentor2.jpg",
+    achievements: Array.isArray(profile.achievements) && profile.achievements.length
+      ? profile.achievements
+      : Array.isArray(baseMentor.achievements) ? baseMentor.achievements.slice() : [],
     _origin: "supabase"
   });
   normalizedProfile.searchableText = buildMentorSearchableText(normalizedProfile);
-  return normalizedProfile;
+  return isBlockedMentor(normalizedProfile) ? null : normalizedProfile;
 }
 
 async function fetchPublicMentorProfiles() {

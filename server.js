@@ -45,6 +45,7 @@ const SUPABASE_SERVICE_ROLE_KEY =
   localEnv.SUPABASE_SERVICE_ROLE_KEY ||
   localEnv.SUPABASE_SERVICE_KEY ||
   "";
+const BLOCKED_MENTOR_SLUGS = new Set(["tien-dung", "nguyen-tien-dung"]);
 
 function getPublicClientConfig() {
   return {
@@ -440,6 +441,26 @@ function sanitizeMentorProfile(record) {
     createdAt: record.created_at,
     updatedAt: record.updated_at
   };
+}
+
+function isBlockedMentorRecord(record) {
+  if (!record) return false;
+
+  const profile = record.profile && typeof record.profile === "object" ? record.profile : {};
+  const candidateSlugs = [
+    record.id,
+    record.name,
+    record.mentor_id,
+    profile.id,
+    profile.name,
+    profile.displayName
+  ]
+    .map(slugifyText)
+    .filter(Boolean);
+
+  return candidateSlugs.some(function (slug) {
+    return BLOCKED_MENTOR_SLUGS.has(slug);
+  });
 }
 
 function sanitizeBookingRequest(request) {
@@ -1961,7 +1982,12 @@ app.get("/api/mentor-profiles", async (req, res) => {
     });
 
     res.json({
-      profiles: profiles.map(sanitizeMentorProfile)
+      profiles: profiles
+        .filter(function (profile) {
+          return !isBlockedMentorRecord(profile);
+        })
+        .map(sanitizeMentorProfile)
+        .filter(Boolean)
     });
   } catch (error) {
     handleRouteError(res, error, "Khong the tai danh sach mentor luc nay.");
@@ -1982,7 +2008,7 @@ app.get("/api/mentor-profiles/:id", async (req, res) => {
   try {
     await repairPublishedMentorProfiles();
     const profile = await getMentorProfileById(mentorId);
-    if (!profile || profile.visibility !== "public") {
+    if (!profile || profile.visibility !== "public" || isBlockedMentorRecord(profile)) {
       res.status(404).json({ message: "Khong tim thay mentor." });
       return;
     }
