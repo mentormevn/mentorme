@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin mentor profiles | Mentor Me</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20260331-2235">
+</head>
+<body class="admin-page" data-default-admin-section="mentor-profiles">
+  <div class="navbar">
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Mentor Me logo">
+      <span>MENTOR ME</span>
+    </a>
+    <ul class="menu">
+      <li><a href="index.html">Trang chủ</a></li>
+      <li><a href="services.html">Dịch vụ</a></li>
+      <li><a href="mentee-schedule.html">Lịch học</a></li>
+      <li class="active"><a href="admin-mentor-profiles.html">Mentor manage</a></li>
+    </ul>
+    <div id="authArea"></div>
+  </div>
+  <main class="admin-shell">
+    <section class="admin-header-card">
+      <h1>Admin xử lý lead tư vấn, tuyển chọn mentor và duyệt hồ sơ công khai</h1>
+      <p>Dùng trang này để xem lead mới, cập nhật trạng thái, thêm ghi chú nội bộ, đồng thời tách rõ 2 bước: duyệt ứng tuyển để cấp mã kích hoạt và duyệt hồ sơ mentor để hiển thị lên tìm kiếm.</p>
+    </section>
+    <section class="admin-flow-card">
+      <article class="admin-flow-step"><span class="admin-flow-badge">Bước 1</span><h2>Duyệt ứng tuyển mentor</h2><p>`pending` ở đây nghĩa là hồ sơ ứng tuyển ban đầu chưa được admin xử lý.</p><p>Sau khi `approved`, mentor chỉ mới được cấp mã kích hoạt hoặc đủ điều kiện tạo tài khoản, chưa chắc đã lên search.</p></article>
+      <article class="admin-flow-step"><span class="admin-flow-badge">Bước 2</span><h2>Duyệt hồ sơ công khai lên search</h2><p>`pending` ở đây là hồ sơ công khai do mentor gửi từ dashboard, chờ admin duyệt hiển thị.</p><p>Chỉ khi bước này `approved`, thông tin hồ sơ mới cập nhật lên trang tìm kiếm mentor.</p></article>
+    </section>
+    <section class="admin-access-card">
+      <div id="adminConsultationMessage" class="auth-message" hidden></div>
+      <form id="adminAccessForm" class="admin-access-form" novalidate>
+        <label class="auth-field"><span>Mật khẩu quản trị</span><input type="password" id="adminAccessKey" placeholder="Nhập mật khẩu admin để xem dữ liệu" required></label>
+        <button type="submit" class="mentor-primary-btn">Mở dashboard</button>
+      </form>
+    </section>
+    <section id="adminSectionNav" class="admin-section-nav" hidden>
+      <a href="admin-consultations.html" class="admin-section-tab" data-admin-section-link="consultations"><span class="admin-section-tab-label">Lead tư vấn</span><strong>Yêu cầu tư vấn</strong><p>Xử lý lead từ form dịch vụ.</p></a>
+      <a href="admin-mentor-applications.html" class="admin-section-tab" data-admin-section-link="mentor-applications"><span class="admin-section-tab-label">Mentor apply</span><strong>Duyệt ứng tuyển mentor</strong><p>Lọc hồ sơ apply và cấp mã kích hoạt.</p></a>
+      <a href="admin-mentor-profile-updates.html" class="admin-section-tab" data-admin-section-link="mentor-profile-updates"><span class="admin-section-tab-label">Mentor update</span><strong>Duyệt hồ sơ public</strong><p>Review hồ sơ mentor trước khi lên search.</p></a>
+      <a href="admin-mentor-profiles.html" class="admin-section-tab" data-admin-section-link="mentor-profiles"><span class="admin-section-tab-label">Mentor manage</span><strong>Quản lý mentor hiển thị</strong><p>Tạo mới hoặc chỉnh sửa mentor đang public.</p></a>
+      <a href="admin-booking-requests.html" class="admin-section-tab" data-admin-section-link="booking-requests"><span class="admin-section-tab-label">Booking</span><strong>Đăng ký học với mentor</strong><p>Theo dõi booking và cập nhật trạng thái.</p></a>
+    </section>
+    <section id="adminConsultationDashboard" class="admin-dashboard" data-admin-section="consultations" hidden><div class="admin-dashboard-bar"><h2>Yêu cầu tư vấn</h2><button type="button" id="adminRefreshRequests" class="mentor-secondary-btn">Tải lại</button></div><div id="adminConsultationList" class="admin-consultation-list"></div></section>
+    <section id="adminMentorApplicationDashboard" class="admin-dashboard" data-admin-section="mentor-applications" hidden><div class="admin-dashboard-bar"><h2>Bước 1: Duyệt ứng tuyển mentor và cấp mã kích hoạt</h2><button type="button" id="adminRefreshMentorApplications" class="mentor-secondary-btn">Tải lại</button></div><div id="adminMentorApplicationSummary"></div><div id="adminMentorApplicationList" class="admin-consultation-list"></div></section>
+    <section id="adminBookingDashboard" class="admin-dashboard" data-admin-section="booking-requests" hidden><div class="admin-dashboard-bar"><h2>Đăng ký học với mentor</h2><button type="button" id="adminRefreshBookingRequests" class="mentor-secondary-btn">Tải lại</button></div><div id="adminBookingRequestList" class="admin-consultation-list"></div></section>
+    <section id="adminMentorProfileUpdateDashboard" class="admin-dashboard" data-admin-section="mentor-profile-updates" hidden><div class="admin-dashboard-bar"><h2>Bước 2: Duyệt hồ sơ mentor để hiển thị lên tìm kiếm</h2><button type="button" id="adminRefreshMentorProfileUpdates" class="mentor-secondary-btn">Tải lại</button></div><div id="adminMentorProfileUpdateList" class="admin-consultation-list"></div></section>
+    <section id="adminMentorCreateDashboard" class="admin-dashboard" data-admin-section="mentor-profiles" hidden>
+      <div class="admin-dashboard-bar"><h2>Thêm/ chỉnh sửa mentor trên tìm kiếm</h2></div>
+      <div class="admin-consultation-list">
+        <article class="admin-request-card">
+          <div class="admin-request-head"><div><span id="adminMentorCreateModeLabel" class="admin-request-label">Mentor mới</span><h3 id="adminMentorCreateTitle">Đăng mentor lên tìm kiếm</h3><p id="adminMentorCreateDescription">Điền thông tin cơ bản để mentor hiển thị trên trang tìm kiếm.</p></div></div>
+          <form id="adminMentorCreateForm" class="admin-mentor-create-form" novalidate>
+            <input type="hidden" id="adminMentorEditId">
+            <label class="auth-field"><span>Tên mentor</span><input type="text" id="adminMentorCreateName" placeholder="Ví dụ: Nguyễn Minh Anh" required></label>
+            <label class="auth-field"><span>Email đăng nhập mentor</span><input type="email" id="adminMentorCreateEmail" placeholder="mentor@example.com" required></label>
+            <label class="auth-field"><span>Số điện thoại</span><input type="text" id="adminMentorCreatePhone" placeholder="Ví dụ: 0912345678"></label>
+            <label class="auth-field"><span id="adminMentorCreatePasswordLabel">Mật khẩu tạm cho mentor</span><input type="password" id="adminMentorCreatePassword" placeholder="Tối thiểu 8 ký tự" required></label>
+            <label class="auth-field"><span>Headline/ Vai trò</span><input type="text" id="adminMentorCreateRole" placeholder="Ví dụ: Mentor IELTS, kỹ năng mềm"></label>
+            <label class="auth-field"><span>Nơi làm việc/ học tập</span><input type="text" id="adminMentorCreateWorkplace" placeholder="Ví dụ: Đại học Ngoại thương"></label>
+            <label class="auth-field"><span>Lĩnh vực chính</span><input type="text" id="adminMentorCreateFocus" placeholder="Ví dụ: IELTS, kỹ năng học tập" required></label>
+            <label class="auth-field"><span>Nhóm lĩnh vực</span><select id="adminMentorCreateField" required><option value="">Chọn lĩnh vực</option><option value="hoc-tap">Học tập (Toán, Văn,..)</option><option value="ngoai-ngu">Ngoại ngữ và chứng chỉ</option><option value="ngoai-khoa">Hoạt động ngoại khóa</option><option value="cuoc-thi-nghien-cuu">Cuộc thi học thuật, nghiên cứu khoa học</option><option value="dinh-huong-ky-nang">Định hướng nghề nghiệp & kỹ năng</option><option value="kinh-doanh-khoi-nghiep">Kinh doanh & khởi nghiệp</option><option value="cong-nghe">Công nghệ</option><option value="phat-trien-ban-than">Phát triển bản thân</option></select></label>
+            <label class="auth-field"><span>Ảnh mentor (file/URL)</span><input type="text" id="adminMentorCreateImage" placeholder="Ví dụ: mentor2.jpg"></label>
+            <label class="auth-field"><span>Upload ảnh mentor</span><input type="file" id="adminMentorCreateImageUpload" accept="image/*"></label>
+            <div class="profile-full-width mentor-inline-image-preview"><img id="adminMentorCreateImagePreview" src="logo.png" alt="Preview ảnh mentor"></div>
+            <label class="auth-field"><span>Tag ngắn</span><input type="text" id="adminMentorCreateTag" placeholder="Ví dụ: Mentor định hướng"></label>
+            <label class="auth-field"><span>Thời gian rảnh</span><div class="auth-field-checkboxes"><label><input type="checkbox" name="adminMentorCreateAvailability" value="sang"> Buổi sáng</label><label><input type="checkbox" name="adminMentorCreateAvailability" value="chieu"> Buổi chiều</label><label><input type="checkbox" name="adminMentorCreateAvailability" value="toi"> Buổi tối</label><label><input type="checkbox" name="adminMentorCreateAvailability" value="cuoi-tuan"> Cuối tuần</label></div></label>
+            <label class="auth-field"><span>Dịch vụ</span><div class="auth-field-checkboxes"><label><input type="checkbox" name="adminMentorCreateService" value="1-1"> Mentoring 1-1</label><label><input type="checkbox" name="adminMentorCreateService" value="course"> Mini Course/ Course/ Class</label><label><input type="checkbox" name="adminMentorCreateService" value="coaching"> Career Package/ Coaching</label><label><input type="checkbox" name="adminMentorCreateService" value="quick-service"> Quick service (Sửa bài luận, Review CV,...)</label><label><input type="checkbox" name="adminMentorCreateService" value="qa-chat"> Hỏi đáp nhanh (Q&A/ Chat)</label></div></label>
+            <label class="auth-field"><span>Giới thiệu mentor</span><textarea id="adminMentorCreateBio" rows="4" placeholder="Mô tả ngắn về mentor"></textarea></label>
+            <label class="auth-field"><span>Thành tích nổi bật (mỗi dòng một mục)</span><textarea id="adminMentorCreateAchievements" rows="4" placeholder="Ví dụ: IELTS 8.0"></textarea></label>
+            <label class="auth-field"><span>Mentor phù hợp với</span><textarea id="adminMentorCreateFit" rows="3" placeholder="Mentee phù hợp"></textarea></label>
+            <label class="auth-field"><span>Đánh giá hiển thị</span><input type="number" id="adminMentorCreateRating" min="0" max="5" step="0.1" placeholder="Ví dụ: 4.8"></label>
+            <label class="auth-field"><span>Số học sinh đã dạy</span><input type="number" id="adminMentorCreateStudents" min="0" step="1" placeholder="Ví dụ: 20"></label>
+            <div class="profile-actions"><button type="submit" id="adminMentorCreateSubmit" class="mentor-primary-btn">Tạo mentor</button><button type="button" id="adminMentorEditCancel" class="mentor-secondary-btn" hidden>Hủy chỉnh sửa</button></div>
+          </form>
+        </article>
+        <article class="admin-request-card"><div class="admin-request-head"><div><span class="admin-request-label">Mentor đang hiển thị</span><h3>Danh sách mentor đã lưu</h3><p>Admin có thể mở từng mentor để chỉnh sửa và lưu lại trực tiếp.</p></div><button type="button" id="adminRefreshMentorProfiles" class="mentor-secondary-btn">Tải lại</button></div><div id="adminMentorManageList" class="admin-consultation-list"></div></article>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div class="footer-container"><div class="footer-col"><h3>MENTOR ME</h3><p>Nền tảng kết nối mentor - mentee trong học tập và phát triển kĩ năng.</p></div><div class="footer-col"><h4>LIÊN HỆ</h4><div class="contact-item"><img src="email.png" alt="Email"><span>mentorme.vn@gmail.com</span></div><div class="contact-item"><img src="lienhe.png" alt="Điện thoại"><span>(+84) 367 863 987</span></div><div class="contact-item"><img src="diachi.png" alt="Địa chỉ"><span>144 Xuân Thủy, Hà Nội</span></div></div><div class="footer-col"><a href="mentor-apply.html" class="footer-btn">ĐĂNG KÝ LÀM MENTOR</a><div class="socials"><a href="https://facebook.com/mentorme4.0" target="_blank" class="social-link"><span>Facebook</span></a><a href="https://www.instagram.com/mentorme.vn" target="_blank">Instagram</a></div></div></div><div class="footer-bottom">© 2026 Mentor Me. All rights reserved.</div></footer>
+  <script src="public-config.js?v=20260331-2235"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js?v=20260331-2235"></script>
+</body>
+</html>

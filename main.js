@@ -1468,6 +1468,10 @@ function renderAuthArea(user) {
       <a href="profile.html">Hồ sơ nội bộ</a>
       <a href="notifications.html">Thông báo</a>
       <a href="admin-consultations.html">Quản trị nội bộ</a>
+      <a href="admin-mentor-applications.html">Mentor apply</a>
+      <a href="admin-mentor-profile-updates.html">Mentor update</a>
+      <a href="admin-mentor-profiles.html">Quản lý mentor public</a>
+      <a href="admin-booking-requests.html">Booking mentor</a>
       <a href="mentor-dashboard.html">Hồ sơ mentor</a>
       <a href="mentor-teaching-calendar.html">Lịch dạy</a>
     `;
@@ -2800,6 +2804,28 @@ async function registerAccount(payload) {
   return data;
 }
 
+async function diagnoseLoginIssue(identifier) {
+  const response = await fetch("/api/auth/login-diagnose", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      identifier: identifier
+    })
+  });
+
+  const data = await response.json().catch(function () {
+    return {};
+  });
+
+  if (!response.ok) {
+    throw new Error(data.message || "Không thể kiểm tra trạng thái đăng nhập lúc này.");
+  }
+
+  return data;
+}
+
 async function activateMentorApplication(payload) {
   const response = await fetch("/api/mentor-applications/activate", {
     method: "POST",
@@ -3978,6 +4004,8 @@ function initializeMentorActivationPage() {
 
 function initializeAdminConsultationPage() {
   const accessForm = document.getElementById("adminAccessForm");
+  const bodyDefaultAdminSection = document.body.getAttribute("data-default-admin-section");
+  const sectionNav = document.getElementById("adminSectionNav");
   const dashboard = document.getElementById("adminConsultationDashboard");
   const listElement = document.getElementById("adminConsultationList");
   const refreshButton = document.getElementById("adminRefreshRequests");
@@ -4005,9 +4033,67 @@ function initializeAdminConsultationPage() {
   const mentorCreateImageInput = document.getElementById("adminMentorCreateImage");
   const mentorCreateImageUpload = document.getElementById("adminMentorCreateImageUpload");
   const mentorCreateImagePreview = document.getElementById("adminMentorCreateImagePreview");
+  const adminSections = Array.from(document.querySelectorAll("[data-admin-section]"));
+  const adminSectionLinks = Array.from(document.querySelectorAll("[data-admin-section-link]"));
+  const allowedAdminSections = [
+    "consultations",
+    "mentor-applications",
+    "mentor-profile-updates",
+    "mentor-profiles",
+    "booking-requests"
+  ];
   let adminMentorProfilesCache = [];
+  let isAdminDashboardUnlocked = false;
+  let activeAdminSection = getRequestedAdminSection();
 
   if (!accessForm || !dashboard || !listElement) return;
+
+  function getRequestedAdminSection() {
+    const params = new URLSearchParams(window.location.search);
+    const requestedSection = normalizeWhitespace(params.get("section"));
+    const defaultSection = normalizeWhitespace(bodyDefaultAdminSection);
+    if (!requestedSection && allowedAdminSections.includes(defaultSection)) {
+      return defaultSection;
+    }
+    return allowedAdminSections.includes(requestedSection)
+      ? requestedSection
+      : (allowedAdminSections.includes(defaultSection) ? defaultSection : "consultations");
+  }
+
+  function syncAdminSectionVisibility() {
+    adminSections.forEach(function (section) {
+      section.hidden = !isAdminDashboardUnlocked || section.getAttribute("data-admin-section") !== activeAdminSection;
+    });
+
+    if (sectionNav) {
+      sectionNav.hidden = !isAdminDashboardUnlocked;
+    }
+
+    adminSectionLinks.forEach(function (link) {
+      const sectionKey = link.getAttribute("data-admin-section-link");
+      link.classList.toggle("is-active", sectionKey === activeAdminSection);
+      link.setAttribute("aria-current", sectionKey === activeAdminSection ? "page" : "false");
+    });
+  }
+
+  function setActiveAdminSection(sectionKey, options) {
+    const nextSection = allowedAdminSections.includes(sectionKey) ? sectionKey : "consultations";
+    const shouldUpdateUrl = !options || options.updateUrl !== false;
+    const shouldScroll = Boolean(options && options.scrollToTop);
+
+    activeAdminSection = nextSection;
+    if (shouldUpdateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("section", nextSection);
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    syncAdminSectionVisibility();
+
+    if (shouldScroll && sectionNav) {
+      sectionNav.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
 
   const currentUser = getCurrentUser();
   if (!currentUser) {
@@ -4034,7 +4120,7 @@ function initializeAdminConsultationPage() {
     try {
       clearMessage("adminConsultationMessage");
       const requests = await fetchAdminConsultationRequests(currentAdminKey);
-      dashboard.hidden = false;
+      syncAdminSectionVisibility();
 
       if (!requests.length) {
         listElement.innerHTML = `
@@ -4048,7 +4134,6 @@ function initializeAdminConsultationPage() {
 
       listElement.innerHTML = requests.map(buildAdminConsultationCard).join("");
     } catch (error) {
-      dashboard.hidden = true;
       showMessage("adminConsultationMessage", "error", error.message);
     }
   }
@@ -4059,7 +4144,7 @@ function initializeAdminConsultationPage() {
     try {
       clearMessage("adminConsultationMessage");
       const applications = await fetchAdminMentorApplications(currentAdminKey);
-      mentorDashboard.hidden = false;
+      syncAdminSectionVisibility();
       if (mentorSummaryElement) {
         mentorSummaryElement.innerHTML = buildAdminMentorApplicationSummary(applications);
       }
@@ -4076,7 +4161,6 @@ function initializeAdminConsultationPage() {
 
       mentorListElement.innerHTML = applications.map(buildAdminMentorApplicationCard).join("");
     } catch (error) {
-      mentorDashboard.hidden = true;
       showMessage("adminConsultationMessage", "error", error.message);
     }
   }
@@ -4088,7 +4172,7 @@ function initializeAdminConsultationPage() {
       const requests = (!isRealAdmin && !currentAdminKey)
         ? getBookingRequests()
         : await fetchAdminBookingRequests(currentAdminKey);
-      bookingDashboard.hidden = false;
+      syncAdminSectionVisibility();
 
       if (!requests.length) {
         bookingListElement.innerHTML = `
@@ -4102,7 +4186,6 @@ function initializeAdminConsultationPage() {
 
       bookingListElement.innerHTML = requests.map(buildAdminBookingRequestCard).join("");
     } catch (error) {
-      bookingDashboard.hidden = true;
       showMessage("adminConsultationMessage", "error", error.message);
     }
   }
@@ -4113,7 +4196,7 @@ function initializeAdminConsultationPage() {
     try {
       clearMessage("adminConsultationMessage");
       const requests = await fetchAdminMentorProfileUpdates(currentAdminKey);
-      mentorProfileUpdateDashboard.hidden = false;
+      syncAdminSectionVisibility();
 
       if (!requests.length) {
         mentorProfileUpdateList.innerHTML = `
@@ -4127,7 +4210,6 @@ function initializeAdminConsultationPage() {
 
       mentorProfileUpdateList.innerHTML = requests.map(buildAdminMentorProfileUpdateCard).join("");
     } catch (error) {
-      mentorProfileUpdateDashboard.hidden = true;
       showMessage("adminConsultationMessage", "error", error.message);
     }
   }
@@ -4138,7 +4220,7 @@ function initializeAdminConsultationPage() {
     try {
       const profiles = await fetchAdminMentorProfiles(currentAdminKey);
       adminMentorProfilesCache = profiles;
-      mentorCreateDashboard.hidden = false;
+      syncAdminSectionVisibility();
 
       if (!profiles.length) {
         mentorManageList.innerHTML = `
@@ -4214,20 +4296,20 @@ function initializeAdminConsultationPage() {
     if (mentorCreatePasswordLabel) mentorCreatePasswordLabel.textContent = "Đổi mật khẩu mentor (để trống nếu không đổi)";
     if (mentorCreateSubmit) mentorCreateSubmit.textContent = "Lưu chỉnh sửa mentor";
     if (mentorEditCancel) mentorEditCancel.hidden = false;
+    setActiveAdminSection("mentor-profiles", { updateUrl: true });
     mentorCreateForm.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   if (isRealAdmin) {
     accessForm.hidden = true;
+    isAdminDashboardUnlocked = true;
+    syncAdminSectionVisibility();
     loadRequests();
     loadMentorApplications();
     loadBookingRequestsForAdmin();
     loadMentorProfileUpdates();
     loadAdminMentorProfiles();
     startAdminAutoRefresh();
-    if (mentorCreateDashboard) {
-      mentorCreateDashboard.hidden = false;
-    }
   } else {
     accessForm.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -4239,15 +4321,24 @@ function initializeAdminConsultationPage() {
         return;
       }
 
+      isAdminDashboardUnlocked = true;
+      syncAdminSectionVisibility();
       await loadRequests();
       await loadMentorApplications();
       loadBookingRequestsForAdmin();
       await loadMentorProfileUpdates();
       await loadAdminMentorProfiles();
       startAdminAutoRefresh();
-      if (mentorCreateDashboard) {
-        mentorCreateDashboard.hidden = false;
-      }
+    });
+  }
+
+  if (sectionNav) {
+    sectionNav.addEventListener("click", function (e) {
+      const link = e.target.closest("[data-admin-section-link]");
+      if (!link) return;
+      setActiveAdminSection(link.getAttribute("data-admin-section-link"), {
+        updateUrl: false
+      });
     });
   }
 
@@ -4581,16 +4672,17 @@ function initializeAdminConsultationPage() {
     if (accessInput) {
       accessInput.value = currentAdminKey;
     }
+    isAdminDashboardUnlocked = true;
+    syncAdminSectionVisibility();
     loadRequests();
     loadMentorApplications();
     loadBookingRequestsForAdmin();
     loadMentorProfileUpdates();
     loadAdminMentorProfiles();
-    if (mentorCreateDashboard) {
-      mentorCreateDashboard.hidden = false;
-    }
     startAdminAutoRefresh();
   }
+
+  syncAdminSectionVisibility();
 
   function startAdminAutoRefresh() {
     return;
@@ -5339,6 +5431,20 @@ function initializeLoginPage() {
         window.location.href = getRedirectTarget() || getRoleHomePath(sessionUser.role);
       }, 700);
     } catch (error) {
+      const rawMessage = String(error && error.message || "");
+      const shouldDiagnose = /invalid login credentials/i.test(rawMessage);
+
+      if (shouldDiagnose) {
+        try {
+          const diagnosis = await diagnoseLoginIssue(identifier);
+          showMessage("loginMessage", "error", diagnosis.message || "Email hoặc mật khẩu chưa chính xác.");
+          return;
+        } catch (diagnosisError) {
+          showMessage("loginMessage", "error", diagnosisError.message || "Không thể kiểm tra trạng thái đăng nhập lúc này.");
+          return;
+        }
+      }
+
       showMessage("loginMessage", "error", error.message || "Không thể đăng nhập lúc này.");
     }
   });

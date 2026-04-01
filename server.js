@@ -1521,6 +1521,113 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+app.post("/api/auth/login-diagnose", async (req, res) => {
+  if (!ensureSupabaseConfig(res)) {
+    return;
+  }
+
+  const identifier = String(req.body.identifier || "").trim();
+
+  if (!identifier) {
+    res.status(400).json({ message: "Vui long nhap email hoac so dien thoai." });
+    return;
+  }
+
+  try {
+    if (!identifier.includes("@")) {
+      const phone = normalizePhone(identifier);
+      const profile = await getProfileByPhone(phone);
+
+      if (!profile) {
+        res.json({
+          code: "phone_not_found",
+          message: "Số điện thoại này chưa có tài khoản trong hệ thống."
+        });
+        return;
+      }
+
+      const authUser = await getAuthUserById(profile.id);
+      if (!authUser) {
+        res.json({
+          code: "profile_without_auth",
+          message: "Tài khoản này có hồ sơ dữ liệu nhưng chưa có đăng nhập hợp lệ trong Supabase Authentication."
+        });
+        return;
+      }
+
+      res.json({
+        code: "wrong_password",
+        message: "Tài khoản đã tồn tại, nhưng mật khẩu chưa đúng."
+      });
+      return;
+    }
+
+    const email = normalizeEmail(identifier);
+    const authUser = await findAuthUserByEmail(email);
+    if (authUser) {
+      res.json({
+        code: "wrong_password",
+        message: "Email này đã có tài khoản, nhưng mật khẩu chưa đúng. Nếu là mentor, hãy dùng mật khẩu bạn đã tạo sau khi kích hoạt."
+      });
+      return;
+    }
+
+    const latestApplication = await restSelect("mentor_applications", {
+      single: true,
+      query: {
+        select: "*",
+        email: toEqualityFilter(email),
+        order: "created_at.desc",
+        limit: 1
+      }
+    });
+
+    if (latestApplication) {
+      const applicationStatus = String(latestApplication.status || "").trim();
+
+      if (applicationStatus === "approved") {
+        res.json({
+          code: "mentor_not_activated",
+          message: "Email này đã được duyệt mentor nhưng chưa kích hoạt tài khoản. Hãy vào trang kích hoạt mentor, nhập email ứng tuyển, mã kích hoạt và tạo mật khẩu mới."
+        });
+        return;
+      }
+
+      if (applicationStatus === "pending") {
+        res.json({
+          code: "mentor_pending",
+          message: "Email này đang ở bước ứng tuyển mentor và chưa được duyệt kích hoạt tài khoản."
+        });
+        return;
+      }
+
+      if (applicationStatus === "activated") {
+        res.json({
+          code: "activated_but_no_auth",
+          message: "Email này đã có trạng thái kích hoạt mentor trong dữ liệu, nhưng hiện chưa đăng nhập được. Khả năng cao là mật khẩu đang nhập chưa đúng."
+        });
+        return;
+      }
+    }
+
+    const mentorProfile = await getMentorProfileByEmail(email);
+    if (mentorProfile) {
+      res.json({
+        code: "profile_exists_without_auth",
+        message: "Email này đã có hồ sơ mentor trong dữ liệu, nhưng chưa có tài khoản đăng nhập hợp lệ trong Supabase Authentication."
+      });
+      return;
+    }
+
+    res.json({
+      code: "email_not_registered",
+      message: "Email này chưa có tài khoản đăng nhập. Nếu là mentee, hãy đăng ký tài khoản. Nếu là mentor, hãy kiểm tra lại email ứng tuyển hoặc kích hoạt tài khoản trước."
+    });
+  } catch (error) {
+    handleRouteError(res, error, "Khong the kiem tra trang thai dang nhap luc nay.");
+  }
+});
+
 app.post("/api/auth/logout", authMiddleware, async (req, res) => {
   if (!ensureSupabaseConfig(res, { requireServiceRole: false })) {
     return;
