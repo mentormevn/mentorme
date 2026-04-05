@@ -1936,7 +1936,7 @@ function initializeHomeMentorSection() {
     let mentorsPerPage = 3;
 
     if (window.matchMedia("(max-width: 768px)").matches) {
-      mentorsPerPage = 1;
+      mentorsPerPage = 2;
     } else if (window.matchMedia("(max-width: 1180px)").matches) {
       mentorsPerPage = 2;
     }
@@ -1969,6 +1969,10 @@ function initializeHomeMentorSection() {
   let mentorPages = renderHomeMentorPages();
   let autoAdvanceHandle = null;
 
+  function isMobileViewport() {
+    return window.matchMedia("(max-width: 640px)").matches;
+  }
+
   function stopAutoAdvance() {
     if (autoAdvanceHandle) {
       window.clearInterval(autoAdvanceHandle);
@@ -1986,7 +1990,7 @@ function initializeHomeMentorSection() {
   }
 
   function updateHomeMentorSlider() {
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const isMobile = isMobileViewport();
     homeMentorTrack.style.transform = isMobile ? "translateX(0)" : `translateX(-${currentPage * 100}%)`;
 
     if (isMobile) {
@@ -1995,6 +1999,22 @@ function initializeHomeMentorSection() {
         behavior: "smooth"
       });
     }
+
+    if (prevButton) {
+      prevButton.disabled = currentPage === 0;
+      prevButton.style.opacity = currentPage === 0 ? "0.5" : "1";
+      prevButton.hidden = isMobile;
+    }
+
+    if (nextButton) {
+      nextButton.disabled = currentPage === mentorPages.length - 1;
+      nextButton.style.opacity = currentPage === mentorPages.length - 1 ? "0.5" : "1";
+      nextButton.hidden = isMobile;
+    }
+  }
+
+  function syncHomeMentorControls() {
+    const isMobile = isMobileViewport();
 
     if (prevButton) {
       prevButton.disabled = currentPage === 0;
@@ -2039,6 +2059,15 @@ function initializeHomeMentorSection() {
     element.addEventListener("touchend", startAutoAdvance, { passive: true });
   });
 
+  homeMentorTrack.addEventListener("scroll", function () {
+    if (!isMobileViewport()) return;
+    const nextPage = Math.round(homeMentorTrack.scrollLeft / Math.max(homeMentorTrack.clientWidth, 1));
+    if (nextPage !== currentPage) {
+      currentPage = Math.min(Math.max(nextPage, 0), Math.max(mentorPages.length - 1, 0));
+      syncHomeMentorControls();
+    }
+  }, { passive: true });
+
   window.addEventListener("resize", function () {
     const nextPages = getMentorPages();
     if (nextPages.length !== mentorPages.length) {
@@ -2064,17 +2093,47 @@ function initializeMenteeSection() {
   let currentIndex = 0;
   let autoAdvanceHandle = null;
 
+  function isMobileViewport() {
+    return window.matchMedia("(max-width: 640px)").matches;
+  }
+
   function updateMenteeSlider() {
-    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+    const isMobile = isMobileViewport();
+    track.style.transform = isMobile ? "translateX(0)" : `translateX(-${currentIndex * 100}%)`;
+
+    if (isMobile) {
+      track.scrollTo({
+        left: currentIndex * track.clientWidth,
+        behavior: "smooth"
+      });
+    }
 
     if (prevButton) {
       prevButton.disabled = slides.length <= 1;
       prevButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
+      prevButton.hidden = isMobile;
     }
 
     if (nextButton) {
       nextButton.disabled = slides.length <= 1;
       nextButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
+      nextButton.hidden = isMobile;
+    }
+  }
+
+  function syncMenteeControls() {
+    const isMobile = isMobileViewport();
+
+    if (prevButton) {
+      prevButton.disabled = slides.length <= 1;
+      prevButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
+      prevButton.hidden = isMobile;
+    }
+
+    if (nextButton) {
+      nextButton.disabled = slides.length <= 1;
+      nextButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
+      nextButton.hidden = isMobile;
     }
   }
 
@@ -2120,8 +2179,44 @@ function initializeMenteeSection() {
     element.addEventListener("touchend", startAutoAdvance, { passive: true });
   });
 
+  track.addEventListener("scroll", function () {
+    if (!isMobileViewport()) return;
+    const nextIndex = Math.round(track.scrollLeft / Math.max(track.clientWidth, 1));
+    if (nextIndex !== currentIndex) {
+      currentIndex = Math.min(Math.max(nextIndex, 0), Math.max(slides.length - 1, 0));
+      syncMenteeControls();
+    }
+  }, { passive: true });
+
   updateMenteeSlider();
   startAutoAdvance();
+}
+
+function initializeHomeServicesSection() {
+  const homeServicesTrack = document.getElementById("homeServicesTrack");
+  const homeServicesPrev = document.querySelector(".home-services-prev");
+  const homeServicesNext = document.querySelector(".home-services-next");
+  if (!homeServicesTrack || !homeServicesPrev || !homeServicesNext) return;
+
+  function getScrollStep() {
+    const card = homeServicesTrack.querySelector(".home-service-card");
+    return card ? card.getBoundingClientRect().width + 18 : 320;
+  }
+
+  function scrollHomeServices(direction) {
+    homeServicesTrack.scrollBy({
+      left: direction * getScrollStep(),
+      behavior: "smooth"
+    });
+  }
+
+  homeServicesPrev.addEventListener("click", function () {
+    scrollHomeServices(-1);
+  });
+
+  homeServicesNext.addEventListener("click", function () {
+    scrollHomeServices(1);
+  });
 }
 
 function initializeScrollReveal() {
@@ -7108,6 +7203,7 @@ async function bootstrapApp() {
   initializeSearchPage();
   initializeHomeMentorSection();
   initializeMenteeSection();
+  initializeHomeServicesSection();
   initializeScrollReveal();
   initializeAboutTitleTyping();
   renderMentorDetail();
