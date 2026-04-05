@@ -16384,7 +16384,7 @@ body > main > section{
   }
 }
 
-@media (min-width: 769px){
+@media (min-width: 641px){
   body{
     padding-bottom:0 !important;
   }
@@ -16451,7 +16451,29 @@ body > main > section{
   }
 }
 
-@media (max-width: 768px){
+@media (max-width: 640px){
+  body.home-page .mobile-nav-icon{
+    display:none !important;
+  }
+
+  body.home-page .mobile-nav-actions{
+    margin-left:auto !important;
+    gap:0 !important;
+  }
+
+  body.home-page .hamburger{
+    display:inline-flex !important;
+    width:34px !important;
+    height:34px !important;
+    min-width:34px !important;
+    min-height:34px !important;
+    padding:0 !important;
+    border:none !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+  }
+
   body.home-page .hero{
     margin-bottom:24px !important;
   }
