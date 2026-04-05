@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=20260331-2235">
 </head>
-<body>
+<body class="home-page">
   <header>
     <nav class="navbar">
       <a href="index.html" class="logo">
@@ -53,11 +53,15 @@
     <section class="hero">
       <div class="hero-container">
         <div class="hero-image">
-          <img src="robot.png" alt="Robot Mentor Me">
+          <img src="robot.svg" alt="Robot Mentor Me">
         </div>
 
         <div class="hero-content">
           <h1>MENTOR ME</h1>
+          <p class="hero-mobile-headline">
+            <span>Find your mentor</span>
+            <span>Shape your future</span>
+          </p>
     
 
           <div class="search-box">
@@ -97,84 +101,39 @@
     <section class="home-journey">
       <div class="home-journey-head">
         <h2>HÀNH TRÌNH MENTEE BẮT ĐẦU</h2>
-        <p class="about-title-reveal">Find your mentor, shape your future</p>
+        <p class="about-title-reveal">Find your mentor. Shape your future.</p>
       </div>
 
       <div class="journey-roadmap-shell">
         <div class="journey-roadmap" aria-label="Sơ đồ hành trình mentee">
-          <svg class="journey-roadmap-svg" viewBox="0 0 1000 420" aria-hidden="true">
-            <defs>
-              <linearGradient id="journeyFlowStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="rgba(13,87,183,0.12)"/>
-                <stop offset="30%" stop-color="rgba(13,87,183,0.34)"/>
-                <stop offset="70%" stop-color="rgba(13,87,183,0.46)"/>
-                <stop offset="100%" stop-color="rgba(13,87,183,0.18)"/>
-              </linearGradient>
-            </defs>
-            <path class="journey-flow-path journey-flow-path-glow" d="M 108 100 C 132 130, 136 176, 154 214" />
-            <path class="journey-flow-path journey-flow-path-glow" d="M 212 214 C 244 180, 258 136, 276 106" />
-            <path class="journey-flow-path journey-flow-path-glow" d="M 372 106 C 404 126, 424 166, 438 206" />
-            <path class="journey-flow-path journey-flow-path-glow" d="M 520 206 C 554 178, 580 136, 608 100" />
-            <path class="journey-flow-path journey-flow-path-glow is-final" d="M 704 100 L 790 184" />
-            <path class="journey-flow-path" d="M 108 100 C 132 130, 136 176, 154 214" />
-            <path class="journey-flow-path" d="M 212 214 C 244 180, 258 136, 276 106" />
-            <path class="journey-flow-path" d="M 372 106 C 404 126, 424 166, 438 206" />
-            <path class="journey-flow-path" d="M 520 206 C 554 178, 580 136, 608 100" />
-            <path class="journey-flow-path is-final" d="M 704 100 L 790 184" />
-          </svg>
-
-          <article class="journey-step journey-step-1">
-            <span class="journey-step-number">1</span>
-            <strong>Xác định mục tiêu</strong>
-          </article>
-
-          <article class="journey-step journey-step-3">
-            <span class="journey-step-number">2</span>
-            <strong>AI matching</strong>
-          </article>
-
-          <article class="journey-step journey-step-4">
-            <span class="journey-step-number">3</span>
-            <strong>Tìm hiểu mentor</strong>
-          </article>
-
-          <article class="journey-step journey-step-5">
-            <span class="journey-step-number">4</span>
-            <strong>Đặt lịch</strong>
-          </article>
-
-          <article class="journey-step journey-step-6">
-            <span class="journey-step-number">5</span>
-            <strong>Mentor duyệt hồ sơ</strong>
-          </article>
-
-          <article class="journey-step journey-step-finish">
-            <strong>Hành trình bắt đầu</strong>
-          </article>
+          <ol class="journey-steps-list">
+            <li class="journey-step journey-step-linear">
+              <span class="journey-step-number">1</span>
+              <strong>Xác định mục tiêu</strong>
+            </li>
+            <li class="journey-step journey-step-linear">
+              <span class="journey-step-number">2</span>
+              <strong>AI matching</strong>
+            </li>
+            <li class="journey-step journey-step-linear">
+              <span class="journey-step-number">3</span>
+              <strong>Tìm hiểu mentor</strong>
+            </li>
+            <li class="journey-step journey-step-linear">
+              <span class="journey-step-number">4</span>
+              <strong>Đặt lịch</strong>
+            </li>
+            <li class="journey-step journey-step-linear">
+              <span class="journey-step-number">5</span>
+              <strong>Mentor duyệt hồ sơ</strong>
+            </li>
+            <li class="journey-step-cta-item">
+              <a href="search.html" class="journey-step journey-step-finish journey-step-link">
+                <strong>Hành trình bắt đầu</strong>
+              </a>
+            </li>
+          </ol>
         </div>
-      </div>
-    </section>
-
-    <section class="home-proof">
-      <div class="home-proof-copy">
-        <span class="section-eyebrow">Vì sao</span>
-        <h2>Mentor Me khác biệt?</h2>
-        <p>Chúng tôi kết hợp matching, hồ sơ mentor có chiều sâu, nhiều hình thức dịch vụ và trải nghiệm hỗ trợ nhanh để bạn đi từ mơ hồ đến có lộ trình rõ ràng.</p>
-      </div>
-
-      <div class="home-proof-grid">
-        <article class="proof-card">
-          <strong>AI Matching</strong>
-          <p>Điền mục tiêu, ngân sách, thời gian rảnh, hệ thống sẽ giúp bạn tìm Mentor phù hợp</p>
-        </article>
-        <article class="proof-card">
-          <strong>Profile Mentor rõ ràng</strong>
-          <p>Xem kinh nghiệm, học tập, hoạt động, giải thưởng và chứng chỉ trước khi đưa ra quyết định.</p>
-        </article>
-        <article class="proof-card">
-          <strong>Dịch vụ đa dạng</strong>
-          <p>Từ hỏi đáp nhanh, review hồ sơ, mentoring 1–1 tới các khóa học trong cùng một nền tảng.</p>
-        </article>
       </div>
     </section>
 
