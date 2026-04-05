@@ -24,6 +24,11 @@ const navbar = document.querySelector(".navbar");
 let hamburger = document.querySelector(".hamburger");
 const menu = document.querySelector(".menu");
 const authArea = document.getElementById("authArea");
+const mobileNavActions = document.querySelector(".mobile-nav-actions");
+let navPanel = document.querySelector(".nav-panel");
+let navScrim = document.querySelector(".nav-scrim");
+let navTopActions = document.querySelector(".nav-top-actions");
+let navAccountShortcut = document.querySelector(".nav-account-shortcut");
 const DEMO_ADMIN_ACCESS_CODE = "ADMIN2026";
 const DEMO_MENTEE_EMAIL = "";
 const DEMO_MENTEE_PASSWORD = "trang2007";
@@ -114,22 +119,147 @@ if (navbar && menu && !hamburger) {
   hamburger.type = "button";
   hamburger.className = "hamburger";
   hamburger.setAttribute("aria-label", "Mở menu");
-  hamburger.innerHTML = "<span></span><span></span><span></span>";
+  hamburger.innerHTML = "<span class=\"hamburger-box\"><span></span><span></span><span></span></span><span class=\"hamburger-label\">Menu</span>";
   menu.parentNode.insertBefore(hamburger, menu);
+}
+
+if (hamburger) {
+  hamburger.type = "button";
+  hamburger.setAttribute("aria-label", hamburger.getAttribute("aria-label") || "Mở menu");
+  hamburger.setAttribute("aria-expanded", hamburger.getAttribute("aria-expanded") || "false");
+  hamburger.innerHTML = "<span class=\"hamburger-box\"><span></span><span></span><span></span></span>";
+}
+
+if (navbar && !navTopActions && !mobileNavActions) {
+  navTopActions = document.createElement("div");
+  navTopActions.className = "nav-top-actions";
+  navbar.insertBefore(navTopActions, navPanel || menu || authArea || null);
+}
+
+if (navTopActions && mobileNavActions && mobileNavActions.children.length) {
+  const quickActions = Array.from(mobileNavActions.children).filter(function (item) {
+    return !item.classList.contains("hamburger");
+  });
+
+  quickActions.forEach(function (item) {
+    navTopActions.insertBefore(item, navTopActions.firstChild);
+  });
+}
+
+if (navTopActions && hamburger && hamburger.parentNode !== navTopActions) {
+  navTopActions.appendChild(hamburger);
+}
+
+if (navTopActions && !navAccountShortcut) {
+  navAccountShortcut = document.createElement("button");
+  navAccountShortcut.type = "button";
+  navAccountShortcut.className = "nav-account-shortcut";
+  navAccountShortcut.setAttribute("aria-label", "Mở hồ sơ");
+  navTopActions.insertBefore(navAccountShortcut, hamburger || null);
+}
+
+if (navbar && menu && authArea && !navPanel && !mobileNavActions) {
+  navPanel = document.createElement("div");
+  navPanel.className = "nav-panel";
+  navbar.insertBefore(navPanel, menu);
+  navPanel.appendChild(menu);
+  navPanel.appendChild(authArea);
+}
+
+if (navbar && !navScrim && !mobileNavActions) {
+  navScrim = document.createElement("button");
+  navScrim.type = "button";
+  navScrim.className = "nav-scrim";
+  navScrim.setAttribute("aria-label", "Đóng menu");
+  document.body.appendChild(navScrim);
+}
+
+function setMobileNavOpen(isActive) {
+  if (navPanel) {
+    navPanel.classList.toggle("active", isActive);
+  }
+  if (menu) {
+    menu.classList.toggle("active", isActive);
+  }
+  if (authArea) {
+    authArea.classList.toggle("active", isActive);
+  }
+  if (navbar) {
+    navbar.classList.toggle("mobile-open", isActive);
+  }
+  if (navScrim) {
+    navScrim.classList.toggle("active", isActive);
+  }
+  if (hamburger) {
+    hamburger.setAttribute("aria-expanded", isActive ? "true" : "false");
+  }
+  document.body.classList.toggle("nav-panel-open", isActive);
+}
+
+function renderNavAccountShortcut(user) {
+  if (!navAccountShortcut) return;
+
+  if (user) {
+    navAccountShortcut.innerHTML = `
+      <img src="${user.avatar || createAvatarFallback(user.name)}" alt="Ảnh đại diện ${escapeHtml(user.name || "Người dùng")}">
+      <span>Hồ sơ</span>
+    `;
+    navAccountShortcut.hidden = false;
+    return;
+  }
+
+  navAccountShortcut.innerHTML = `
+    <span class="nav-account-shortcut-icon" aria-hidden="true"></span>
+    <span>Đăng nhập</span>
+  `;
+  navAccountShortcut.hidden = false;
 }
 
 if (hamburger && menu) {
   hamburger.addEventListener("click", () => {
-    const isActive = menu.classList.toggle("active");
-    if (authArea) {
-      authArea.classList.toggle("active", isActive);
-    }
-    if (navbar) {
-      navbar.classList.toggle("mobile-open", isActive);
-    }
-    hamburger.setAttribute("aria-expanded", isActive ? "true" : "false");
+    const isActive = !(navPanel ? navPanel.classList.contains("active") : menu.classList.contains("active"));
+    setMobileNavOpen(isActive);
   });
 }
+
+if (navScrim) {
+  navScrim.addEventListener("click", function () {
+    setMobileNavOpen(false);
+  });
+}
+
+if (navAccountShortcut) {
+  navAccountShortcut.addEventListener("click", function () {
+    const activeUser = getCurrentUser();
+    if (!activeUser) {
+      window.location.href = "login.html?redirect=" + encodeURIComponent(getCurrentPagePath());
+      return;
+    }
+
+    setMobileNavOpen(true);
+    window.requestAnimationFrame(function () {
+      const userMenu = document.querySelector(".user-menu");
+      const trigger = userMenu ? userMenu.querySelector(".user-menu-trigger") : null;
+      if (!userMenu || !trigger) return;
+      userMenu.classList.add("active");
+      trigger.setAttribute("aria-expanded", "true");
+      userMenu.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  });
+}
+
+document.addEventListener("click", function (event) {
+  if (window.innerWidth > 1024) return;
+  if (!navPanel) return;
+  if (!event.target.closest(".nav-panel a")) return;
+  setMobileNavOpen(false);
+});
+
+window.addEventListener("resize", function () {
+  if (window.innerWidth > 1024) {
+    setMobileNavOpen(false);
+  }
+});
 
 function normalizeEmail(email) {
   return email.trim().toLowerCase();
@@ -259,6 +389,214 @@ function getRoleCalendarPath(role) {
   const normalizedRole = normalizeRole(role);
   if (normalizedRole === "mentor" || normalizedRole === "admin") return "mentor-teaching-calendar.html";
   return "mentee-calendar.html";
+}
+
+function getCurrentPagePath() {
+  const path = window.location.pathname.split("/").pop();
+  return path || "index.html";
+}
+
+function getMobileBottomNavItems() {
+  const activeUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+  const accountHref = activeUser ? "profile.html" : "login.html";
+
+  return [
+    {
+      href: "index.html",
+      label: "Trang chủ",
+      match: ["index.html"],
+      icon:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 10.5 12 4.5l7.5 6"></path><path d="M7.5 9.75V19.5h9V9.75"></path></svg>'
+    },
+    {
+      href: "search.html",
+      label: "Tìm kiếm mentor",
+      match: ["search.html", "mentor-detail.html", "booking.html"],
+      icon:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="5.5"></circle><path d="M15.5 15.5 20 20"></path></svg>'
+    },
+    {
+      href: "mentee-schedule.html",
+      label: "Lịch học",
+      match: ["mentee-schedule.html", "mentee-calendar.html", "mentor-teaching-calendar.html"],
+      icon:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"></rect><path d="M8 3.5v5"></path><path d="M16 3.5v5"></path><path d="M4 10.5h16"></path><path d="M8.5 14h.01"></path><path d="M12 14h.01"></path><path d="M15.5 14h.01"></path></svg>'
+    },
+    {
+      href: "notifications.html",
+      label: "Thông báo",
+      match: ["notifications.html"],
+      icon:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5a4.5 4.5 0 0 1 4.5 4.5v2.25c0 .82.25 1.63.72 2.3l1.03 1.45a1 1 0 0 1-.81 1.58H6.56a1 1 0 0 1-.81-1.58l1.03-1.45c.47-.67.72-1.48.72-2.3V9A4.5 4.5 0 0 1 12 4.5Z"></path><path d="M10 18.5a2 2 0 0 0 4 0"></path></svg>'
+    },
+    {
+      href: accountHref,
+      label: activeUser ? "Tài khoản" : "Đăng nhập",
+      match: ["login.html", "register.html", "forgot-password.html", "reset-password.html", "profile.html"],
+      icon:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 19a7 7 0 0 1 14 0"></path></svg>'
+    }
+  ];
+}
+
+function initializeMobileBottomNav() {
+  const currentPath = getCurrentPagePath();
+  let mobileBottomNav = document.querySelector(".mobile-bottom-nav");
+
+  if (!mobileBottomNav) {
+    mobileBottomNav = document.createElement("nav");
+    mobileBottomNav.className = "mobile-bottom-nav";
+    mobileBottomNav.setAttribute("aria-label", "Điều hướng nhanh trên điện thoại");
+    document.body.appendChild(mobileBottomNav);
+  }
+
+  mobileBottomNav.innerHTML = getMobileBottomNavItems()
+    .map(function (item) {
+      const isActive = isNavItemActive(item, currentPath);
+      return `
+        <a href="${item.href}" class="mobile-bottom-nav-link ${isActive ? "is-active" : ""}" aria-label="${item.label}">
+          ${item.icon}
+        </a>
+      `;
+    })
+    .join("");
+}
+
+function isNavItemActive(item, currentPath) {
+  const matches = [item.href].concat(item.match || []);
+  return matches.includes(currentPath);
+}
+
+function getNavbarItemsForRole(role) {
+  const normalizedRole = normalizeRole(role);
+
+  if (normalizedRole === "mentor") {
+    return [
+      { href: "mentor-dashboard.html", label: "Dashboard mentor" },
+      {
+        href: "mentor-mentees.html",
+        label: "Mentee & lịch dạy",
+        match: ["mentor-accepted.html", "mentor-booking-detail.html", "mentor-teaching-calendar.html"]
+      },
+      { href: "mentor-requests.html", label: "Yêu cầu mới" },
+      { href: "notifications.html", label: "Thông báo" }
+    ];
+  }
+
+  if (normalizedRole === "admin") {
+    return [
+      { href: "admin-consultations.html", label: "Tổng quan admin" },
+      { href: "admin-mentor-applications.html", label: "Duyệt mentor" },
+      {
+        href: "admin-mentor-profile-updates.html",
+        label: "Hồ sơ mentor",
+        match: ["admin-mentor-profiles.html"]
+      },
+      { href: "admin-booking-requests.html", label: "Booking" },
+      { href: "notifications.html", label: "Thông báo" }
+    ];
+  }
+
+  return [
+    { href: "index.html", label: "Trang chủ" },
+    { href: "search.html", label: "Tìm mentor" },
+    { href: "services.html", label: "Dịch vụ" },
+    {
+      href: "mentee-schedule.html",
+      label: "Lịch học",
+      match: ["booking.html", "booking-chat.html", "mentee-calendar.html"]
+    }
+  ];
+}
+
+function syncNavbarMenu(user) {
+  const menuElement = document.querySelector(".menu");
+  if (!menuElement) return;
+
+  const currentPath = getCurrentPagePath();
+
+  if (!user) {
+    menuElement.querySelectorAll("li").forEach(function (item) {
+      const link = item.querySelector("a");
+      if (!link) return;
+      item.classList.toggle("active", link.getAttribute("href") === currentPath);
+    });
+    return;
+  }
+
+  const items = getNavbarItemsForRole(user.role);
+  menuElement.innerHTML = items.map(function (item) {
+    const activeClass = isNavItemActive(item, currentPath) ? " class=\"active\"" : "";
+    return "<li" + activeClass + "><a href=\"" + item.href + "\">" + escapeHtml(item.label) + "</a></li>";
+  }).join("");
+}
+
+function buildProfileMenuSection(title, links, currentPath) {
+  if (!links.length) return "";
+
+  return `
+    <div class="dropdown-section">
+      <p class="dropdown-section-title">${escapeHtml(title)}</p>
+      ${links.map(function (link) {
+        const activeClass = isNavItemActive(link, currentPath) ? " is-current" : "";
+        return `
+          <a href="${link.href}" class="dropdown-link${activeClass}">
+            <span class="dropdown-link-title">${escapeHtml(link.label)}</span>
+            ${link.description ? `<span class="dropdown-link-meta">${escapeHtml(link.description)}</span>` : ""}
+          </a>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function getProfileMenuSections(user) {
+  const normalizedRole = normalizeRole(user.role);
+  const accountLinks = [
+    { href: "profile.html", label: "Hồ sơ tài khoản", description: "Thông tin cá nhân và bảo mật" },
+    { href: "notifications.html", label: "Thông báo", description: "Nhắc lịch và cập nhật mới" }
+  ];
+
+  if (normalizedRole === "mentor") {
+    return [
+      { title: "Tài khoản", links: accountLinks },
+      {
+        title: "Không gian mentor",
+        links: [
+          { href: "mentor-dashboard.html", label: "Hồ sơ mentor", description: "Cập nhật hồ sơ public" },
+          { href: "mentor-mentees.html", label: "Mentee & lịch dạy", description: "Theo dõi mentee và buổi học" },
+          { href: "mentor-requests.html", label: "Yêu cầu mới", description: "Xử lý mentee muốn đăng ký" }
+        ]
+      }
+    ];
+  }
+
+  if (normalizedRole === "admin") {
+    return [
+      { title: "Tài khoản", links: accountLinks },
+      {
+        title: "Quản trị",
+        links: [
+          { href: "admin-consultations.html", label: "Lead tư vấn", description: "Tổng quan vận hành" },
+          { href: "admin-mentor-applications.html", label: "Duyệt ứng tuyển mentor", description: "Xử lý hồ sơ apply" },
+          { href: "admin-mentor-profile-updates.html", label: "Duyệt hồ sơ public", description: "Kiểm tra hồ sơ trước khi lên search" },
+          { href: "admin-mentor-profiles.html", label: "Quản lý mentor hiển thị", description: "Chỉnh sửa mentor đang public" },
+          { href: "admin-booking-requests.html", label: "Booking mentor", description: "Theo dõi đăng ký và trạng thái" }
+        ]
+      }
+    ];
+  }
+
+  return [
+    { title: "Tài khoản", links: accountLinks },
+    {
+      title: "Hành trình mentee",
+      links: [
+        { href: "search.html", label: "Tìm mentor", description: "Tìm mentor phù hợp mục tiêu" },
+        { href: "mentee-schedule.html", label: "Lịch học", description: "Xem lịch đã đặt và nhắc lịch" }
+      ]
+    }
+  ];
 }
 
 function getRoleGoalLabel(role) {
@@ -1442,6 +1780,9 @@ function initializePasswordToggles() {
 function renderAuthArea(user) {
   if (!authArea) return;
 
+  syncNavbarMenu(user);
+  renderNavAccountShortcut(user);
+
   if (!user) {
     authArea.innerHTML = `
       <a href="login.html">Đăng nhập</a>
@@ -1451,46 +1792,33 @@ function renderAuthArea(user) {
   }
 
   const normalizedRole = normalizeRole(user.role);
-  let dropdownLinks = "";
-
-  if (normalizedRole === "mentor") {
-    dropdownLinks = `
-      <a href="profile.html">Hồ sơ tài khoản</a>
-      <a href="notifications.html">Thông báo</a>
-      <a href="mentor-dashboard.html">Hồ sơ mentor</a>
-      <a href="mentee-schedule.html">Lịch học</a>
-      <a href="mentor-accepted.html">Mentee đã nhận</a>
-      <a href="mentor-teaching-calendar.html">Lịch dạy</a>
-      <a href="mentor-requests.html">Mentee muốn đăng ký</a>
-    `;
-  } else if (normalizedRole === "admin") {
-    dropdownLinks = `
-      <a href="profile.html">Hồ sơ nội bộ</a>
-      <a href="notifications.html">Thông báo</a>
-      <a href="admin-consultations.html">Quản trị nội bộ</a>
-      <a href="admin-mentor-applications.html">Mentor apply</a>
-      <a href="admin-mentor-profile-updates.html">Mentor update</a>
-      <a href="admin-mentor-profiles.html">Quản lý mentor public</a>
-      <a href="admin-booking-requests.html">Booking mentor</a>
-      <a href="mentor-dashboard.html">Hồ sơ mentor</a>
-      <a href="mentor-teaching-calendar.html">Lịch dạy</a>
-    `;
-  } else {
-    dropdownLinks = `
-      <a href="profile.html">Hồ sơ mentee</a>
-      <a href="notifications.html">Thông báo</a>
-      <a href="mentee-schedule.html">Lịch học</a>
-    `;
-  }
+  const currentPath = getCurrentPagePath();
+  const profileSections = getProfileMenuSections(user);
+  const roleLabel = formatRoleLabel(normalizedRole);
 
   authArea.innerHTML = `
     <div class="user-menu">
-      <img src="${user.avatar || createAvatarFallback(user.name)}" class="avatar">
-      <span>${user.name}</span>
+      <button type="button" class="user-menu-trigger" aria-haspopup="true" aria-expanded="false">
+        <img src="${user.avatar || createAvatarFallback(user.name)}" class="avatar" alt="Ảnh đại diện ${escapeHtml(user.name || roleLabel)}">
+        <span class="user-menu-meta">
+          <strong>${escapeHtml(user.name || "Mentor Me User")}</strong>
+          <small>${escapeHtml(roleLabel)}</small>
+        </span>
+        <span class="user-menu-caret" aria-hidden="true"></span>
+      </button>
 
-      <div class="dropdown">
-        ${dropdownLinks}
-        <a href="#" id="logoutBtn">Đăng xuất</a>
+      <div class="dropdown" role="menu">
+        <div class="dropdown-summary">
+          <span class="dropdown-summary-label">Đang đăng nhập</span>
+          <strong>${escapeHtml(user.name || "Mentor Me User")}</strong>
+          <p>${escapeHtml(roleLabel)} workspace</p>
+        </div>
+        ${profileSections.map(function (section) {
+          return buildProfileMenuSection(section.title, section.links, currentPath);
+        }).join("")}
+        <div class="dropdown-footer">
+          <button type="button" id="logoutBtn" class="dropdown-action">Đăng xuất</button>
+        </div>
       </div>
     </div>
   `;
@@ -1500,14 +1828,37 @@ renderAuthArea(getCurrentUser());
 
 // ================= DROPDOWN CLICK =================
 document.addEventListener("click", function (e) {
-  const menu = document.querySelector(".user-menu");
+  const userMenu = document.querySelector(".user-menu");
+  if (!userMenu) return;
+  const trigger = userMenu.querySelector(".user-menu-trigger");
+  const clickedTrigger = e.target.closest(".user-menu-trigger");
 
-  if (!menu) return;
+  if (clickedTrigger && userMenu.contains(clickedTrigger)) {
+    const isActive = userMenu.classList.toggle("active");
+    if (trigger) {
+      trigger.setAttribute("aria-expanded", isActive ? "true" : "false");
+    }
+    return;
+  }
 
-  if (menu.contains(e.target)) {
-    menu.classList.toggle("active");
-  } else {
-    menu.classList.remove("active");
+  if (!e.target.closest(".user-menu")) {
+    userMenu.classList.remove("active");
+    if (trigger) {
+      trigger.setAttribute("aria-expanded", "false");
+    }
+  }
+});
+
+document.addEventListener("keydown", function (event) {
+  if (event.key !== "Escape") return;
+
+  const userMenu = document.querySelector(".user-menu");
+  const trigger = userMenu ? userMenu.querySelector(".user-menu-trigger") : null;
+  if (!userMenu) return;
+  userMenu.classList.remove("active");
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.focus();
   }
 });
 
@@ -1526,24 +1877,6 @@ document.addEventListener("click", async function (e) {
   }
 });
 
-document.addEventListener("click", function(e) {
-  const userMenu = document.querySelector(".user-menu");
-  if (!userMenu) return;
-
-  const dropdown = userMenu.querySelector(".dropdown");
-
-  // Nếu click đúng vào avatar hoặc tên → toggle
-  if (e.target.closest(".user-menu > img") || e.target.closest(".user-menu > span")) {
-    dropdown.style.display =
-      dropdown.style.display === "flex" ? "none" : "flex";
-  }
-
-  // Nếu click ra ngoài → đóng
-  else if (!e.target.closest(".user-menu")) {
-    dropdown.style.display = "none";
-  }
-});
-
 function goSearch() {
   const searchInput = document.querySelector(".search-box input");
   if (!searchInput) return;
@@ -1552,12 +1885,20 @@ function goSearch() {
 
   if (window.location.pathname.endsWith("search.html")) {
     filterMentors();
+    const mentorResults = document.getElementById("mentor-results");
+    if (mentorResults) {
+      mentorResults.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     return;
   }
 
-  const targetUrl = keyword
-    ? "search.html?q=" + encodeURIComponent(keyword)
-    : "search.html";
+  const params = new URLSearchParams();
+  if (keyword) {
+    params.set("q", keyword);
+  }
+  params.set("focus", "results");
+
+  const targetUrl = "search.html" + (params.toString() ? "?" + params.toString() : "");
 
   window.location.href = targetUrl;
 }
@@ -1893,6 +2234,61 @@ function renderMentorList(mentors, keyword, page) {
   );
 }
 
+function renderSearchLoadingState() {
+  const mentorGrid = document.getElementById("mentorGrid");
+  const summary = document.getElementById("mentorResultsSummary");
+  const pagination = document.getElementById("mentorPagination");
+  if (!mentorGrid || !summary || !pagination) return;
+
+  mentorGrid.innerHTML = `
+    <div class="mentor-search-loading" aria-live="polite">
+      <div class="mentor-search-loading-note">
+        <strong>Đang tải mentor phù hợp...</strong>
+        <span>Hệ thống đang chuẩn bị danh sách mentor cho bạn.</span>
+      </div>
+      <div class="mentor-search-skeleton-grid" aria-hidden="true">
+        <div class="mentor-card mentor-grid-card mentor-card-skeleton">
+          <div class="mentor-card-media">
+            <div class="mentor-skeleton-block mentor-skeleton-image"></div>
+          </div>
+          <div class="mentor-card-body">
+            <div class="mentor-skeleton-block mentor-skeleton-title"></div>
+            <div class="mentor-skeleton-row">
+              <div class="mentor-skeleton-block mentor-skeleton-meta"></div>
+              <div class="mentor-skeleton-block mentor-skeleton-meta is-short"></div>
+            </div>
+            <div class="mentor-card-achievements">
+              <div class="mentor-skeleton-block mentor-skeleton-label"></div>
+              <div class="mentor-skeleton-block mentor-skeleton-line"></div>
+              <div class="mentor-skeleton-block mentor-skeleton-line is-short"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mentor-card mentor-grid-card mentor-card-skeleton">
+          <div class="mentor-card-media">
+            <div class="mentor-skeleton-block mentor-skeleton-image"></div>
+          </div>
+          <div class="mentor-card-body">
+            <div class="mentor-skeleton-block mentor-skeleton-title"></div>
+            <div class="mentor-skeleton-row">
+              <div class="mentor-skeleton-block mentor-skeleton-meta"></div>
+              <div class="mentor-skeleton-block mentor-skeleton-meta is-short"></div>
+            </div>
+            <div class="mentor-card-achievements">
+              <div class="mentor-skeleton-block mentor-skeleton-label"></div>
+              <div class="mentor-skeleton-block mentor-skeleton-line"></div>
+              <div class="mentor-skeleton-block mentor-skeleton-line is-short"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  summary.textContent = "Đang tải mentor...";
+  pagination.hidden = true;
+  pagination.innerHTML = "";
+}
+
 function renderHomeMentorLoadingState() {
   const homeMentorTrack = document.getElementById("homeMentorTrack");
   if (!homeMentorTrack) return;
@@ -1935,7 +2331,9 @@ function initializeHomeMentorSection() {
   function getMentorPages() {
     let mentorsPerPage = 3;
 
-    if (window.matchMedia("(max-width: 768px)").matches) {
+    if (window.matchMedia("(max-width: 640px)").matches) {
+      mentorsPerPage = 1;
+    } else if (window.matchMedia("(max-width: 768px)").matches) {
       mentorsPerPage = 2;
     } else if (window.matchMedia("(max-width: 1180px)").matches) {
       mentorsPerPage = 2;
@@ -2003,13 +2401,13 @@ function initializeHomeMentorSection() {
     if (prevButton) {
       prevButton.disabled = currentPage === 0;
       prevButton.style.opacity = currentPage === 0 ? "0.5" : "1";
-      prevButton.hidden = isMobile;
+      prevButton.hidden = false;
     }
 
     if (nextButton) {
       nextButton.disabled = currentPage === mentorPages.length - 1;
       nextButton.style.opacity = currentPage === mentorPages.length - 1 ? "0.5" : "1";
-      nextButton.hidden = isMobile;
+      nextButton.hidden = false;
     }
   }
 
@@ -2019,13 +2417,13 @@ function initializeHomeMentorSection() {
     if (prevButton) {
       prevButton.disabled = currentPage === 0;
       prevButton.style.opacity = currentPage === 0 ? "0.5" : "1";
-      prevButton.hidden = isMobile;
+      prevButton.hidden = false;
     }
 
     if (nextButton) {
       nextButton.disabled = currentPage === mentorPages.length - 1;
       nextButton.style.opacity = currentPage === mentorPages.length - 1 ? "0.5" : "1";
-      nextButton.hidden = isMobile;
+      nextButton.hidden = false;
     }
   }
 
@@ -2111,13 +2509,13 @@ function initializeMenteeSection() {
     if (prevButton) {
       prevButton.disabled = slides.length <= 1;
       prevButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
-      prevButton.hidden = isMobile;
+      prevButton.hidden = false;
     }
 
     if (nextButton) {
       nextButton.disabled = slides.length <= 1;
       nextButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
-      nextButton.hidden = isMobile;
+      nextButton.hidden = false;
     }
   }
 
@@ -2127,13 +2525,13 @@ function initializeMenteeSection() {
     if (prevButton) {
       prevButton.disabled = slides.length <= 1;
       prevButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
-      prevButton.hidden = isMobile;
+      prevButton.hidden = false;
     }
 
     if (nextButton) {
       nextButton.disabled = slides.length <= 1;
       nextButton.style.opacity = slides.length <= 1 ? "0.45" : "1";
-      nextButton.hidden = isMobile;
+      nextButton.hidden = false;
     }
   }
 
@@ -2429,6 +2827,8 @@ function initializeSearchPage() {
   const serviceFilter = document.getElementById("serviceFilter");
   const params = new URLSearchParams(window.location.search);
   const initialKeyword = params.get("q");
+  const shouldFocusResults = params.get("focus") === "results";
+  const mentorResultsSection = document.getElementById("mentor-results");
 
   if (searchField && initialKeyword) {
     searchField.value = initialKeyword;
@@ -2466,6 +2866,12 @@ function initializeSearchPage() {
   });
 
   filterMentors();
+
+  if ((initialKeyword || shouldFocusResults) && mentorResultsSection) {
+    window.requestAnimationFrame(function () {
+      mentorResultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 }
 
 function renderMentorDetail() {
@@ -7181,10 +7587,12 @@ function initializeResetPasswordPage() {
 }
 
 async function bootstrapApp() {
+  initializeMobileBottomNav();
   initializePasswordToggles();
   syncSubmittedReviewsWithCurrentData();
   ensureDemoBookingRequests();
   renderHomeMentorLoadingState();
+  renderSearchLoadingState();
   if (isSupabaseReady()) {
     try {
       await fetchPublicMentorProfiles();
