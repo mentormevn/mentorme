@@ -19680,18 +19680,78 @@ body.home-page .mentee > h2{
 }
 
 body.home-page .home-journey-head .about-title-reveal,
+body.home-page .home-journey-head h2,
 body.home-page .home-partners-copy h2,
 body.home-page .home-fields-copy h2,
 body.home-page .home-services-head h2,
 body.home-page .mentor h2,
 body.home-page .mentee h2{
-  color:var(--brand) !important;
+  color:#004AAD !important;
   text-align:left !important;
 }
 
 body.home-page .home-journey-head .about-title-reveal{
   margin-left:0 !important;
   margin-right:0 !important;
+}
+
+body.home-page .home-journey-head h2{
+  margin-left:0 !important;
+  margin-right:0 !important;
+  font-size:clamp(30px, 3.3vw, 40px) !important;
+  line-height:1.12 !important;
+  letter-spacing:-0.03em !important;
+  font-weight:850 !important;
+}
+
+body.home-page .home-journey-head{
+  max-width:none !important;
+  margin:0 0 24px !important;
+  padding-left:24px !important;
+}
+
+body.home-page .home-journey-head .section-eyebrow{
+  display:block !important;
+  margin:0 0 8px !important;
+  color:#004AAD !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  padding:0 !important;
+  font-size:14px !important;
+  line-height:1.2 !important;
+  letter-spacing:0.08em !important;
+  text-transform:uppercase !important;
+  text-align:left !important;
+  opacity:1 !important;
+  visibility:visible !important;
+}
+
+body.home-page .journey-step-finish,
+body.home-page .journey-step-finish.journey-step-link{
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  place-items:center !important;
+}
+
+body.home-page .journey-step-finish strong,
+body.home-page .journey-step-finish.journey-step-link strong{
+  text-align:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+@media (max-width: 768px){
+  body.home-page .home-journey-head{
+    padding-left:18px !important;
+  }
+}
+
+@media (max-width: 560px){
+  body.home-page .home-journey-head{
+    padding-left:16px !important;
+  }
 }
 
 /* ===== Stable mobile navbar ===== */
