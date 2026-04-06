@@ -2609,7 +2609,7 @@ function initializeHomeServicesSection() {
     if (homeServiceCards.length <= 1) return;
     autoAdvanceHandle = window.setInterval(function () {
       scrollToService(currentServiceIndex + 1);
-    }, 1000);
+    }, 1500);
   }
 
   if (homeServicesPrev) {
