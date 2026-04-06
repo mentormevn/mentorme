@@ -27,6 +27,7 @@ const authArea = document.getElementById("authArea");
 const mobileNavActions = document.querySelector(".mobile-nav-actions");
 let navPanel = document.querySelector(".nav-panel");
 let navScrim = document.querySelector(".nav-scrim");
+const NAV_COLLAPSE_BREAKPOINT = 1100;
 const DEMO_ADMIN_ACCESS_CODE = "ADMIN2026";
 const DEMO_MENTEE_EMAIL = "";
 const DEMO_MENTEE_PASSWORD = "trang2007";
@@ -174,6 +175,8 @@ function setMobileNavOpen(isActive) {
   document.body.classList.toggle("nav-panel-open", isActive);
 }
 
+setMobileNavOpen(false);
+
 if (hamburger && menu) {
   hamburger.addEventListener("click", () => {
     const isActive = !(navPanel ? navPanel.classList.contains("active") : menu.classList.contains("active"));
@@ -188,16 +191,20 @@ if (navScrim) {
 }
 
 document.addEventListener("click", function (event) {
-  if (window.innerWidth > 1024) return;
-  if (!navPanel) return;
-  if (!event.target.closest(".nav-panel a")) return;
+  if (window.innerWidth > NAV_COLLAPSE_BREAKPOINT) return;
+  if (!event.target.closest(".nav-panel a, .menu a, .menu button")) return;
+  setMobileNavOpen(false);
+});
+
+window.addEventListener("pageshow", function () {
   setMobileNavOpen(false);
 });
 
 window.addEventListener("resize", function () {
-  if (window.innerWidth > 1024) {
+  if (window.innerWidth > NAV_COLLAPSE_BREAKPOINT) {
     setMobileNavOpen(false);
   }
+  syncNavbarMenu(getCurrentUser());
 });
 
 function normalizeEmail(email) {
@@ -448,13 +455,43 @@ function getNavbarItemsForRole(role) {
   ];
 }
 
+function getCollapsedNavbarItems(user) {
+  const items = user
+    ? getNavbarItemsForRole(user.role).slice()
+    : [
+        { href: "index.html", label: "Trang chủ" },
+        { href: "search.html", label: "Tìm mentor" },
+        { href: "services.html", label: "Dịch vụ" },
+        {
+          href: "mentee-schedule.html",
+          label: "Lịch học",
+          match: ["booking.html", "booking-chat.html", "mentee-calendar.html"]
+        }
+      ];
+
+  if (user) {
+    items.push(
+      { href: "profile.html", label: "Hồ sơ", match: ["profile.html"] },
+      { href: "#logout", label: "Đăng xuất", action: "logout" }
+    );
+  } else {
+    items.push(
+      { href: "login.html", label: "Đăng nhập", match: ["login.html", "forgot-password.html", "reset-password.html"] },
+      { href: "register.html", label: "Đăng ký", match: ["register.html"] }
+    );
+  }
+
+  return items;
+}
+
 function syncNavbarMenu(user) {
   const menuElement = document.querySelector(".menu");
   if (!menuElement) return;
 
   const currentPath = getCurrentPagePath();
+  const isCollapsedViewport = window.innerWidth <= NAV_COLLAPSE_BREAKPOINT;
 
-  if (!user) {
+  if (!user && !isCollapsedViewport) {
     menuElement.querySelectorAll("li").forEach(function (item) {
       const link = item.querySelector("a");
       if (!link) return;
@@ -463,9 +500,12 @@ function syncNavbarMenu(user) {
     return;
   }
 
-  const items = getNavbarItemsForRole(user.role);
+  const items = isCollapsedViewport ? getCollapsedNavbarItems(user) : getNavbarItemsForRole(user.role);
   menuElement.innerHTML = items.map(function (item) {
     const activeClass = isNavItemActive(item, currentPath) ? " class=\"active\"" : "";
+    if (item.action === "logout") {
+      return "<li" + activeClass + "><button type=\"button\" id=\"navLogoutBtn\" class=\"nav-menu-action\">" + escapeHtml(item.label) + "</button></li>";
+    }
     return "<li" + activeClass + "><a href=\"" + item.href + "\">" + escapeHtml(item.label) + "</a></li>";
   }).join("");
 }
@@ -1802,7 +1842,7 @@ document.addEventListener("keydown", function (event) {
 
 // ================= LOGOUT =================
 document.addEventListener("click", async function (e) {
-  if (e.target.id === "logoutBtn") {
+  if (e.target.id === "logoutBtn" || e.target.id === "navLogoutBtn") {
     try {
       if (isSupabaseReady()) {
         await supabaseClient.auth.signOut();
@@ -6202,6 +6242,14 @@ function buildBookingStatusLabel(status) {
   return "Chờ phản hồi";
 }
 
+function buildBookingStatusClass(status) {
+  const normalizedStatus = normalizeWhitespace(status).toLowerCase();
+  if (normalizedStatus === "accepted") return "status-accepted";
+  if (normalizedStatus === "rejected") return "status-rejected";
+  if (normalizedStatus === "completed") return "status-completed";
+  return "status-pending";
+}
+
 function renderProfileDetailsSections(details, options) {
   const normalized = normalizeProfileDetails(details);
   const title = options && options.title ? options.title : "Hồ sơ cá nhân";
@@ -6553,6 +6601,16 @@ function renderCalendarGrid(gridElement, monthLabelElement, requests, linkBuilde
     return map;
   }, {});
 
+  Object.keys(eventsByDay).forEach(function (dayKey) {
+    eventsByDay[dayKey].sort(function (left, right) {
+      const statusOrder = { pending: 0, accepted: 1, completed: 2, rejected: 3 };
+      const leftScore = statusOrder[normalizeWhitespace(left.status).toLowerCase()] ?? 9;
+      const rightScore = statusOrder[normalizeWhitespace(right.status).toLowerCase()] ?? 9;
+      if (leftScore !== rightScore) return leftScore - rightScore;
+      return String(left.preferredTime || "").localeCompare(String(right.preferredTime || ""));
+    });
+  });
+
   const cells = [];
   for (let i = 0; i < startOffset; i += 1) {
     cells.push('<div class="mentor-calendar-cell is-empty"></div>');
@@ -6579,9 +6637,12 @@ function renderCalendarGrid(gridElement, monthLabelElement, requests, linkBuilde
         </div>
         <div class="mentor-calendar-events">
           ${events.map(function (request) {
+            const statusClass = buildBookingStatusClass(request.status);
+            const statusLabel = buildBookingStatusLabel(request.status);
             return `
-              <a href="${linkBuilder(request)}" class="mentor-calendar-event">
-                <strong>${escapeHtml(request.menteeName || request.mentorName)}</strong>
+              <a href="${linkBuilder(request)}" class="mentor-calendar-event ${statusClass}">
+                <em class="mentor-calendar-event-badge ${statusClass}">${escapeHtml(statusLabel)}</em>
+                <strong>${escapeHtml(request.serviceName || request.menteeName || request.mentorName)}</strong>
                 <span>${escapeHtml(request.preferredTime)}</span>
               </a>
             `;
@@ -6657,15 +6718,15 @@ function renderMenteeScheduleSummary(summaryElement, requests) {
   if (!summaryElement) return;
 
   summaryElement.innerHTML = `
-    <article class="schedule-summary-card">
+    <article class="schedule-summary-card schedule-summary-card-total">
       <span>Tổng yêu cầu</span>
       <strong>${requests.length}</strong>
     </article>
-    <article class="schedule-summary-card">
+    <article class="schedule-summary-card schedule-summary-card-accepted">
       <span>Đã nhận</span>
       <strong>${requests.filter(function (request) { return request.status === "accepted"; }).length}</strong>
     </article>
-    <article class="schedule-summary-card">
+    <article class="schedule-summary-card schedule-summary-card-pending">
       <span>Chờ phản hồi</span>
       <strong>${requests.filter(function (request) { return request.status === "pending"; }).length}</strong>
     </article>
@@ -7091,15 +7152,15 @@ async function initializeMentorTeachingCalendarPage() {
     : "Calendar đang hiển thị toàn bộ các lịch dạy đã được nhận trong hệ thống.";
 
   summary.innerHTML = `
-    <article class="schedule-summary-card">
+    <article class="schedule-summary-card schedule-summary-card-total">
       <span>Buổi đã nhận</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
-    <article class="schedule-summary-card">
+    <article class="schedule-summary-card schedule-summary-card-week">
       <span>Tuần này</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
-    <article class="schedule-summary-card">
+    <article class="schedule-summary-card schedule-summary-card-completed">
       <span>Calendar events</span>
       <strong>${acceptedRequests.length}</strong>
     </article>
