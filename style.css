@@ -17986,3 +17986,1684 @@ body.home-page .home-service-card:last-child{
     justify-content:center !important;
   }
 }
+
+/* ===== Homepage responsive reset 2026-04-06 ===== */
+
+.nav-menu-action{
+  width:100%;
+  min-height:48px;
+  padding:12px 16px;
+  border:none;
+  border-radius:16px;
+  background:#edf4ff;
+  color:#11418a;
+  font:inherit;
+  font-weight:700;
+  text-align:left;
+  cursor:pointer;
+}
+
+body.home-page{
+  overflow-x:hidden;
+}
+
+body.home-page main,
+body.home-page .hero,
+body.home-page .home-journey,
+body.home-page .mentor,
+body.home-page .mentee,
+body.home-page .home-partners,
+body.home-page .home-fields,
+body.home-page .home-services{
+  overflow-x:clip;
+}
+
+body.home-page .home-journey-head{
+  align-items:flex-start;
+  text-align:left;
+}
+
+body.home-page .home-journey-head h2{
+  font-size:14px !important;
+  line-height:1.2 !important;
+  letter-spacing:0.08em !important;
+  text-transform:uppercase !important;
+  text-align:left !important;
+  color:#17345e !important;
+}
+
+body.home-page .home-journey-head .about-title-reveal{
+  min-height:0 !important;
+  margin-top:4px !important;
+  font-size:clamp(34px, 4vw, 48px) !important;
+  line-height:1.1 !important;
+  letter-spacing:-0.03em !important;
+  font-weight:850 !important;
+  white-space:normal !important;
+  text-align:left !important;
+  color:#17345e !important;
+}
+
+body.home-page .journey-roadmap-shell{
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+}
+
+body.home-page .journey-roadmap{
+  min-width:1020px !important;
+}
+
+@media (max-width: 1100px){
+  body.home-page header{
+    position:sticky !important;
+    top:0 !important;
+    z-index:80 !important;
+    background:#ffffff !important;
+    box-shadow:0 10px 24px rgba(23, 63, 128, 0.08) !important;
+  }
+
+  body.home-page .navbar{
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) auto !important;
+    align-items:center !important;
+    gap:16px !important;
+    min-height:76px !important;
+    padding:16px 24px !important;
+    background:#ffffff !important;
+  }
+
+  body.home-page .logo{
+    min-width:0 !important;
+    gap:12px !important;
+    align-items:center !important;
+  }
+
+  body.home-page .logo img{
+    width:40px !important;
+    height:40px !important;
+  }
+
+  body.home-page .logo span{
+    display:inline !important;
+    font-size:30px !important;
+    line-height:1 !important;
+    letter-spacing:-0.03em !important;
+  }
+
+  body.home-page .mobile-nav-actions{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    margin-left:0 !important;
+  }
+
+  body.home-page .hamburger{
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
+    min-height:44px !important;
+    border:none !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+  }
+
+  body.home-page .hamburger span{
+    background:#0d57b7 !important;
+  }
+
+  body.home-page #authArea{
+    display:none !important;
+  }
+
+  body.home-page .navbar .menu{
+    display:none !important;
+    grid-column:1 / -1 !important;
+    width:100% !important;
+    margin-top:8px !important;
+    padding:12px !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:8px !important;
+    background:#ffffff !important;
+    border:1px solid rgba(0,72,168,0.12) !important;
+    border-radius:22px !important;
+    box-shadow:0 18px 40px rgba(17, 61, 126, 0.08) !important;
+  }
+
+  body.home-page .navbar .menu.active{
+    display:flex !important;
+  }
+
+  body.home-page .navbar .menu li{
+    width:100% !important;
+  }
+
+  body.home-page .navbar .menu a,
+  body.home-page .navbar .menu .nav-menu-action{
+    display:flex !important;
+    align-items:center !important;
+    width:100% !important;
+    min-height:48px !important;
+    padding:12px 16px !important;
+    border-radius:16px !important;
+    text-decoration:none !important;
+  }
+
+  body.home-page .navbar .menu li.active a,
+  body.home-page .navbar .menu li.active .nav-menu-action{
+    background:#edf4ff !important;
+    color:#11418a !important;
+  }
+
+  body.home-page .mobile-bottom-nav,
+  body.home-page .hero-mobile-headline,
+  body.home-page .mobile-home-section-label,
+  body.home-page .mobile-home-solution-label{
+    display:none !important;
+  }
+
+  body.home-page .hero,
+  body.home-page .home-journey,
+  body.home-page .mentor,
+  body.home-page .mentee,
+  body.home-page .home-partners,
+  body.home-page .home-fields,
+  body.home-page .home-services{
+    padding-left:24px !important;
+    padding-right:24px !important;
+    margin-bottom:40px !important;
+  }
+
+  body.home-page .hero{
+    margin-top:20px !important;
+  }
+
+  body.home-page .hero-container{
+    display:grid !important;
+    grid-template-columns:minmax(220px, 0.88fr) minmax(0, 1.12fr) !important;
+    align-items:center !important;
+    gap:30px !important;
+    padding:40px 36px !important;
+    border-radius:34px !important;
+  }
+
+  body.home-page .hero-image{
+    order:initial !important;
+    padding-top:0 !important;
+    justify-content:center !important;
+  }
+
+  body.home-page .hero-image img{
+    width:min(100%, 290px) !important;
+    max-width:100% !important;
+  }
+
+  body.home-page .hero-content{
+    align-items:flex-start !important;
+    padding-top:0 !important;
+  }
+
+  body.home-page .hero-content h1{
+    margin:0 0 16px !important;
+    font-size:clamp(52px, 6vw, 72px) !important;
+    line-height:0.95 !important;
+    text-align:left !important;
+  }
+
+  body.home-page .hero .search-box input{
+    font-size:18px !important;
+  }
+
+  body.home-page .hero-sub{
+    margin-top:16px !important;
+    font-size:15px !important;
+    line-height:1.7 !important;
+  }
+
+  body.home-page .hero-quick-actions{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    gap:12px !important;
+  }
+
+  body.home-page .hero-stats{
+    display:grid !important;
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    gap:14px !important;
+  }
+
+  body.home-page .home-journey-head,
+  body.home-page .home-partners-copy,
+  body.home-page .home-fields-copy,
+  body.home-page .home-services-head > div{
+    text-align:left !important;
+  }
+
+  body.home-page .home-partners-copy h2,
+  body.home-page .home-fields-copy h2,
+  body.home-page .home-services-head h2{
+    font-size:clamp(34px, 4vw, 48px) !important;
+    line-height:1.12 !important;
+  }
+
+  body.home-page .mentor-card,
+  body.home-page .mentee-card{
+    grid-template-columns:160px minmax(0, 1fr) !important;
+    gap:20px !important;
+    padding:22px !important;
+    border-radius:26px !important;
+  }
+
+  body.home-page .mentor-card-media,
+  body.home-page .mentor-card img,
+  body.home-page .mentee-card img{
+    min-height:200px !important;
+    height:200px !important;
+    border-radius:20px !important;
+  }
+
+  body.home-page .home-services-head{
+    grid-template-columns:minmax(0, 1fr) auto !important;
+    justify-items:stretch !important;
+  }
+
+  body.home-page .home-services-slider{
+    grid-template-columns:auto minmax(0, 1fr) auto !important;
+  }
+
+  body.home-page .home-services-nav{
+    display:flex !important;
+  }
+}
+
+@media (max-width: 768px){
+  body.home-page .navbar{
+    padding:14px 18px !important;
+  }
+
+  body.home-page .logo span{
+    font-size:24px !important;
+  }
+
+  body.home-page .hero,
+  body.home-page .home-journey,
+  body.home-page .mentor,
+  body.home-page .mentee,
+  body.home-page .home-partners,
+  body.home-page .home-fields,
+  body.home-page .home-services{
+    padding-left:18px !important;
+    padding-right:18px !important;
+    margin-bottom:32px !important;
+  }
+
+  body.home-page .hero-container{
+    grid-template-columns:minmax(180px, 0.82fr) minmax(0, 1.18fr) !important;
+    gap:20px !important;
+    padding:30px 24px !important;
+  }
+
+  body.home-page .hero-image img{
+    width:min(100%, 210px) !important;
+  }
+
+  body.home-page .hero-content h1{
+    font-size:46px !important;
+  }
+
+  body.home-page .hero .search-box input{
+    font-size:16px !important;
+  }
+
+  body.home-page .hero-stats{
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    gap:10px !important;
+  }
+
+  body.home-page .journey-roadmap{
+    min-width:960px !important;
+  }
+
+  body.home-page .mentor-wrapper,
+  body.home-page .mentee-wrapper{
+    grid-template-columns:32px minmax(0, 1fr) 32px !important;
+    column-gap:10px !important;
+  }
+
+  body.home-page .mentor-card,
+  body.home-page .mentee-card{
+    grid-template-columns:140px minmax(0, 1fr) !important;
+    gap:16px !important;
+    padding:18px !important;
+  }
+
+  body.home-page .mentee-card img{
+    width:140px !important;
+    height:190px !important;
+    object-fit:cover !important;
+  }
+
+  body.home-page .home-services-head{
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+  }
+
+  body.home-page .home-services-head .mentor-secondary-btn{
+    width:100% !important;
+    justify-content:center !important;
+  }
+
+  body.home-page .home-services-slider{
+    grid-template-columns:1fr !important;
+  }
+
+  body.home-page .home-services-nav{
+    display:none !important;
+  }
+}
+
+@media (max-width: 560px){
+  body.home-page .logo span{
+    font-size:20px !important;
+  }
+
+  body.home-page .hero-container{
+    grid-template-columns:minmax(132px, 0.78fr) minmax(0, 1.22fr) !important;
+    gap:16px !important;
+    padding:24px 18px !important;
+    border-radius:28px !important;
+  }
+
+  body.home-page .hero-image img{
+    width:min(100%, 160px) !important;
+  }
+
+  body.home-page .hero-content h1{
+    font-size:36px !important;
+  }
+
+  body.home-page .hero-stats{
+    grid-template-columns:1fr !important;
+  }
+
+  body.home-page .mentor-card,
+  body.home-page .mentee-card{
+    grid-template-columns:1fr !important;
+  }
+
+  body.home-page .mentee-card img{
+    width:100% !important;
+    height:220px !important;
+  }
+
+  body.home-page .home-journey-head .about-title-reveal,
+  body.home-page .home-partners-copy h2,
+  body.home-page .home-fields-copy h2,
+  body.home-page .home-services-head h2{
+    font-size:30px !important;
+  }
+}
+
+/* ===== Services + Schedule polish 2026-04-06 ===== */
+
+body.home-page .home-services{
+  position:relative !important;
+  max-width:1280px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  padding-top:28px !important;
+}
+
+body.home-page .home-services::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:36px;
+  background:
+    radial-gradient(circle at top right, rgba(213,229,255,0.85), rgba(213,229,255,0) 34%),
+    linear-gradient(180deg, rgba(244,249,255,0.98), rgba(231,240,255,0.92));
+  border:1px solid rgba(178, 207, 246, 0.9);
+  box-shadow:0 26px 56px rgba(18, 58, 120, 0.08);
+  z-index:0;
+}
+
+body.home-page .home-services > *{
+  position:relative;
+  z-index:1;
+}
+
+body.home-page .home-services-head{
+  margin-bottom:26px !important;
+  padding:0 4px !important;
+}
+
+body.home-page .home-services-head h2{
+  color:#123a78 !important;
+}
+
+body.home-page .home-services-head p{
+  max-width:48ch !important;
+  color:#45648f !important;
+  font-size:16px !important;
+}
+
+body.home-page .home-services-nav{
+  width:52px !important;
+  height:52px !important;
+  border:1px solid rgba(18,58,120,0.12) !important;
+  background:#ffffff !important;
+  color:#123a78 !important;
+  box-shadow:0 16px 28px rgba(18, 58, 120, 0.14) !important;
+}
+
+body.home-page .home-services-track{
+  padding:6px 4px 14px !important;
+  gap:22px !important;
+}
+
+body.home-page .home-service-card{
+  position:relative !important;
+  flex:0 0 min(380px, calc(100% - 36px)) !important;
+  width:min(380px, calc(100% - 36px)) !important;
+  max-width:min(380px, calc(100% - 36px)) !important;
+  min-height:348px !important;
+  padding:26px !important;
+  border-radius:30px !important;
+  background:linear-gradient(180deg, rgba(255,255,255,0.99), rgba(242,247,255,0.96)) !important;
+  border:1px solid rgba(183, 208, 244, 0.95) !important;
+  box-shadow:0 22px 42px rgba(18, 58, 120, 0.12) !important;
+  overflow:hidden !important;
+}
+
+body.home-page .home-service-card::after{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:5px;
+  background:linear-gradient(90deg, #123a78, #2d74d9);
+  opacity:0.95;
+}
+
+body.home-page .home-service-card-featured{
+  background:
+    radial-gradient(circle at top right, rgba(205,225,255,0.98), rgba(205,225,255,0) 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.99), rgba(230,240,255,0.98)) !important;
+  border-color:rgba(107, 162, 238, 0.95) !important;
+}
+
+body.home-page .home-service-index{
+  color:#6d86aa !important;
+}
+
+body.home-page .home-service-type{
+  padding:9px 14px !important;
+  background:#123a78 !important;
+  color:#ffffff !important;
+  font-size:11px !important;
+  letter-spacing:0.08em !important;
+}
+
+body.home-page .home-service-card h3{
+  margin:0 !important;
+  color:#123a78 !important;
+  font-size:30px !important;
+  line-height:1.18 !important;
+  letter-spacing:-0.03em !important;
+}
+
+body.home-page .home-service-card p{
+  color:#45648f !important;
+  font-size:15px !important;
+  line-height:1.75 !important;
+}
+
+body.home-page .home-service-meta{
+  margin-top:auto !important;
+  padding-top:14px !important;
+  border-top:1px solid rgba(187, 210, 241, 0.95) !important;
+}
+
+body.home-page .home-service-meta strong{
+  color:#123a78 !important;
+  font-size:16px !important;
+}
+
+body.home-page .home-service-meta span{
+  margin-top:6px !important;
+  color:#234e92 !important;
+  font-weight:700 !important;
+}
+
+.schedule-page .schedule-shell{
+  max-width:1280px !important;
+  margin:0 auto !important;
+  padding:34px 28px 84px !important;
+}
+
+.schedule-page .schedule-hero-card{
+  padding:34px 36px !important;
+  border-radius:34px !important;
+  background:
+    radial-gradient(circle at top right, rgba(214,228,255,0.95), rgba(214,228,255,0) 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.99), rgba(241,247,255,0.97)) !important;
+  border:1px solid rgba(168, 201, 246, 0.95) !important;
+  box-shadow:0 24px 48px rgba(18, 58, 120, 0.1) !important;
+}
+
+.schedule-page .schedule-hero-card h1{
+  font-size:clamp(34px, 4vw, 52px) !important;
+  letter-spacing:-0.04em !important;
+  color:#123a78 !important;
+}
+
+.schedule-page .schedule-hero-card p{
+  color:#45648f !important;
+  font-size:16px !important;
+}
+
+.schedule-page .schedule-summary-grid{
+  gap:20px !important;
+  margin:28px 0 !important;
+}
+
+.schedule-page .schedule-summary-card{
+  padding:24px !important;
+  border-radius:26px !important;
+  background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,247,255,0.95)) !important;
+  border:1px solid rgba(183, 208, 244, 0.95) !important;
+  box-shadow:0 18px 34px rgba(18, 58, 120, 0.08) !important;
+}
+
+.schedule-page .schedule-summary-card strong{
+  color:#123a78 !important;
+  font-size:34px !important;
+}
+
+.schedule-page .schedule-summary-card-total{
+  background:linear-gradient(180deg, #ffffff 0%, #eef5ff 100%) !important;
+}
+
+.schedule-page .schedule-summary-card-accepted{
+  background:linear-gradient(180deg, #f3fbf7 0%, #e3f5ea 100%) !important;
+  border-color:rgba(133, 205, 165, 0.95) !important;
+}
+
+.schedule-page .schedule-summary-card-accepted span,
+.schedule-page .schedule-summary-card-accepted strong{
+  color:#0d6b42 !important;
+}
+
+.schedule-page .schedule-summary-card-pending,
+.schedule-page .schedule-summary-card-week{
+  background:linear-gradient(180deg, #f7faff 0%, #e6f0ff 100%) !important;
+  border-color:rgba(140, 180, 238, 0.95) !important;
+}
+
+.schedule-page .schedule-summary-card-completed{
+  background:linear-gradient(180deg, #f4f6fb 0%, #e9edf5 100%) !important;
+  border-color:rgba(182, 194, 214, 0.95) !important;
+}
+
+.schedule-page .schedule-summary-card-completed span,
+.schedule-page .schedule-summary-card-completed strong{
+  color:#44556f !important;
+}
+
+.schedule-page .schedule-card{
+  padding:26px !important;
+  border-radius:28px !important;
+  background:linear-gradient(180deg, rgba(255,255,255,0.99), rgba(243,248,255,0.96)) !important;
+  border:1px solid rgba(183, 208, 244, 0.95) !important;
+  box-shadow:0 18px 34px rgba(18, 58, 120, 0.08) !important;
+}
+
+.schedule-page .mentor-calendar-card{
+  padding:28px !important;
+  border-radius:34px !important;
+  background:
+    radial-gradient(circle at top right, rgba(214,228,255,0.92), rgba(214,228,255,0) 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.995), rgba(238,245,255,0.97)) !important;
+  border:1px solid rgba(168, 201, 246, 0.98) !important;
+  box-shadow:0 26px 52px rgba(18, 58, 120, 0.1) !important;
+}
+
+.schedule-page .schedule-panel-head h2{
+  color:#123a78 !important;
+  font-size:34px !important;
+}
+
+.schedule-page .schedule-panel-head p{
+  color:#4a6994 !important;
+  font-size:15px !important;
+}
+
+.schedule-page .mentor-calendar-toolbar{
+  margin-bottom:18px !important;
+  padding:14px 16px !important;
+  border-radius:24px !important;
+  background:rgba(255,255,255,0.82) !important;
+  border:1px solid rgba(190, 214, 244, 0.95) !important;
+}
+
+.schedule-page .mentor-calendar-nav-btn{
+  min-height:46px !important;
+  padding:12px 18px !important;
+  background:#123a78 !important;
+  color:#ffffff !important;
+  font-size:13px !important;
+  letter-spacing:0.02em !important;
+  box-shadow:0 14px 24px rgba(18, 58, 120, 0.18) !important;
+}
+
+.schedule-page .mentor-calendar-nav-btn:hover{
+  background:#0f3166 !important;
+}
+
+.schedule-page .mentor-calendar-month{
+  color:#123a78 !important;
+  font-size:clamp(26px, 3vw, 34px) !important;
+  line-height:1.1 !important;
+}
+
+.schedule-page .mentor-calendar-weekdays{
+  gap:10px !important;
+  margin-bottom:10px !important;
+}
+
+.schedule-page .mentor-calendar-weekdays span{
+  padding:10px 6px !important;
+  border-radius:16px !important;
+  background:rgba(225, 238, 255, 0.9) !important;
+  color:#3c5e8f !important;
+  font-size:11px !important;
+}
+
+.schedule-page .mentor-calendar-grid{
+  gap:10px !important;
+}
+
+.schedule-page .mentor-calendar-cell{
+  min-height:184px !important;
+  padding:14px !important;
+  border-radius:24px !important;
+  background:linear-gradient(180deg, #ffffff 0%, #eef5ff 100%) !important;
+  border:1px solid rgba(187, 210, 241, 0.98) !important;
+  box-shadow:0 12px 26px rgba(18, 58, 120, 0.06) !important;
+}
+
+.schedule-page .mentor-calendar-cell.is-empty{
+  background:rgba(240, 245, 252, 0.8) !important;
+  box-shadow:none !important;
+}
+
+.schedule-page .mentor-calendar-cell.is-today{
+  background:linear-gradient(180deg, #ffffff 0%, #deebff 100%) !important;
+  border-color:rgba(45, 116, 217, 0.7) !important;
+  box-shadow:inset 0 0 0 1px rgba(45, 116, 217, 0.22), 0 14px 28px rgba(18, 58, 120, 0.08) !important;
+}
+
+.schedule-page .mentor-calendar-date{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:4px !important;
+  margin-bottom:12px !important;
+}
+
+.schedule-page .mentor-calendar-date strong{
+  color:#123a78 !important;
+  font-size:24px !important;
+  line-height:1 !important;
+}
+
+.schedule-page .mentor-calendar-date span{
+  color:#58729a !important;
+  font-size:11px !important;
+  font-weight:800 !important;
+  line-height:1.45 !important;
+}
+
+.schedule-page .mentor-calendar-events{
+  gap:10px !important;
+}
+
+.schedule-page .mentor-calendar-event{
+  display:grid !important;
+  gap:8px !important;
+  padding:12px 14px !important;
+  border-radius:18px !important;
+  background:linear-gradient(180deg, #123a78 0%, #1f5ab2 100%) !important;
+  box-shadow:0 14px 24px rgba(18, 58, 120, 0.18) !important;
+}
+
+.schedule-page .mentor-calendar-event.status-pending{
+  background:linear-gradient(180deg, #2b62b8 0%, #3c7ae1 100%) !important;
+}
+
+.schedule-page .mentor-calendar-event.status-accepted{
+  background:linear-gradient(180deg, #0f6a47 0%, #13875a 100%) !important;
+}
+
+.schedule-page .mentor-calendar-event.status-completed{
+  background:linear-gradient(180deg, #5c6980 0%, #74839b 100%) !important;
+}
+
+.schedule-page .mentor-calendar-event.status-rejected{
+  background:linear-gradient(180deg, #8d3840 0%, #b84c55 100%) !important;
+}
+
+.schedule-page .mentor-calendar-event-badge{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:fit-content !important;
+  min-height:24px !important;
+  padding:4px 8px !important;
+  border-radius:999px !important;
+  background:rgba(255,255,255,0.18) !important;
+  color:#ffffff !important;
+  font-size:10px !important;
+  font-style:normal !important;
+  font-weight:800 !important;
+  letter-spacing:0.08em !important;
+  text-transform:uppercase !important;
+}
+
+.schedule-page .mentor-calendar-event strong{
+  color:#ffffff !important;
+  font-size:13px !important;
+  line-height:1.45 !important;
+}
+
+.schedule-page .mentor-calendar-event span{
+  color:rgba(255,255,255,0.84) !important;
+  font-size:11px !important;
+}
+
+@media (max-width: 900px){
+  body.home-page .home-service-card{
+    flex:0 0 min(336px, calc(100% - 28px)) !important;
+    width:min(336px, calc(100% - 28px)) !important;
+    max-width:min(336px, calc(100% - 28px)) !important;
+    min-height:320px !important;
+  }
+
+  .schedule-page .schedule-shell{
+    padding:24px 16px 56px !important;
+  }
+
+  .schedule-page .mentor-calendar-toolbar{
+    padding:12px !important;
+  }
+
+  .schedule-page .mentor-calendar-cell{
+    min-height:150px !important;
+    padding:10px !important;
+    border-radius:20px !important;
+  }
+
+  .schedule-page .mentor-calendar-event{
+    padding:10px 11px !important;
+  }
+}
+
+@media (max-width: 640px){
+  body.home-page .home-services::before{
+    border-radius:28px;
+  }
+
+  body.home-page .home-service-card{
+    min-height:300px !important;
+    padding:22px !important;
+  }
+
+  body.home-page .home-service-card h3{
+    font-size:26px !important;
+  }
+
+  .schedule-page .schedule-hero-card,
+  .schedule-page .mentor-calendar-card{
+    border-radius:26px !important;
+  }
+
+  .schedule-page .schedule-panel-head h2{
+    font-size:28px !important;
+  }
+}
+
+/* ===== Services page responsive reset 2026-04-06 ===== */
+
+body.services-page{
+  overflow-x:hidden;
+}
+
+body.services-page main,
+body.services-page .services-shell,
+body.services-page .services-hero,
+body.services-page .services-intro-band,
+body.services-page .services-grid,
+body.services-page .services-value-strip,
+body.services-page .services-consult-section{
+  min-width:0 !important;
+}
+
+body.services-page .services-shell{
+  max-width:1280px !important;
+  margin:0 auto !important;
+}
+
+body.services-page .services-hero{
+  grid-template-columns:minmax(0, 1.04fr) minmax(360px, 0.96fr) !important;
+  gap:24px !important;
+  align-items:start !important;
+}
+
+body.services-page .services-hero-copy,
+body.services-page .services-hero-highlight,
+body.services-page .services-intro-card,
+body.services-page .service-card,
+body.services-page .services-consult-copy,
+body.services-page .services-consult-form-card,
+body.services-page .services-value-card{
+  min-width:0 !important;
+  overflow:hidden !important;
+}
+
+body.services-page .services-hero-copy h1,
+body.services-page .service-card h2,
+body.services-page .services-consult-copy h2{
+  overflow-wrap:anywhere !important;
+  text-wrap:balance !important;
+}
+
+body.services-page .services-hero-copy{
+  padding:30px !important;
+  border-radius:30px !important;
+}
+
+body.services-page .services-hero-copy h1{
+  font-size:clamp(38px, 4.4vw, 60px) !important;
+  line-height:1.02 !important;
+  margin-bottom:14px !important;
+}
+
+body.services-page .services-hero-copy p{
+  max-width:34ch !important;
+  font-size:16px !important;
+  line-height:1.72 !important;
+}
+
+body.services-page .services-hero-highlight{
+  justify-content:flex-start !important;
+  align-self:start !important;
+  min-height:100% !important;
+  padding:34px !important;
+}
+
+body.services-page .services-hero-highlight strong{
+  font-size:clamp(28px, 3vw, 42px) !important;
+  line-height:1.12 !important;
+}
+
+body.services-page .services-panel-list{
+  margin-top:8px !important;
+}
+
+@media (max-width: 1100px){
+  body.services-page .services-shell{
+    padding:28px 24px 72px !important;
+  }
+
+  body.services-page .services-hero{
+    grid-template-columns:minmax(0, 1.05fr) minmax(280px, 0.95fr) !important;
+    gap:20px !important;
+    margin-bottom:22px !important;
+  }
+
+  body.services-page .services-hero-copy,
+  body.services-page .services-hero-highlight{
+    padding:26px !important;
+    border-radius:28px !important;
+  }
+
+  body.services-page .services-hero-copy h1{
+    font-size:clamp(44px, 5vw, 64px) !important;
+    line-height:0.98 !important;
+    margin-bottom:14px !important;
+  }
+
+  body.services-page .services-hero-copy p{
+    font-size:15px !important;
+    line-height:1.7 !important;
+  }
+
+  body.services-page .services-hero-actions{
+    gap:10px !important;
+    margin-top:20px !important;
+  }
+
+  body.services-page .services-hero-actions a{
+    min-height:48px !important;
+  }
+
+  body.services-page .services-metrics{
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    gap:12px !important;
+    margin-top:22px !important;
+  }
+
+  body.services-page .services-metric-card{
+    padding:16px !important;
+    border-radius:20px !important;
+  }
+
+  body.services-page .services-metric-card strong{
+    font-size:22px !important;
+  }
+
+  body.services-page .services-metric-card span{
+    font-size:13px !important;
+    line-height:1.55 !important;
+  }
+
+  body.services-page .services-hero-highlight strong{
+    font-size:26px !important;
+    line-height:1.16 !important;
+  }
+
+  body.services-page .services-hero-highlight span,
+  body.services-page .services-panel-list li{
+    font-size:14px !important;
+    line-height:1.65 !important;
+  }
+
+  body.services-page .services-intro-band{
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    gap:14px !important;
+    margin-bottom:28px !important;
+  }
+
+  body.services-page .services-intro-card{
+    padding:18px !important;
+    border-radius:22px !important;
+  }
+
+  body.services-page .services-grid{
+    display:flex !important;
+    gap:18px !important;
+  }
+
+  body.services-page .service-card{
+    flex:0 0 min(340px, calc(100% - 32px)) !important;
+    width:min(340px, calc(100% - 32px)) !important;
+    max-width:min(340px, calc(100% - 32px)) !important;
+    padding:22px !important;
+    border-radius:26px !important;
+  }
+
+  body.services-page .service-card h2{
+    font-size:26px !important;
+    line-height:1.14 !important;
+  }
+
+  body.services-page .service-price{
+    font-size:22px !important;
+  }
+
+  body.services-page .service-kicker,
+  body.services-page .service-desc,
+  body.services-page .service-block p{
+    font-size:14px !important;
+    line-height:1.65 !important;
+  }
+
+  body.services-page .services-consult-section{
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap:18px !important;
+    margin-top:32px !important;
+  }
+
+  body.services-page .services-consult-copy,
+  body.services-page .services-consult-form-card{
+    padding:24px !important;
+    border-radius:26px !important;
+  }
+}
+
+@media (max-width: 900px){
+  body.services-page .services-shell{
+    padding:22px 18px 56px !important;
+  }
+
+  body.services-page .services-hero{
+    grid-template-columns:1fr !important;
+  }
+
+  body.services-page .services-hero-copy h1{
+    font-size:clamp(36px, 8vw, 52px) !important;
+  }
+
+  body.services-page .services-metrics{
+    grid-template-columns:1fr !important;
+  }
+
+  body.services-page .services-intro-band{
+    grid-template-columns:1fr !important;
+  }
+
+  body.services-page .services-consult-section{
+    grid-template-columns:1fr !important;
+  }
+}
+
+@media (max-width: 640px){
+  body.services-page main{
+    max-width:none !important;
+    margin:0 !important;
+  }
+
+  body.services-page .services-shell{
+    width:100% !important;
+    padding:18px 16px 46px !important;
+  }
+
+  body.services-page .services-hero{
+    gap:16px !important;
+    margin-bottom:18px !important;
+  }
+
+  body.services-page .services-hero-copy,
+  body.services-page .services-hero-highlight{
+    padding:20px !important;
+    border-radius:24px !important;
+  }
+
+  body.services-page .services-hero-copy h1{
+    font-size:clamp(28px, 9vw, 40px) !important;
+    line-height:1.02 !important;
+  }
+
+  body.services-page .services-hero-copy p{
+    font-size:14px !important;
+    line-height:1.6 !important;
+  }
+
+  body.services-page .services-hero-actions{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+  }
+
+  body.services-page .services-hero-actions a{
+    width:100% !important;
+    justify-content:center !important;
+  }
+
+  body.services-page .services-metric-card,
+  body.services-page .services-intro-card{
+    padding:16px !important;
+  }
+
+  body.services-page .services-hero-highlight strong{
+    font-size:22px !important;
+  }
+
+  body.services-page .service-card{
+    flex:0 0 calc(100vw - 32px) !important;
+    width:calc(100vw - 32px) !important;
+    max-width:calc(100vw - 32px) !important;
+    padding:18px !important;
+    border-radius:22px !important;
+  }
+
+  body.services-page .service-card h2{
+    font-size:22px !important;
+  }
+}
+
+/* ===== Homepage hero alignment fix ===== */
+
+body.home-page .hero{
+  width:min(100% - 32px, 1180px) !important;
+  margin:18px auto 40px !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+}
+
+body.home-page .hero-container{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 auto !important;
+  background:linear-gradient(180deg, #dceeff 0%, #eef5ff 100%) !important;
+  border:1px solid rgba(0, 72, 168, 0.12) !important;
+  box-shadow:none !important;
+}
+
+@media (max-width: 1024px){
+  body.home-page .hero{
+    width:min(100% - 24px, 980px) !important;
+  }
+}
+
+@media (max-width: 768px){
+  body.home-page .hero{
+    width:min(100% - 20px, 100%) !important;
+    margin:18px auto 32px !important;
+  }
+}
+
+@media (max-width: 768px){
+  body.home-page .partner-pill-row{
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    gap:12px !important;
+    padding:2px 2px 10px !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    scroll-snap-type:x proximity !important;
+    -webkit-overflow-scrolling:touch !important;
+  }
+
+  body.home-page .partner-pill-row::-webkit-scrollbar{
+    display:none !important;
+  }
+
+  body.home-page .partner-pill-row span{
+    flex:0 0 auto !important;
+    white-space:nowrap !important;
+    scroll-snap-align:start !important;
+  }
+
+  body.home-page .mentor-card{
+    grid-template-columns:132px minmax(0, 1fr) !important;
+    align-items:start !important;
+  }
+
+  body.home-page .mentor-card-media,
+  body.home-page .mentor-card img{
+    width:132px !important;
+    min-width:132px !important;
+    height:132px !important;
+    min-height:132px !important;
+    aspect-ratio:1 / 1 !important;
+    object-fit:cover !important;
+    border-radius:20px !important;
+  }
+}
+
+@media (max-width: 560px){
+  body.home-page .mentor-card{
+    grid-template-columns:120px minmax(0, 1fr) !important;
+    gap:14px !important;
+  }
+
+  body.home-page .mentor-card-media,
+  body.home-page .mentor-card img{
+    width:120px !important;
+    min-width:120px !important;
+    height:120px !important;
+    min-height:120px !important;
+  }
+}
+
+/* ===== Homepage journey + mentor mobile polish ===== */
+
+body.home-page .journey-steps-list{
+  align-items:stretch !important;
+}
+
+body.home-page .journey-step-linear,
+body.home-page .journey-step-link{
+  height:100% !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(48px, auto) 1fr !important;
+  align-content:start !important;
+  align-items:start !important;
+}
+
+body.home-page .journey-step-number,
+body.home-page .journey-step strong,
+body.home-page .journey-step p{
+  margin:0 !important;
+}
+
+body.home-page .journey-step strong{
+  max-width:none !important;
+  width:100% !important;
+}
+
+body.home-page .journey-step p{
+  width:100% !important;
+  max-width:none !important;
+  align-self:start !important;
+}
+
+body.home-page .journey-step-link{
+  grid-template-rows:minmax(48px, auto) 1fr !important;
+}
+
+body.home-page .journey-step-link strong{
+  max-width:none !important;
+  width:100% !important;
+}
+
+body.home-page .journey-step-number{
+  margin-bottom:6px !important;
+}
+
+body.home-page .journey-step strong{
+  min-height:2.6em !important;
+  font-size:17px !important;
+  line-height:1.28 !important;
+  letter-spacing:-0.02em !important;
+}
+
+body.home-page .journey-step p{
+  font-size:13px !important;
+  line-height:1.62 !important;
+  color:#5a7398 !important;
+}
+
+body.home-page .journey-step-link{
+  place-items:start !important;
+}
+
+body.home-page .journey-step-link strong{
+  min-height:2.4em !important;
+  font-size:21px !important;
+  line-height:1.18 !important;
+}
+
+@media (max-width: 768px){
+  body.home-page .journey-roadmap-shell{
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    padding-bottom:10px !important;
+    -webkit-overflow-scrolling:touch !important;
+    scroll-snap-type:x proximity !important;
+  }
+
+  body.home-page .journey-roadmap-shell::-webkit-scrollbar{
+    display:none !important;
+  }
+
+  body.home-page .journey-roadmap{
+    width:max-content !important;
+    min-width:100% !important;
+  }
+
+  body.home-page .journey-steps-list{
+    grid-template-columns:repeat(6, 220px) !important;
+    gap:14px !important;
+  }
+
+  body.home-page .journey-roadmap::after{
+    content:"";
+    display:block;
+    width:8px;
+    flex:0 0 8px;
+  }
+
+  body.home-page .journey-step-linear,
+  body.home-page .journey-step-link{
+    min-height:190px !important;
+    padding:20px 18px !important;
+    scroll-snap-align:start !important;
+  }
+
+  body.home-page .mentor-card{
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+    min-height:0 !important;
+    padding:16px !important;
+    border-radius:24px !important;
+  }
+
+  body.home-page .mentor-card-media,
+  body.home-page .mentor-card img{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:168px !important;
+    min-height:168px !important;
+    aspect-ratio:1 / 1 !important;
+    border-radius:22px !important;
+  }
+
+  body.home-page .mentor-stats-badge{
+    left:10px !important;
+    right:10px !important;
+    bottom:10px !important;
+    padding:8px 10px !important;
+    border-radius:16px !important;
+  }
+
+  body.home-page .mentor-stats-pill{
+    font-size:11px !important;
+    gap:6px !important;
+  }
+
+  body.home-page .mentor-card-body{
+    width:100% !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+    padding:2px 2px 0 !important;
+  }
+
+  body.home-page .mentor-card h3{
+    margin-bottom:0 !important;
+    font-size:16px !important;
+    line-height:1.24 !important;
+  }
+
+  body.home-page .mentor-card-achievements{
+    margin:0 !important;
+    padding:14px 14px 12px !important;
+    border-radius:18px !important;
+  }
+
+  body.home-page .mentor-card-achievements ul{
+    padding-left:16px !important;
+  }
+
+  body.home-page .mentor-card-achievements li{
+    font-size:12px !important;
+    line-height:1.55 !important;
+    margin-bottom:6px !important;
+  }
+}
+
+@media (max-width: 560px){
+  body.home-page .journey-steps-list{
+    grid-template-columns:repeat(6, 196px) !important;
+  }
+
+  body.home-page .journey-step-linear,
+  body.home-page .journey-step-link{
+    min-height:176px !important;
+    padding:18px 16px !important;
+  }
+
+  body.home-page .journey-step strong{
+    font-size:15px !important;
+    line-height:1.24 !important;
+  }
+
+  body.home-page .journey-step p{
+    font-size:12px !important;
+    line-height:1.55 !important;
+  }
+
+  body.home-page .journey-step-link strong{
+    font-size:18px !important;
+  }
+
+  body.home-page .mentor-card-media,
+  body.home-page .mentor-card img{
+    height:148px !important;
+    min-height:148px !important;
+  }
+
+  body.home-page .mentor-card{
+    padding:14px !important;
+    gap:12px !important;
+  }
+
+  body.home-page .mentor-card h3{
+    font-size:15px !important;
+  }
+
+  body.home-page .mentor-card-achievements{
+    padding:12px 12px 10px !important;
+  }
+
+  body.home-page .mentor-card-achievements li{
+    font-size:11.5px !important;
+    line-height:1.5 !important;
+  }
+}
+
+/* ===== Homepage mobile consistency cleanup ===== */
+
+@media (max-width: 768px){
+  body.home-page .hero,
+  body.home-page .home-journey,
+  body.home-page .mentor,
+  body.home-page .mentee,
+  body.home-page .home-partners,
+  body.home-page .home-fields,
+  body.home-page .home-services{
+    margin-bottom:28px !important;
+  }
+
+  body.home-page .home-journey-head,
+  body.home-page .home-partners-copy,
+  body.home-page .home-fields-copy,
+  body.home-page .home-services-head{
+    margin-bottom:14px !important;
+  }
+
+  body.home-page .home-journey-head .about-title-reveal,
+  body.home-page .home-partners-copy h2,
+  body.home-page .home-fields-copy h2,
+  body.home-page .home-services-head h2,
+  body.home-page .mentor h2,
+  body.home-page .mentee h2{
+    font-size:clamp(28px, 7.2vw, 36px) !important;
+    line-height:1.06 !important;
+    letter-spacing:-0.04em !important;
+    text-wrap:balance !important;
+  }
+
+  body.home-page .hero-container{
+    padding:26px 20px !important;
+    gap:18px !important;
+    border-radius:28px !important;
+  }
+
+  body.home-page .hero-content{
+    gap:12px !important;
+  }
+
+  body.home-page .hero-content h1{
+    font-size:42px !important;
+    margin:0 !important;
+  }
+
+  body.home-page .hero .search-box{
+    min-height:54px !important;
+  }
+
+  body.home-page .hero-sub{
+    margin-top:0 !important;
+    font-size:14px !important;
+    line-height:1.65 !important;
+  }
+
+  body.home-page .hero-quick-actions{
+    width:100% !important;
+    gap:10px !important;
+  }
+
+  body.home-page .hero-quick-actions a{
+    flex:1 1 0 !important;
+    min-height:48px !important;
+    justify-content:center !important;
+    padding:12px 14px !important;
+  }
+
+  body.home-page .hero-stats{
+    display:grid !important;
+    grid-template-columns:repeat(3, minmax(120px, 1fr)) !important;
+    gap:10px !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    padding-bottom:4px !important;
+    scroll-snap-type:x proximity !important;
+  }
+
+  body.home-page .hero-stats::-webkit-scrollbar{
+    display:none !important;
+  }
+
+  body.home-page .hero-stat-card{
+    min-height:140px !important;
+    padding:16px !important;
+    border-radius:20px !important;
+    scroll-snap-align:start !important;
+  }
+
+  body.home-page .hero-stat-card strong{
+    font-size:24px !important;
+    margin-bottom:6px !important;
+  }
+
+  body.home-page .hero-stat-card span{
+    font-size:13px !important;
+    line-height:1.5 !important;
+  }
+
+  body.home-page .mentor,
+  body.home-page .mentee,
+  body.home-page .home-fields,
+  body.home-page .home-partners{
+    padding-top:22px !important;
+    padding-bottom:22px !important;
+    border-radius:28px !important;
+  }
+
+  body.home-page .mentor-wrapper,
+  body.home-page .mentee-wrapper{
+    column-gap:8px !important;
+  }
+
+  body.home-page .mentor-home-prev,
+  body.home-page .mentor-home-next,
+  body.home-page .mentee-prev,
+  body.home-page .mentee-next{
+    width:30px !important;
+    height:30px !important;
+    min-width:30px !important;
+    min-height:30px !important;
+  }
+
+  body.home-page .mentee-card{
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+    padding:18px !important;
+    border-radius:24px !important;
+  }
+
+  body.home-page .mentee-card img{
+    width:100% !important;
+    max-width:100% !important;
+    height:180px !important;
+    border-radius:20px !important;
+  }
+
+  body.home-page .mentee-content{
+    padding:0 !important;
+  }
+
+  body.home-page .partner-pill-row span,
+  body.home-page .field-feature-card{
+    border-radius:18px !important;
+  }
+
+  body.home-page .field-feature-card{
+    min-height:138px !important;
+    padding:18px 16px !important;
+  }
+
+  body.home-page .field-feature-card strong{
+    font-size:16px !important;
+    line-height:1.28 !important;
+  }
+
+  body.home-page .field-feature-card p{
+    font-size:13px !important;
+    line-height:1.55 !important;
+  }
+
+  body.home-page .home-services{
+    padding-top:22px !important;
+    padding-bottom:22px !important;
+  }
+
+  body.home-page .home-services::before{
+    border-radius:28px !important;
+  }
+
+  body.home-page .home-services-head{
+    gap:10px !important;
+  }
+
+  body.home-page .home-services-head p{
+    font-size:14px !important;
+    line-height:1.6 !important;
+  }
+
+  body.home-page .home-services-track{
+    gap:14px !important;
+    padding:4px 2px 10px !important;
+  }
+
+  body.home-page .home-service-card{
+    flex:0 0 calc(100vw - 44px) !important;
+    width:calc(100vw - 44px) !important;
+    max-width:calc(100vw - 44px) !important;
+    min-height:300px !important;
+    padding:20px !important;
+    border-radius:24px !important;
+  }
+}
+
+@media (max-width: 560px){
+  body.home-page .hero,
+  body.home-page .home-journey,
+  body.home-page .mentor,
+  body.home-page .mentee,
+  body.home-page .home-partners,
+  body.home-page .home-fields,
+  body.home-page .home-services{
+    margin-bottom:24px !important;
+  }
+
+  body.home-page .hero-container{
+    padding:22px 16px !important;
+    gap:16px !important;
+  }
+
+  body.home-page .hero-content h1{
+    font-size:36px !important;
+  }
+
+  body.home-page .hero-quick-actions{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+  }
+
+  body.home-page .hero-stats{
+    grid-template-columns:repeat(3, 140px) !important;
+  }
+
+  body.home-page .hero-stat-card{
+    min-height:132px !important;
+  }
+
+  body.home-page .mentee-card img{
+    height:164px !important;
+  }
+
+  body.home-page .home-service-card{
+    flex:0 0 calc(100vw - 36px) !important;
+    width:calc(100vw - 36px) !important;
+    max-width:calc(100vw - 36px) !important;
+    min-height:284px !important;
+    padding:18px !important;
+  }
+}
