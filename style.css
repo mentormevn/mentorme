@@ -18524,6 +18524,8 @@ body.home-page .home-service-meta{
   margin-top:auto !important;
   padding-top:14px !important;
   border-top:1px solid rgba(187, 210, 241, 0.95) !important;
+  background:transparent !important;
+  box-shadow:none !important;
 }
 
 body.home-page .home-service-meta strong{
