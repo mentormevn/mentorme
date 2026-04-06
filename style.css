@@ -19729,8 +19729,11 @@ body.home-page .home-journey-head .section-eyebrow{
 
 body.home-page .journey-step-finish,
 body.home-page .journey-step-finish.journey-step-link{
+  display:grid !important;
+  grid-template-rows:1fr !important;
   align-items:center !important;
   justify-content:center !important;
+  align-content:center !important;
   text-align:center !important;
   place-items:center !important;
 }
