@@ -19817,3 +19817,11 @@ body.home-page .journey-step-finish.journey-step-link strong{
     right:12px !important;
   }
 }
+
+body.home-page .home-services-nav{
+  display:none !important;
+}
+
+body.home-page .home-services-slider{
+  grid-template-columns:minmax(0, 1fr) !important;
+}

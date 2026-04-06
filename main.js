@@ -2574,27 +2574,74 @@ function initializeHomeServicesSection() {
   const homeServicesTrack = document.getElementById("homeServicesTrack");
   const homeServicesPrev = document.querySelector(".home-services-prev");
   const homeServicesNext = document.querySelector(".home-services-next");
-  if (!homeServicesTrack || !homeServicesPrev || !homeServicesNext) return;
+  if (!homeServicesTrack) return;
+  const homeServiceCards = Array.from(homeServicesTrack.querySelectorAll(".home-service-card"));
+  let currentServiceIndex = 0;
+  let autoAdvanceHandle = null;
 
   function getScrollStep() {
     const card = homeServicesTrack.querySelector(".home-service-card");
     return card ? card.getBoundingClientRect().width + 18 : 320;
   }
 
-  function scrollHomeServices(direction) {
-    homeServicesTrack.scrollBy({
-      left: direction * getScrollStep(),
+  function scrollToService(index) {
+    if (!homeServiceCards.length) return;
+    currentServiceIndex = (index + homeServiceCards.length) % homeServiceCards.length;
+    homeServicesTrack.scrollTo({
+      left: currentServiceIndex * getScrollStep(),
       behavior: "smooth"
     });
   }
 
-  homeServicesPrev.addEventListener("click", function () {
-    scrollHomeServices(-1);
+  function scrollHomeServices(direction) {
+    scrollToService(currentServiceIndex + direction);
+  }
+
+  function stopAutoAdvance() {
+    if (autoAdvanceHandle) {
+      window.clearInterval(autoAdvanceHandle);
+      autoAdvanceHandle = null;
+    }
+  }
+
+  function startAutoAdvance() {
+    stopAutoAdvance();
+    if (homeServiceCards.length <= 1) return;
+    autoAdvanceHandle = window.setInterval(function () {
+      scrollToService(currentServiceIndex + 1);
+    }, 1000);
+  }
+
+  if (homeServicesPrev) {
+    homeServicesPrev.addEventListener("click", function () {
+      scrollHomeServices(-1);
+      startAutoAdvance();
+    });
+  }
+
+  if (homeServicesNext) {
+    homeServicesNext.addEventListener("click", function () {
+      scrollHomeServices(1);
+      startAutoAdvance();
+    });
+  }
+
+  homeServicesTrack.addEventListener("scroll", function () {
+    const nextIndex = Math.round(homeServicesTrack.scrollLeft / Math.max(getScrollStep(), 1));
+    currentServiceIndex = Math.min(Math.max(nextIndex, 0), Math.max(homeServiceCards.length - 1, 0));
+  }, { passive: true });
+
+  [homeServicesTrack, homeServicesPrev, homeServicesNext].forEach(function (element) {
+    if (!element) return;
+    element.addEventListener("mouseenter", stopAutoAdvance);
+    element.addEventListener("mouseleave", startAutoAdvance);
+    element.addEventListener("focusin", stopAutoAdvance);
+    element.addEventListener("focusout", startAutoAdvance);
+    element.addEventListener("touchstart", stopAutoAdvance, { passive: true });
+    element.addEventListener("touchend", startAutoAdvance, { passive: true });
   });
 
-  homeServicesNext.addEventListener("click", function () {
-    scrollHomeServices(1);
-  });
+  startAutoAdvance();
 }
 
 function initializeScrollReveal() {
