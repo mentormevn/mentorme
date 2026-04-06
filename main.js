@@ -27,8 +27,6 @@ const authArea = document.getElementById("authArea");
 const mobileNavActions = document.querySelector(".mobile-nav-actions");
 let navPanel = document.querySelector(".nav-panel");
 let navScrim = document.querySelector(".nav-scrim");
-let navTopActions = document.querySelector(".nav-top-actions");
-let navAccountShortcut = document.querySelector(".nav-account-shortcut");
 const DEMO_ADMIN_ACCESS_CODE = "ADMIN2026";
 const DEMO_MENTEE_EMAIL = "";
 const DEMO_MENTEE_PASSWORD = "trang2007";
@@ -130,32 +128,12 @@ if (hamburger) {
   hamburger.innerHTML = "<span class=\"hamburger-box\"><span></span><span></span><span></span></span>";
 }
 
-if (navbar && !navTopActions && !mobileNavActions) {
-  navTopActions = document.createElement("div");
-  navTopActions.className = "nav-top-actions";
-  navbar.insertBefore(navTopActions, navPanel || menu || authArea || null);
-}
-
-if (navTopActions && mobileNavActions && mobileNavActions.children.length) {
-  const quickActions = Array.from(mobileNavActions.children).filter(function (item) {
-    return !item.classList.contains("hamburger");
+if (mobileNavActions) {
+  Array.from(mobileNavActions.children).forEach(function (item) {
+    if (!item.classList.contains("hamburger")) {
+      item.remove();
+    }
   });
-
-  quickActions.forEach(function (item) {
-    navTopActions.insertBefore(item, navTopActions.firstChild);
-  });
-}
-
-if (navTopActions && hamburger && hamburger.parentNode !== navTopActions) {
-  navTopActions.appendChild(hamburger);
-}
-
-if (navTopActions && !navAccountShortcut) {
-  navAccountShortcut = document.createElement("button");
-  navAccountShortcut.type = "button";
-  navAccountShortcut.className = "nav-account-shortcut";
-  navAccountShortcut.setAttribute("aria-label", "Mở hồ sơ");
-  navTopActions.insertBefore(navAccountShortcut, hamburger || null);
 }
 
 if (navbar && menu && authArea && !navPanel && !mobileNavActions) {
@@ -196,25 +174,6 @@ function setMobileNavOpen(isActive) {
   document.body.classList.toggle("nav-panel-open", isActive);
 }
 
-function renderNavAccountShortcut(user) {
-  if (!navAccountShortcut) return;
-
-  if (user) {
-    navAccountShortcut.innerHTML = `
-      <img src="${user.avatar || createAvatarFallback(user.name)}" alt="Ảnh đại diện ${escapeHtml(user.name || "Người dùng")}">
-      <span>Hồ sơ</span>
-    `;
-    navAccountShortcut.hidden = false;
-    return;
-  }
-
-  navAccountShortcut.innerHTML = `
-    <span class="nav-account-shortcut-icon" aria-hidden="true"></span>
-    <span>Đăng nhập</span>
-  `;
-  navAccountShortcut.hidden = false;
-}
-
 if (hamburger && menu) {
   hamburger.addEventListener("click", () => {
     const isActive = !(navPanel ? navPanel.classList.contains("active") : menu.classList.contains("active"));
@@ -225,26 +184,6 @@ if (hamburger && menu) {
 if (navScrim) {
   navScrim.addEventListener("click", function () {
     setMobileNavOpen(false);
-  });
-}
-
-if (navAccountShortcut) {
-  navAccountShortcut.addEventListener("click", function () {
-    const activeUser = getCurrentUser();
-    if (!activeUser) {
-      window.location.href = "login.html?redirect=" + encodeURIComponent(getCurrentPagePath());
-      return;
-    }
-
-    setMobileNavOpen(true);
-    window.requestAnimationFrame(function () {
-      const userMenu = document.querySelector(".user-menu");
-      const trigger = userMenu ? userMenu.querySelector(".user-menu-trigger") : null;
-      if (!userMenu || !trigger) return;
-      userMenu.classList.add("active");
-      trigger.setAttribute("aria-expanded", "true");
-      userMenu.scrollIntoView({ block: "start", behavior: "smooth" });
-    });
   });
 }
 
@@ -398,7 +337,7 @@ function getCurrentPagePath() {
 
 function getMobileBottomNavItems() {
   const activeUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-  const accountHref = activeUser ? "profile.html" : "login.html";
+  const accountHref = activeUser ? "profile.html" : "login.html?redirect=profile.html";
 
   return [
     {
@@ -431,7 +370,7 @@ function getMobileBottomNavItems() {
     },
     {
       href: accountHref,
-      label: activeUser ? "Tài khoản" : "Đăng nhập",
+      label: "Hồ sơ",
       match: ["login.html", "register.html", "forgot-password.html", "reset-password.html", "profile.html"],
       icon:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"></circle><path d="M5 19a7 7 0 0 1 14 0"></path></svg>'
@@ -1781,7 +1720,6 @@ function renderAuthArea(user) {
   if (!authArea) return;
 
   syncNavbarMenu(user);
-  renderNavAccountShortcut(user);
 
   if (!user) {
     authArea.innerHTML = `
@@ -2125,7 +2063,10 @@ function renderMentorStatsBadge(mentor) {
         <strong>${Number(mentor.rating || 0).toFixed(1)}</strong>
       </span>
       <span class="mentor-stats-pill">
-        <img src="personicon.png" alt="Số học sinh">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8.5" r="3.5"></circle>
+          <path d="M5 19a7 7 0 0 1 14 0"></path>
+        </svg>
         <strong>${mentor.studentsTaught || 0}</strong>
       </span>
     </div>
@@ -2140,9 +2081,8 @@ function renderReviewStars(rating) {
 function createMentorCard(mentor) {
   const safeMentor = getResolvedMentorById(mentor.id) || mentor;
   const achievementItems = splitMultilineItems(safeMentor.featuredAchievements || safeMentor.achievements)
-    .slice(0, 2)
     .map(function (achievement) {
-      return "<li>" + achievement + "</li>";
+      return "<li>" + escapeHtml(achievement) + "</li>";
     })
     .join("");
 
@@ -6620,13 +6560,23 @@ function renderCalendarGrid(gridElement, monthLabelElement, requests, linkBuilde
 
   for (let day = 1; day <= totalDays; day += 1) {
     const events = eventsByDay[day] || [];
+    const calendarDate = new Date(year, month, day);
     const isToday =
       day === today.getDate() &&
       month === today.getMonth() &&
       year === today.getFullYear();
+    const weekdayLabel = calendarDate.toLocaleDateString("vi-VN", { weekday: "short" });
+    const fullDateLabel = calendarDate.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
     cells.push(`
       <div class="mentor-calendar-cell ${isToday ? "is-today" : ""}">
-        <div class="mentor-calendar-date">${day}</div>
+        <div class="mentor-calendar-date">
+          <strong>${String(day).padStart(2, "0")}</strong>
+          <span>${escapeHtml(weekdayLabel)}, ${escapeHtml(fullDateLabel)}</span>
+        </div>
         <div class="mentor-calendar-events">
           ${events.map(function (request) {
             return `
@@ -6639,6 +6589,10 @@ function renderCalendarGrid(gridElement, monthLabelElement, requests, linkBuilde
         </div>
       </div>
     `);
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push('<div class="mentor-calendar-cell is-empty"></div>');
   }
 
   gridElement.innerHTML = cells.join("");

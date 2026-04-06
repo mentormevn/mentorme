@@ -10,26 +10,31 @@
   <link rel="stylesheet" href="style.css?v=20260331-2235">
 </head>
 <body class="profile-page">
-  <div class="navbar">
-    <a href="index.html" class="logo">
-      <img src="logo.png" alt="Mentor Me logo">
-      <span>MENTOR ME</span>
-    </a>
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo">
+        <img src="logo.svg" alt="Mentor Me logo">
+        <span>MENTOR ME</span>
+      </a>
 
-    <ul class="menu">
-      <li><a href="index.html">Trang chủ</a></li>
-      <li><a href="search.html">Tìm kiếm Mentor</a></li>
-      <li><a href="services.html">Dịch vụ</a></li>
-      <li><a href="mentee-schedule.html">Lịch học</a></li>
-    </ul>
-
-    <div id="authArea">
-      <div class="auth-links">
-        <a href="login.html">Đăng nhập</a>
-        <a href="register.html" class="btn-register">Đăng ký</a>
+      <div class="mobile-nav-actions" aria-label="Điều hướng nhanh">
+        <button type="button" class="hamburger" aria-label="Mở menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
-    </div>
-  </div>
+
+      <ul class="menu">
+        <li><a href="index.html">Trang chủ</a></li>
+        <li><a href="search.html">Tìm kiếm mentor</a></li>
+        <li><a href="services.html">Dịch vụ</a></li>
+        <li><a href="mentee-schedule.html">Lịch học</a></li>
+      </ul>
+
+      <div id="authArea"></div>
+    </nav>
+  </header>
 
   <main class="profile-shell">
     <section class="profile-sidebar">
