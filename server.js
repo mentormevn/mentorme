@@ -48,6 +48,8 @@ const SUPABASE_SERVICE_ROLE_KEY =
 const BLOCKED_MENTOR_SLUGS = new Set(["tien-dung", "nguyen-tien-dung"]);
 const MENTOR_APPLICATION_SELECT =
   "id,full_name,email,phone,expertise,experience,motivation,portfolio_link,status,admin_note,activation_code,invited_at,activated_at,created_at,updated_at";
+const BOOKING_REQUEST_SELECT =
+  "id,mentor_id,mentor_name,mentor_image,mentor_focus,mentee_user_id,mentee_name,mentee_email,service_package_id,service_name,service_duration_minutes,service_price_text,proposed_options,slot_id,slot_ids,mentee_profile_snapshot,goal,preferred_time,note,status,admin_note,created_at,updated_at";
 
 function getPublicClientConfig() {
   return {
@@ -326,6 +328,21 @@ async function getMentorApplicationById(applicationId) {
     query: {
       select: MENTOR_APPLICATION_SELECT,
       id: toEqualityFilter(applicationId),
+      limit: 1
+    }
+  });
+}
+
+async function getBookingRequestById(requestId) {
+  if (!requestId) {
+    return null;
+  }
+
+  return restSelect("booking_requests", {
+    single: true,
+    query: {
+      select: BOOKING_REQUEST_SELECT,
+      id: toEqualityFilter(requestId),
       limit: 1
     }
   });
@@ -2251,7 +2268,7 @@ app.post("/api/booking-requests", async (req, res) => {
     const mentorProfile = await getMentorProfileById(mentorId).catch(function () {
       return null;
     });
-    const [createdRequest] = await restInsert("booking_requests", {
+    await restInsert("booking_requests", {
       mentor_id: mentorId,
       mentor_name: mentorName,
       mentor_image: mentorImage,
@@ -2271,7 +2288,6 @@ app.post("/api/booking-requests", async (req, res) => {
         normalizeProfileDetails(menteeProfile && menteeProfile.details),
         menteeProfileSnapshot
       ),
-      chat_messages: [],
       goal: goal,
       preferred_time: preferredTime,
       note: note,
@@ -2279,6 +2295,19 @@ app.post("/api/booking-requests", async (req, res) => {
       admin_note: "",
       created_at: now,
       updated_at: now
+    }, {
+      prefer: "return=minimal"
+    });
+
+    const createdRequest = await restSelect("booking_requests", {
+      single: true,
+      query: {
+        select: BOOKING_REQUEST_SELECT,
+        mentee_email: toEqualityFilter(menteeEmail),
+        mentor_id: toEqualityFilter(mentorId),
+        order: "created_at.desc",
+        limit: 1
+      }
     });
 
     if (mentorProfile && mentorProfile.owner_user_id) {
@@ -2314,7 +2343,7 @@ app.get("/api/booking-requests/mine", authMiddleware, async (req, res) => {
   try {
     const requests = await restSelect("booking_requests", {
       query: {
-        select: "*",
+        select: BOOKING_REQUEST_SELECT,
         or: "(mentee_user_id.eq." + req.authUser.id + ",mentee_email.eq." + normalizeEmail(req.user.email) + ")",
         order: "created_at.desc"
       }
@@ -2401,7 +2430,7 @@ app.get("/api/mentor/booking-requests", authMiddleware, async (req, res) => {
   try {
     const requests = await restSelect("booking_requests", {
       query: {
-        select: "*",
+        select: BOOKING_REQUEST_SELECT,
         mentor_id: toEqualityFilter(mentorId),
         order: "created_at.desc"
       }
@@ -2448,7 +2477,7 @@ app.get("/api/admin/booking-requests", requireAdmin, async (req, res) => {
   try {
     const requests = await restSelect("booking_requests", {
       query: {
-        select: "*",
+        select: BOOKING_REQUEST_SELECT,
         order: "created_at.desc"
       }
     });
@@ -3043,7 +3072,7 @@ app.put("/api/admin/booking-requests/:id", requireAdmin, async (req, res) => {
     const existingRequest = await restSelect("booking_requests", {
       single: true,
       query: {
-        select: "*",
+        select: BOOKING_REQUEST_SELECT,
         id: toEqualityFilter(requestId),
         limit: 1
       }
@@ -3054,15 +3083,18 @@ app.put("/api/admin/booking-requests/:id", requireAdmin, async (req, res) => {
       return;
     }
 
-    const [updatedRequest] = await restUpdate("booking_requests", {
+    await restUpdate("booking_requests", {
       status: status,
       admin_note: adminNote,
       updated_at: new Date().toISOString()
     }, {
       query: {
         id: toEqualityFilter(requestId)
-      }
+      },
+      prefer: "return=minimal"
     });
+
+    const updatedRequest = await getBookingRequestById(requestId);
 
     if (existingRequest.mentee_user_id) {
       await createNotification({
@@ -3115,7 +3147,7 @@ app.put("/api/mentor/booking-requests/:id", authMiddleware, async (req, res) => 
     const existingRequest = await restSelect("booking_requests", {
       single: true,
       query: {
-        select: "*",
+        select: BOOKING_REQUEST_SELECT,
         id: toEqualityFilter(requestId),
         limit: 1
       }
@@ -3147,11 +3179,14 @@ app.put("/api/mentor/booking-requests/:id", authMiddleware, async (req, res) => 
       patch.slot_ids = [];
     }
 
-    const [updatedRequest] = await restUpdate("booking_requests", patch, {
+    await restUpdate("booking_requests", patch, {
       query: {
         id: toEqualityFilter(requestId)
-      }
+      },
+      prefer: "return=minimal"
     });
+
+    const updatedRequest = await getBookingRequestById(requestId);
 
     if (existingRequest.mentee_user_id) {
       await createNotification({
@@ -3196,7 +3231,7 @@ app.get("/api/booking-requests/:id/chat", authMiddleware, async (req, res) => {
     const bookingRequest = await restSelect("booking_requests", {
       single: true,
       query: {
-        select: "*",
+        select: BOOKING_REQUEST_SELECT,
         id: toEqualityFilter(requestId),
         limit: 1
       }
@@ -3214,7 +3249,7 @@ app.get("/api/booking-requests/:id/chat", authMiddleware, async (req, res) => {
 
     res.json({
       request: sanitizeBookingRequest(bookingRequest),
-      messages: Array.isArray(bookingRequest.chat_messages) ? bookingRequest.chat_messages : []
+      messages: []
     });
   } catch (error) {
     handleRouteError(res, error, "Khong the tai doan chat.");
@@ -3242,7 +3277,7 @@ app.post("/api/booking-requests/:id/chat", authMiddleware, async (req, res) => {
     const bookingRequest = await restSelect("booking_requests", {
       single: true,
       query: {
-        select: "*",
+        select: BOOKING_REQUEST_SELECT,
         id: toEqualityFilter(requestId),
         limit: 1
       }
@@ -3258,54 +3293,10 @@ app.post("/api/booking-requests/:id/chat", authMiddleware, async (req, res) => {
       return;
     }
 
-    const now = new Date().toISOString();
-    const nextMessage = {
-      id: "chat-" + requestId + "-" + Date.now(),
-      senderUserId: req.authUser.id,
-      senderRole: normalizeRole(req.user.role),
-      senderName: req.user.name || req.authUser.email || "Mentor Me",
-      content: content,
-      createdAt: now
-    };
-    const existingMessages = Array.isArray(bookingRequest.chat_messages) ? bookingRequest.chat_messages : [];
-    const [updatedRequest] = await restUpdate("booking_requests", {
-      chat_messages: existingMessages.concat(nextMessage),
-      updated_at: now
-    }, {
-      query: {
-        id: toEqualityFilter(requestId)
-      }
+    res.status(503).json({
+      message: "Tinh nang chat booking chua san sang tren he thong hien tai. Ban van co the gui booking va theo doi trang thai."
     });
-
-    const senderRole = normalizeRole(req.user.role);
-    let recipientUserId = "";
-    if (senderRole === "mentor" || senderRole === "admin") {
-      recipientUserId = String(bookingRequest.mentee_user_id || "").trim();
-    } else {
-      const mentorProfile = await getMentorProfileById(bookingRequest.mentor_id).catch(function () {
-        return null;
-      });
-      recipientUserId = String((mentorProfile && mentorProfile.owner_user_id) || "").trim();
-    }
-
-    await createNotification({
-      userId: recipientUserId,
-      title: "Bạn có tin nhắn mới",
-      body: (req.user.name || "Người dùng") + " vừa gửi tin nhắn trong booking với " + bookingRequest.mentor_name + ".",
-      link: "booking-chat.html?id=" + requestId,
-      type: "chat",
-      meta: {
-        bookingId: requestId
-      }
-    }).catch(function () {
-      return null;
-    });
-
-    res.status(201).json({
-      message: "Da gui tin nhan.",
-      request: sanitizeBookingRequest(updatedRequest || bookingRequest),
-      chatMessage: nextMessage
-    });
+    return;
   } catch (error) {
     handleRouteError(res, error, "Khong the gui tin nhan luc nay.");
   }
