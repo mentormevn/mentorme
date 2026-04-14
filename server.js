@@ -46,6 +46,8 @@ const SUPABASE_SERVICE_ROLE_KEY =
   localEnv.SUPABASE_SERVICE_KEY ||
   "";
 const BLOCKED_MENTOR_SLUGS = new Set(["tien-dung", "nguyen-tien-dung"]);
+const MENTOR_APPLICATION_SELECT =
+  "id,full_name,email,phone,expertise,experience,motivation,portfolio_link,status,admin_note,activation_code,invited_at,activated_at,created_at,updated_at";
 
 function getPublicClientConfig() {
   return {
@@ -312,6 +314,21 @@ async function restUpdate(table, patch, options = {}) {
   });
 
   return Array.isArray(payload) ? payload : [payload];
+}
+
+async function getMentorApplicationById(applicationId) {
+  if (!applicationId) {
+    return null;
+  }
+
+  return restSelect("mentor_applications", {
+    single: true,
+    query: {
+      select: MENTOR_APPLICATION_SELECT,
+      id: toEqualityFilter(applicationId),
+      limit: 1
+    }
+  });
 }
 
 async function authRequest(pathname, options = {}) {
@@ -1129,7 +1146,7 @@ async function repairPublishedMentorProfiles() {
 async function repairApprovedMentorApplicationProfiles() {
   const approvedApplications = await restSelect("mentor_applications", {
     query: {
-      select: "*",
+      select: MENTOR_APPLICATION_SELECT,
       status: "in.(approved,activated)",
       order: "updated_at.desc"
     }
@@ -1575,7 +1592,7 @@ app.post("/api/auth/login-diagnose", async (req, res) => {
     const latestApplication = await restSelect("mentor_applications", {
       single: true,
       query: {
-        select: "*",
+        select: MENTOR_APPLICATION_SELECT,
         email: toEqualityFilter(email),
         order: "created_at.desc",
         limit: 1
@@ -1913,7 +1930,7 @@ app.post("/api/mentor-applications", async (req, res) => {
       const fullExistingApplication = await restSelect("mentor_applications", {
         single: true,
         query: {
-          select: "*",
+          select: MENTOR_APPLICATION_SELECT,
           id: toEqualityFilter(existedApplication.id),
           limit: 1
         }
@@ -1926,7 +1943,7 @@ app.post("/api/mentor-applications", async (req, res) => {
     }
 
     const now = new Date().toISOString();
-    const [createdApplication] = await restInsert("mentor_applications", {
+    await restInsert("mentor_applications", {
       full_name: fullName,
       email: email,
       phone: phone,
@@ -1941,6 +1958,18 @@ app.post("/api/mentor-applications", async (req, res) => {
       activated_at: null,
       created_at: now,
       updated_at: now
+    }, {
+      prefer: "return=minimal"
+    });
+
+    const createdApplication = await restSelect("mentor_applications", {
+      single: true,
+      query: {
+        select: MENTOR_APPLICATION_SELECT,
+        email: toEqualityFilter(email),
+        order: "created_at.desc",
+        limit: 1
+      }
     });
 
     res.status(201).json({
@@ -2723,7 +2752,7 @@ app.get("/api/admin/mentor-applications", requireAdmin, async (req, res) => {
   try {
     const applications = await restSelect("mentor_applications", {
       query: {
-        select: "*",
+        select: MENTOR_APPLICATION_SELECT,
         order: "created_at.desc"
       }
     });
@@ -2818,7 +2847,7 @@ app.put("/api/admin/mentor-applications/:id", requireAdmin, async (req, res) => 
     const existingApplication = await restSelect("mentor_applications", {
       single: true,
       query: {
-        select: "*",
+        select: MENTOR_APPLICATION_SELECT,
         id: toEqualityFilter(applicationId),
         limit: 1
       }
@@ -2840,7 +2869,7 @@ app.put("/api/admin/mentor-applications/:id", requireAdmin, async (req, res) => 
       ? new Date().toISOString()
       : existingApplication.invited_at || null;
 
-    const [updatedApplication] = await restUpdate(
+    await restUpdate(
       "mentor_applications",
       {
         status: status,
@@ -2852,11 +2881,12 @@ app.put("/api/admin/mentor-applications/:id", requireAdmin, async (req, res) => 
       {
         query: {
           id: toEqualityFilter(applicationId)
-        }
+        },
+        prefer: "return=minimal"
       }
     );
 
-    const nextApplication = updatedApplication || existingApplication;
+    const nextApplication = await getMentorApplicationById(applicationId) || existingApplication;
     const existingProfile = await getMentorProfileByEmail(existingApplication.email);
     const applicationProfileState = mapMentorProfileStateFromApplicationStatus(status);
     let publishedProfile = null;
@@ -3303,7 +3333,7 @@ app.post("/api/mentor-applications/verify-activation", async (req, res) => {
     const application = await restSelect("mentor_applications", {
       single: true,
       query: {
-        select: "*",
+        select: MENTOR_APPLICATION_SELECT,
         email: toEqualityFilter(email),
         activation_code: toEqualityFilter(activationCode),
         status: toEqualityFilter("approved"),
@@ -3360,7 +3390,7 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
     const application = await restSelect("mentor_applications", {
       single: true,
       query: {
-        select: "*",
+        select: MENTOR_APPLICATION_SELECT,
         email: toEqualityFilter(email),
         activation_code: toEqualityFilter(activationCode),
         status: toEqualityFilter("approved"),
@@ -3436,7 +3466,7 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
         updated_at: now
       });
 
-      const [updatedApplication] = await restUpdate(
+      await restUpdate(
         "mentor_applications",
         {
           status: "activated",
@@ -3446,9 +3476,12 @@ app.post("/api/mentor-applications/activate", async (req, res) => {
         {
           query: {
             id: toEqualityFilter(application.id)
-          }
+          },
+          prefer: "return=minimal"
         }
       );
+
+      const updatedApplication = await getMentorApplicationById(application.id);
 
       const loginResult = await signInWithPassword({
         email: email,
