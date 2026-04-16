@@ -344,7 +344,20 @@ function getCurrentPagePath() {
 
 function getMobileBottomNavItems() {
   const activeUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-  const accountHref = activeUser ? "profile.html" : "login.html?redirect=profile.html";
+  const normalizedRole = normalizeRole(activeUser && activeUser.role);
+  const isLoggedIn = Boolean(activeUser);
+  const accountHref = isLoggedIn ? "profile.html" : "login.html?redirect=profile.html";
+  const searchHref = normalizedRole === "mentor" || normalizedRole === "admin"
+    ? getRoleHomePath(normalizedRole)
+    : "search.html";
+  const searchMatch = normalizedRole === "mentor" || normalizedRole === "admin"
+    ? [getRoleHomePath(normalizedRole)]
+    : ["search.html", "mentor-detail.html", "booking.html"];
+  const scheduleHref = isLoggedIn ? getRoleSchedulePath(normalizedRole) : "mentee-schedule.html";
+  const scheduleMatch = normalizedRole === "mentor" || normalizedRole === "admin"
+    ? ["mentor-mentees.html", "mentor-accepted.html", "mentor-booking-detail.html", "mentor-teaching-calendar.html"]
+    : ["mentee-schedule.html", "mentee-calendar.html", "booking-chat.html"];
+  const notificationsHref = isLoggedIn ? "notifications.html" : "login.html?redirect=notifications.html";
 
   return [
     {
@@ -355,21 +368,21 @@ function getMobileBottomNavItems() {
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 10.5 12 4.5l7.5 6"></path><path d="M7.5 9.75V19.5h9V9.75"></path></svg>'
     },
     {
-      href: "search.html",
-      label: "Tìm kiếm mentor",
-      match: ["search.html", "mentor-detail.html", "booking.html"],
+      href: searchHref,
+      label: normalizedRole === "mentor" || normalizedRole === "admin" ? "Dashboard" : "Tìm kiếm mentor",
+      match: searchMatch,
       icon:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="5.5"></circle><path d="M15.5 15.5 20 20"></path></svg>'
     },
     {
-      href: "mentee-schedule.html",
+      href: scheduleHref,
       label: "Lịch học",
-      match: ["mentee-schedule.html", "mentee-calendar.html", "mentor-teaching-calendar.html"],
+      match: scheduleMatch,
       icon:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"></rect><path d="M8 3.5v5"></path><path d="M16 3.5v5"></path><path d="M4 10.5h16"></path><path d="M8.5 14h.01"></path><path d="M12 14h.01"></path><path d="M15.5 14h.01"></path></svg>'
     },
     {
-      href: "notifications.html",
+      href: notificationsHref,
       label: "Thông báo",
       match: ["notifications.html"],
       icon:
@@ -1560,11 +1573,13 @@ function saveCurrentUser(user) {
 function saveAuthSession(user) {
   saveCurrentUser(user);
   renderAuthArea(user);
+  initializeMobileBottomNav();
 }
 
 function clearAuthSession() {
   currentSessionUser = null;
   renderAuthArea(null);
+  initializeMobileBottomNav();
 }
 
 function showMessage(elementId, type, message) {
@@ -7649,7 +7664,6 @@ function initializeResetPasswordPage() {
 }
 
 async function bootstrapApp() {
-  initializeMobileBottomNav();
   initializePasswordToggles();
   syncSubmittedReviewsWithCurrentData();
   ensureDemoBookingRequests();
@@ -7665,6 +7679,7 @@ async function bootstrapApp() {
   if (isSupabaseReady()) {
     await loadCurrentUserFromSupabase();
   }
+  initializeMobileBottomNav();
   redirectIfAuthenticated();
   initializeRegisterPage();
   initializeLoginPage();
