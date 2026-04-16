@@ -49,7 +49,7 @@ const BLOCKED_MENTOR_SLUGS = new Set(["tien-dung", "nguyen-tien-dung"]);
 const MENTOR_APPLICATION_SELECT =
   "id,full_name,email,phone,expertise,experience,motivation,portfolio_link,status,admin_note,activation_code,invited_at,activated_at,created_at,updated_at";
 const BOOKING_REQUEST_SELECT =
-  "id,mentor_id,mentor_name,mentor_image,mentor_focus,mentee_user_id,mentee_name,mentee_email,service_package_id,service_name,service_duration_minutes,service_price_text,proposed_options,slot_id,slot_ids,mentee_profile_snapshot,goal,preferred_time,note,status,admin_note,created_at,updated_at";
+  "id,mentor_id,mentor_name,mentor_image,mentor_focus,mentee_user_id,mentee_name,mentee_email,service_package_id,service_name,service_duration_minutes,service_price_text,proposed_options,slot_id,slot_ids,goal,preferred_time,note,status,admin_note,created_at,updated_at";
 
 function getPublicClientConfig() {
   return {
@@ -2230,7 +2230,6 @@ app.post("/api/booking-requests", async (req, res) => {
   const serviceDurationMinutes = Number(req.body.serviceDurationMinutes || 0);
   const servicePriceText = String(req.body.servicePriceText || "").trim();
   const proposedOptions = Array.isArray(req.body.proposedOptions) ? req.body.proposedOptions : [];
-  const menteeProfileSnapshot = normalizeProfileDetails(req.body.menteeProfileSnapshot || {});
   const goal = String(req.body.goal || "").trim();
   const preferredTime = String(req.body.preferredTime || "").trim();
   const note = String(req.body.note || "").trim();
@@ -2262,9 +2261,6 @@ app.post("/api/booking-requests", async (req, res) => {
 
   try {
     const now = new Date().toISOString();
-    const menteeProfile = menteeUserId ? await getProfileById(menteeUserId).catch(function () {
-      return null;
-    }) : null;
     const mentorProfile = await getMentorProfileById(mentorId).catch(function () {
       return null;
     });
@@ -2283,11 +2279,6 @@ app.post("/api/booking-requests", async (req, res) => {
       proposed_options: proposedOptions,
       slot_id: "",
       slot_ids: [],
-      mentee_profile_snapshot: Object.assign(
-        {},
-        normalizeProfileDetails(menteeProfile && menteeProfile.details),
-        menteeProfileSnapshot
-      ),
       goal: goal,
       preferred_time: preferredTime,
       note: note,
