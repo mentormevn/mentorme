@@ -99,10 +99,12 @@ const FIELD_CATEGORY_OPTIONS = [
 ];
 let currentSearchPage = 1;
 let currentSessionUser = null;
+let authSessionResolved = false;
 let mentorProfileDraftStore = {};
 let bookingRequestsCache = null;
 let bookingOccupiedSlotsCache = {};
 let mentorProfilesCache = {};
+let publicMentorProfilesLoaded = false;
 let mentorSubmittedReviewsCache = [];
 let notificationsCache = [];
 const appConfig = browserWindow.MENTOR_ME_CONFIG || {};
@@ -503,6 +505,15 @@ function syncNavbarMenu(user) {
 
   const currentPath = getCurrentPagePath();
   const isCollapsedViewport = window.innerWidth <= NAV_COLLAPSE_BREAKPOINT;
+
+  if (!authSessionResolved && !user) {
+    menuElement.querySelectorAll("li").forEach(function (item) {
+      const link = item.querySelector("a");
+      if (!link) return;
+      item.classList.toggle("active", link.getAttribute("href") === currentPath);
+    });
+    return;
+  }
 
   if (!user && !isCollapsedViewport) {
     menuElement.querySelectorAll("li").forEach(function (item) {
@@ -1571,12 +1582,21 @@ function saveCurrentUser(user) {
 }
 
 function saveAuthSession(user) {
+  authSessionResolved = true;
   saveCurrentUser(user);
   renderAuthArea(user);
   initializeMobileBottomNav();
 }
 
 function clearAuthSession() {
+  authSessionResolved = true;
+  currentSessionUser = null;
+  renderAuthArea(null);
+  initializeMobileBottomNav();
+}
+
+function resolveEmptyAuthSession() {
+  authSessionResolved = true;
   currentSessionUser = null;
   renderAuthArea(null);
   initializeMobileBottomNav();
@@ -1725,7 +1745,10 @@ async function loadCurrentUserFromSupabase() {
     return existingUser;
   }
 
-  if (!isSupabaseReady()) return null;
+  if (!isSupabaseReady()) {
+    resolveEmptyAuthSession();
+    return null;
+  }
 
   const authUser = await getSupabaseAuthUser();
   if (!authUser) {
@@ -1775,6 +1798,13 @@ function renderAuthArea(user) {
   if (!authArea) return;
 
   syncNavbarMenu(user);
+
+  if (!authSessionResolved && !user) {
+    authArea.innerHTML = `
+      <div class="auth-loading" aria-live="polite">Đang kiểm tra đăng nhập...</div>
+    `;
+    return;
+  }
 
   if (!user) {
     authArea.innerHTML = `
@@ -2229,6 +2259,23 @@ function renderMentorList(mentors, keyword, page) {
   );
 }
 
+function refreshMentorDependentViews() {
+  if (document.getElementById("mentorGrid")) {
+    filterMentors();
+  }
+
+  if (document.getElementById("mentorDetailName")) {
+    renderMentorDetail();
+  }
+
+  const homeMentorTrack = document.getElementById("homeMentorTrack");
+  if (homeMentorTrack && typeof homeMentorTrack.refreshMentorPages === "function") {
+    homeMentorTrack.refreshMentorPages();
+  } else if (homeMentorTrack) {
+    initializeHomeMentorSection();
+  }
+}
+
 function renderSearchLoadingState() {
   const mentorGrid = document.getElementById("mentorGrid");
   const summary = document.getElementById("mentorResultsSummary");
@@ -2318,12 +2365,17 @@ function initializeHomeMentorSection() {
   const homeMentorTrack = document.getElementById("homeMentorTrack");
   if (!homeMentorTrack) return;
 
-  const featuredMentors = getResolvedMentorList();
+  if (!publicMentorProfilesLoaded && !getResolvedMentorList().length) {
+    renderHomeMentorLoadingState();
+    return;
+  }
+
   const prevButton = document.querySelector(".mentor-home-prev");
   const nextButton = document.querySelector(".mentor-home-next");
   let currentPage = 0;
 
   function getMentorPages() {
+    const featuredMentors = getResolvedMentorList();
     let mentorsPerPage = 3;
 
     if (window.matchMedia("(max-width: 640px)").matches) {
@@ -2421,6 +2473,13 @@ function initializeHomeMentorSection() {
       nextButton.hidden = false;
     }
   }
+
+  homeMentorTrack.refreshMentorPages = function () {
+    currentPage = 0;
+    mentorPages = renderHomeMentorPages();
+    updateHomeMentorSlider();
+    startAutoAdvance();
+  };
 
   if (prevButton) {
     prevButton.addEventListener("click", function () {
@@ -2828,6 +2887,11 @@ function filterMentors() {
   const selectedAvailability = availabilityFilter ? availabilityFilter.value : "";
   const selectedService = serviceFilter ? serviceFilter.value : "";
 
+  if (!publicMentorProfilesLoaded && !getResolvedMentorList().length) {
+    renderSearchLoadingState();
+    return;
+  }
+
   const mentors = getResolvedMentorList()
     .map(function (mentor) {
       return {
@@ -2926,6 +2990,16 @@ function renderMentorDetail() {
   if (!mentor) {
     const detailPage = document.querySelector(".mentor-detail-card");
     if (detailPage) {
+      if (!publicMentorProfilesLoaded) {
+        detailPage.innerHTML = `
+          <div class="admin-empty-state">
+            <h3>Đang tải hồ sơ mentor</h3>
+            <p>Hệ thống đang kiểm tra thông tin mentor mới nhất.</p>
+          </div>
+        `;
+        return;
+      }
+
       detailPage.innerHTML = `
         <div class="admin-empty-state">
           <h3>Không tìm thấy mentor</h3>
@@ -3750,7 +3824,26 @@ async function fetchPublicMentorProfiles() {
     }
   });
   mentorProfilesCache = nextStore;
+  publicMentorProfilesLoaded = true;
   return nextStore;
+}
+
+function loadPublicMentorProfilesInBackground() {
+  if (!isSupabaseReady()) {
+    publicMentorProfilesLoaded = true;
+    return Promise.resolve({});
+  }
+
+  return fetchPublicMentorProfiles()
+    .catch(function () {
+      mentorProfilesCache = {};
+      publicMentorProfilesLoaded = true;
+      return {};
+    })
+    .then(function (profiles) {
+      refreshMentorDependentViews();
+      return profiles;
+    });
 }
 
 async function createAdminMentorProfile(adminKey, payload) {
@@ -7670,15 +7763,11 @@ async function bootstrapApp() {
   renderHomeMentorLoadingState();
   renderSearchLoadingState();
   if (isSupabaseReady()) {
-    try {
-      await fetchPublicMentorProfiles();
-    } catch (error) {
-      mentorProfilesCache = {};
-    }
-  }
-  if (isSupabaseReady()) {
     await loadCurrentUserFromSupabase();
+  } else {
+    resolveEmptyAuthSession();
   }
+  loadPublicMentorProfilesInBackground();
   initializeMobileBottomNav();
   redirectIfAuthenticated();
   initializeRegisterPage();

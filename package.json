@@ -6,7 +6,9 @@
   "scripts": {
     "build": "node generate-config.js",
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test:auth-bootstrap": "node tests/auth-bootstrap.test.js",
+    "test:performance-mobile": "node tests/performance-mobile.test.js"
   },
   "keywords": [],
   "author": "",
